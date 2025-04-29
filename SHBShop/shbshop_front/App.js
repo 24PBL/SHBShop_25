@@ -25,6 +25,7 @@ import DeleteID from './screens/DeleteID';
 import DeleteID1 from './screens/DeleteID1';
 import BookStoreSearch from './screens/Nav/BookStoreSearch';
 import MoreList from './screens/Nav/MoreList';
+
 const Stack = createNativeStackNavigator();
 
 const App = () => {
