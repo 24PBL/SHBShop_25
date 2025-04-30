@@ -5,6 +5,7 @@ from sqlalchemy import desc
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 from werkzeug.security import generate_password_hash, check_password_hash
+from enum import Enum
 
 # 에디터에서 에러 표시 나와도 무시하면 됩니다.
 # 절대 경로 파악이 안 되는 것. 실행은 정상적으로 됩니다.
@@ -25,6 +26,11 @@ PBOOK_UPLOAD_FOLDER = "static/product/personal"
 CBOOK_UPLOAD_FOLDER = "static/product/commercial"
 SBOOK_UPLOAD_FOLDER = "static/product/shop"
 
+class UserType(Enum):
+    PERSONAL = 1
+    COMMERCIAL = 2
+    ADMIN = 3
+
 
 @test_bp.route("/add-personal", methods=["POST"])
 def add_personal():
@@ -36,6 +42,14 @@ def add_personal():
     nickname = request.form.get("nickname")
     address = request.form.get("address")
     imgfile = request.files.get("imgfile")
+
+    exPUser = db.session.query(Personal).filter_by(email=email).first()
+    exCUser = db.session.query(Commercial).filter_by(email=email).first()
+
+    if exPUser:
+        return jsonify({"message": "이미 가입된 회원입니다."}), 403
+    if exCUser:
+        return jsonify({"message": "상업회원으로 가입되어 있습니다."}), 403
 
     filename = secure_filename(f"{uuid4().hex}_{imgfile.filename}")
     save_path = os.path.join(P_PROFILE_UPLOAD_FOLDER, filename)
@@ -82,6 +96,14 @@ def add_commercial():
     coNumber = request.form.get("coNumber")
     imgfile = request.files.get("imgfile")
     licence = request.files.get("licence")
+
+    exPUser = db.session.query(Personal).filter_by(email=email).first()
+    exCUser = db.session.query(Commercial).filter_by(email=email).first()
+
+    if exPUser:
+        return jsonify({"message": "이미 가입된 회원입니다."}), 403
+    if exCUser:
+        return jsonify({"message": "상업회원으로 가입되어 있습니다."}), 403
     
     hashed_pw = generate_password_hash(password)
     
@@ -228,6 +250,15 @@ def add_shop():
     db.session.commit()
 
     return jsonify({"message": "가게추가 완료"}), 201
+
+@test_bp.route("/modify-state/<int:userId>", methods=["PUT"])
+def change_state(userId):
+    cUser = db.session.query(Commercial).filter_by(cid = userId).first()
+    
+    cUser.state = 2
+    db.session.commit()
+
+    return jsonify({"message": "주소 변경 완료"}), 200
 
 @test_bp.route("/add-pbook", methods=["POST"])
 def add_pbook():
@@ -526,3 +557,59 @@ def read_sbook(bookId):
     }
 
     return jsonify({"user": book}), 200
+
+@test_bp.route("/modify-anr/<int:kind>/<int:userId>", methods=["PUT"])
+def change_anr(kind, userId):
+    data = request.get_json()
+
+    address = data.get("address")
+    region = data.get("region")
+
+    try:
+        kind = int(kind)
+    except (TypeError, ValueError):
+        return jsonify({"error": "유효하지 않은 유형 값입니다."}), 400
+
+    if kind == UserType.PERSONAL.value:
+        exUser = db.session.query(Personal).filter_by(pid = userId).first()
+        exUser.address = address
+        exUser.region = region
+        db.session.commit()
+    elif kind == UserType.COMMERCIAL.value:
+        exUser = db.session.query(Commercial).filter_by(cid = userId).first()
+        exShop = db.session.query(Shop).filter_by(cid = userId).first()
+        exUser.address = address
+        exUser.region = region
+        exShop.address = address
+        exShop.region = region
+        db.session.commit()
+    else:
+        return jsonify({"error": "잘못된 유저 유형"}), 404
+
+    return jsonify({"message": "주소 변경 완료"}), 200
+
+@test_bp.route("/modify-book/<int:kind>/<int:bookId>", methods=["PUT"])
+def change_book(kind, bookId):
+    data = request.get_json()
+
+    region = data.get("region")
+
+    try:
+        kind = int(kind)
+    except (TypeError, ValueError):
+        return jsonify({"error": "유효하지 않은 유형 값입니다."}), 400
+
+    if kind == UserType.PERSONAL.value:
+        book = db.session.query(Pbooktrade).filter_by(bid = bookId).first()
+    elif kind == UserType.COMMERCIAL.value:
+        book = db.session.query(Cbooktrade).filter_by(bid = bookId).first()
+    elif kind == 3:
+        book = db.session.query(Sbooktrade).filter_by(bid = bookId).first()
+
+    else:
+        return jsonify({"error": "잘못된 유저 유형"}), 404
+    
+    book.region = region
+    db.session.commit()
+
+    return jsonify({"message": "주소 변경 완료"}), 200

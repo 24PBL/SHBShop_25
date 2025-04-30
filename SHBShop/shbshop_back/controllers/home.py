@@ -2,12 +2,18 @@ from flask import Blueprint, request, jsonify
 from enum import Enum
 from sqlalchemy import desc, and_, or_
 from sqlalchemy.orm import joinedload
+import os
+from werkzeug.utils import secure_filename
+from uuid import uuid4
 from utils.jwt_helper import token_required
 
-from models import Personal, Commercial, Pbooktrade, Sbooktrade, Cbooktrade, Shop, Favorite4p, Favorite4c
+from models import Personal, Commercial, Pbooktrade, Sbooktrade, Cbooktrade, Shop, Favorite4p, Favorite4c, Commercialcert
 from extensions import db
 
 home_bp = Blueprint("home", __name__)
+
+LICENCE_UPLOAD_FOLDER = "static/licence"
+S_IMAGE_UPLOAD_FOLDER = "static/shop"
 
 class UserType(Enum):
     PERSONAL = 1
@@ -178,7 +184,6 @@ def search_book(decoded_user_id, user_type, userId):
         region = "noneRestriction"
 
     keyword_pattern = f"%{keyword}%"
-    region_pattern = f"%{region}%"
     
     if region == "noneRestriction":
         pbook_results = (
@@ -231,7 +236,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .join(Personal, Pbooktrade.pid == Personal.pid)
                 .filter(
                     and_(
-                        Pbooktrade.region.ilike(region_pattern),
+                        Pbooktrade.region == region,
                         or_(
                             Pbooktrade.title.ilike(keyword_pattern),
                             Pbooktrade.author.ilike(keyword_pattern),
@@ -249,7 +254,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .join(Commercial, Cbooktrade.cid == Commercial.cid)
                 .filter(
                     and_(
-                    Cbooktrade.region.ilike(region_pattern),
+                    Cbooktrade.region == region,
                         or_(
                             Cbooktrade.title.ilike(keyword_pattern),
                             Cbooktrade.author.ilike(keyword_pattern),
@@ -267,7 +272,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .join(Shop, Sbooktrade.sid == Shop.sid)
                 .filter(
                     and_(
-                    Sbooktrade.region.ilike(region_pattern),
+                    Sbooktrade.region == region,
                         or_(
                             Sbooktrade.title.ilike(keyword_pattern),
                             Sbooktrade.author.ilike(keyword_pattern),
@@ -353,7 +358,6 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
         region = "noneRestriction"
 
     keyword_pattern = f"%{keyword}%"
-    region_pattern = f"%{region}%"
 
     if region == "noneRestriction":
         pbook_results = (
@@ -394,7 +398,7 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
                 .filter(
                     and_(
                         Pbooktrade.bid < pfinidx,
-                        Pbooktrade.region.ilike(region_pattern),
+                        Pbooktrade.region == region,
                         or_(
                             Pbooktrade.title.ilike(keyword_pattern),
                             Pbooktrade.author.ilike(keyword_pattern),
@@ -413,7 +417,7 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
                 .filter(
                     and_(
                         Cbooktrade.bid < cfinidx,
-                        Cbooktrade.region.ilike(region_pattern),
+                        Cbooktrade.region == region,
                         or_(
                             Cbooktrade.title.ilike(keyword_pattern),
                             Cbooktrade.author.ilike(keyword_pattern),
@@ -483,7 +487,6 @@ def search_more_sbook(decoded_user_id, user_type, userId, sfinidx):
         region = "noneRestriction"
 
     keyword_pattern = f"%{keyword}%"
-    region_pattern = f"%{region}%"
     
     if region == "noneRestriction":
         sbook_results = (
@@ -508,7 +511,7 @@ def search_more_sbook(decoded_user_id, user_type, userId, sfinidx):
                 .filter(
                     and_(
                         Sbooktrade.bid < sfinidx,
-                        Sbooktrade.region.ilike(region_pattern),
+                        Sbooktrade.region == region,
                         or_(
                             Sbooktrade.title.ilike(keyword_pattern),
                             Sbooktrade.author.ilike(keyword_pattern),
@@ -758,3 +761,261 @@ def get_my_page(decoded_user_id, user_type, userId):
     }
 
     return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo}), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-commer", methods=["GET"])
+@token_required
+def get_my_cert(decoded_user_id, user_type, userId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if user_type == UserType.COMMERCIAL.value:
+        userData = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+    else:
+        return jsonify({"error": "권한이 없습니다."}), 403
+
+    if not userData:
+        return jsonify({"error": "일치하는 회원이 없습니다."}), 404
+    
+    comCerts = (
+        db.session.query(Commercialcert)
+            .filter_by(cid=decoded_user_id)
+            .order_by(Commercialcert.idx.desc())
+            .all()
+        )
+    
+    userInfo = {
+        "name": userData.name,
+        "profile": userData.img
+    }
+    
+    cert_list = [
+        {
+            "certId": cert.idx,
+            "state": cert.state,
+            "createAt": cert.createAt.isoformat()
+        } for cert in comCerts
+    ]
+
+    return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo, "cert_list": cert_list}), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-commer/<int:certId>", methods=["GET"])
+@token_required
+def get_my_cert_detail(decoded_user_id, user_type, userId, certId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if user_type == UserType.COMMERCIAL.value:
+        userData = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+    else:
+        return jsonify({"error": "권한이 없습니다."}), 403
+
+    if not userData:
+        return jsonify({"error": "일치하는 회원이 없습니다."}), 404
+    
+    cert = db.session.query(Commercialcert).filter_by(idx=certId).first()
+
+    if not cert:
+        return jsonify({"error": "일치하는 승인 요청이 없습니다."}), 404
+
+    if cert.cid != userData.cid:
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    userInfo = {
+        "name": userData.name,
+        "profile": userData.img
+    }
+
+    certInfo = {
+        "certId": cert.idx,
+        "name": cert.name,
+        "presidentName": cert.presidentName,
+        "businessmanName": cert.businessmanName,
+        "businessEmail": cert.businessEmail,
+        "coNumber": cert.coNumber,
+        "address": cert.address,
+        "state": cert.state,
+        "reason": cert.reason,
+        "createAt": cert.createAt.isoformat(),
+        "licence": cert.licence
+    }
+
+    return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo, "cert": certInfo}), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-commer/<int:certId>/re-cert", methods=["POST"])
+@token_required
+def re_submit_cert(decoded_user_id, user_type, userId, certId):
+    name = request.form.get("name")
+    presidentName = request.form.get("presidentName")
+    businessmanName = request.form.get("businessmanName")
+    businessEmail = request.form.get("businessEmail")
+    coNumber = request.form.get("coNumber")
+    address = request.form.get("address")
+    licence = request.files.get("licence")
+
+    if not all([name, presidentName, businessmanName, businessEmail, address, licence, coNumber]):
+        return jsonify({"error": "모든 정보를 입력해주세요."}), 400
+
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if user_type == UserType.COMMERCIAL.value:
+        userData = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+    else:
+        return jsonify({"error": "권한이 없습니다."}), 403
+
+    if not userData:
+        return jsonify({"error": "일치하는 회원이 없습니다."}), 404
+    
+    cert = db.session.query(Commercialcert).filter_by(idx=certId).first()
+
+    if not cert:
+        return jsonify({"error": "일치하는 승인 요청이 없습니다."}), 404
+    
+    currentCert = (
+            db.session.query(Commercialcert)
+                .filter_by(cid=decoded_user_id)
+                .order_by(Commercialcert.createAt.desc())
+                .first()
+        )
+    
+    if (cert.cid != userData.cid) or (cert.idx != currentCert.idx) or (userData.state != 3):
+        return jsonify({"error": "잘못된 요청입니다."}), 403
+    
+    pdf_filename = secure_filename(f"{uuid4().hex}_{licence.filename}")
+    pdf_save_path = os.path.join(LICENCE_UPLOAD_FOLDER, pdf_filename)
+
+    try:
+        licence.save(pdf_save_path)
+    except Exception as e:
+        return jsonify({"error": f"PDF 저장 실패: {str(e)}"}), 500
+
+    pdf_url = f"/{LICENCE_UPLOAD_FOLDER}/{pdf_filename}"
+
+    region = address.split()[0] + "-" + address.split()[1]
+
+    userData.name = name
+    userData.presidentName = presidentName
+    userData.businessmanName = businessmanName
+    userData.businessEmail = businessEmail
+    userData.coNumber = coNumber
+    userData.address = address
+    userData.region = region
+    userData.licence = pdf_url
+
+    new_certReq = Commercialcert(
+        name = name,
+        presidentName = presidentName,
+        businessmanName = businessmanName,
+        birth = userData.birth,
+        tel = userData.tel,
+        email = userData.email,
+        businessEmail = businessEmail,
+        address = address,
+        coNumber = coNumber,
+        licence=pdf_url,
+        cid=userData.cid
+    )
+
+    db.session.add(new_certReq)
+    db.session.commit()
+
+    return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "message": "재신청 완료" }), 201
+
+@home_bp.route("/<int:userId>/my-page/check-my-commer/<int:certId>/regist-shop", methods=["POST"])
+@token_required
+def make_my_shop(decoded_user_id, user_type, userId, certId):
+    presidentName = request.form.get("presidentName")
+    businessmanName = request.form.get("businessmanName")
+    businessEmail = request.form.get("businessEmail")
+    address = request.form.get("address")
+
+    shopName = request.form.get("shopName")
+    shoptel = request.form.get("shoptel")
+    shopOpen = request.form.get("shopOpen")
+    shopClose = request.form.get("shopClose")
+    holiday = request.form.get("holiday")
+    etc = request.form.get("etc")
+
+    imgfile1 = request.files.get("imgfile1")
+    imgfile2 = request.files.get("imgfile2")
+    imgfile3 = request.files.get("imgfile3")
+
+    if not all([presidentName, businessmanName, businessEmail, address, shopName, shoptel, shopOpen, shopClose, holiday, etc, imgfile1, imgfile2, imgfile3]):
+        return jsonify({"error": "모든 정보를 입력해주세요."}), 400
+    
+    region = address.split()[0] + "-" + address.split()[1]
+
+    filename1 = secure_filename(f"{uuid4().hex}_{imgfile1.filename}")
+    save_path1 = os.path.join(S_IMAGE_UPLOAD_FOLDER, filename1)
+
+    filename2 = secure_filename(f"{uuid4().hex}_{imgfile2.filename}")
+    save_path2 = os.path.join(S_IMAGE_UPLOAD_FOLDER, filename2)
+
+    filename3 = secure_filename(f"{uuid4().hex}_{imgfile3.filename}")
+    save_path3 = os.path.join(S_IMAGE_UPLOAD_FOLDER, filename3)
+        
+    try:
+        imgfile1.save(save_path1)
+        imgfile2.save(save_path2)
+        imgfile3.save(save_path3)
+    except Exception as e:
+        return jsonify({"error": f"파일 저장 실패: {str(e)}"}), 500
+
+    shopimg_url1 = f"/{S_IMAGE_UPLOAD_FOLDER}/{filename1}"
+    shopimg_url2 = f"/{S_IMAGE_UPLOAD_FOLDER}/{filename2}"
+    shopimg_url3 = f"/{S_IMAGE_UPLOAD_FOLDER}/{filename3}" 
+
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if user_type == UserType.COMMERCIAL.value:
+        userData = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+    else:
+        return jsonify({"error": "권한이 없습니다."}), 403
+
+    if not userData:
+        return jsonify({"error": "일치하는 회원이 없습니다."}), 404
+    
+    cert = db.session.query(Commercialcert).filter_by(idx=certId).first()
+    
+    if not cert:
+        return jsonify({"error": "일치하는 승인 요청이 없습니다."}), 404
+    
+    currentCert = (
+            db.session.query(Commercialcert)
+                .filter_by(cid=decoded_user_id)
+                .order_by(Commercialcert.createAt.desc())
+                .first()
+        )
+    
+    exShop = db.session.query(Shop).filter_by(cid=userData.cid).first()
+
+    if (cert.cid != userData.cid) or (cert.idx != currentCert.idx) or (userData.state != 2) or (exShop):
+        return jsonify({"error": "잘못된 요청입니다."}), 403
+
+    new_shop = Shop(
+        cid = userData.cid,
+        presidentName = presidentName,
+        businessmanName = businessmanName,
+        shopName = shopName,
+        shoptel = shoptel,
+        businessEmail = businessEmail,
+        address = address,
+        region=region,
+        open=shopOpen,
+        close=shopClose,
+        holiday=holiday,
+        etc=etc,
+        shopimg1=shopimg_url1,
+        shopimg2=shopimg_url2,
+        shopimg3=shopimg_url3
+    )
+    
+    try:
+        db.session.add(new_shop)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"가게 생성 실패: {str(e)}"}), 500
+
+    return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "message": "가게 등록 성공" }), 201
