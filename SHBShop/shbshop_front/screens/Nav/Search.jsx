@@ -55,6 +55,7 @@ const Search = ({ navigation }) => {
 
         if (response.ok) {
           const data = await response.json();
+          console.log(data.bookList)
           setbookdata(data.bookList);
           const personal = data.bookList.filter(book => book.userType === 1);
           const business = data.bookList.filter(book => book.userType === 2);
