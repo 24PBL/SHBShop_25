@@ -18,7 +18,7 @@ const BookScreen = ({navigation}) => {
   const [locallist, setlocallist] = useState([]); // 지역 리스트 상태 (배열로 초기화)
 
   const addresses = useMemo(() => locallist.map(item => item.address), [locallist]);
-  const centerAddress = '경남 진주시 진주대로 501'; // 예시로 현재 주소는 진주대로로 가정
+  const centerAddress = "10,10" // 예시로 현재 주소는 진주대로로 가정
   const testlocation = { latitude: 37.5563, longitude: 126.9708 };
 
   const BookStoreSearch = async () => {
