@@ -10,7 +10,7 @@ const API_URL = Constants.expoConfig.extra.API_URL;
 const { width } = Dimensions.get('window');
 
 const StoreDetailScreen = ({route, navigation}) => {
-  //const navigation = useNavigation();
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [liked, setLiked] = useState(false);
   const { storedata } = route.params;

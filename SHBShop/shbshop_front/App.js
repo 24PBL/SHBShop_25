@@ -24,6 +24,7 @@ import DeleteID from './screens/DeleteID';
 import DeleteID1 from './screens/DeleteID1';
 import BookStoreSearch from './screens/Nav/BookStoreSearch';
 import MoreList from './screens/Nav/MoreList';
+import StoreRegister from './screens/Nav/StoreRegister';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +51,7 @@ const App = () => {
         <Stack.Screen name="DeleteID1" component={DeleteID1} options={{headerShown:false}}/>
         <Stack.Screen name="BookStoreSearch" component={BookStoreSearch} options={{headerShown:false}}/>
         <Stack.Screen name="MoreList" component={MoreList} options={{ headerShown:false}} />
+        <Stack.Screen name="StoreRegister" component={StoreRegister} options={{ headerShown:false}} />
       </Stack.Navigator>
     </NavigationContainer>
   );

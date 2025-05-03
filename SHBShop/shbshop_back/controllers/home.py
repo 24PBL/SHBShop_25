@@ -945,7 +945,6 @@ def make_my_shop(decoded_user_id, user_type, userId, certId):
     imgfile1 = request.files.get("imgfile1")
     imgfile2 = request.files.get("imgfile2")
     imgfile3 = request.files.get("imgfile3")
-
     if not all([presidentName, businessmanName, businessEmail, address, shopName, shoptel, shopOpen, shopClose, holiday, etc, imgfile1, imgfile2, imgfile3]):
         return jsonify({"error": "모든 정보를 입력해주세요."}), 400
     
@@ -973,7 +972,6 @@ def make_my_shop(decoded_user_id, user_type, userId, certId):
 
     if str(decoded_user_id) != str(userId):
         return jsonify({"error": "권한이 없습니다."}), 403
-    
     if user_type == UserType.COMMERCIAL.value:
         userData = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
     else:
@@ -995,7 +993,6 @@ def make_my_shop(decoded_user_id, user_type, userId, certId):
         )
     
     exShop = db.session.query(Shop).filter_by(cid=userData.cid).first()
-
     if (cert.cid != userData.cid) or (cert.idx != currentCert.idx) or (userData.state != 2) or (exShop):
         return jsonify({"error": "잘못된 요청입니다."}), 403
 

@@ -37,6 +37,26 @@ const MyPageCommon = ({navigation}) => {
     }
   };
 
+  const goToApprove = async () =>{
+    try{
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-commer`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+      const result = await response.json();
+      console.log(result.cert_list)
+      navigation.navigate("Approve",{data : {result}})
+    }
+    catch (error){
+      console.error('오류 발생:', error);
+    }
+  }
+
 
 
   useEffect(() => {
@@ -141,7 +161,7 @@ const MyPageCommon = ({navigation}) => {
           <Ionicons name="chevron-forward" size={18} color="#000" />
         </TouchableOpacity>
       )}
-        {userData?.user_type === 2 && (<TouchableOpacity style={styles.menuItem}>
+        {userData?.user_type === 2 && (<TouchableOpacity style={styles.menuItem} onPress={goToApprove}>
           <Text style={styles.menuText}>승인 요청</Text>
           <Ionicons name="chevron-forward" size={18} color="#000" />
         </TouchableOpacity>
