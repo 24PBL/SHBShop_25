@@ -6,7 +6,8 @@ import ChatScreen from './ChatScreen';
 import MypageScreen from './MyPageScreen';
 import HomeStack from './HomeStack';
 import Approve from './Approve';
-
+import BookDetailScreen from './BookDetailScreen';
+import StoreDetailScreen from './StoreDetailScreen';
 const Tab = createBottomTabNavigator()
 
 const Navbar = () => {
@@ -34,7 +35,7 @@ const Navbar = () => {
       >
         <Tab.Screen name="홈" component={HomeStack} options={{headerShown:false}} />
         <Tab.Screen name="책방" component={BookScreen}  options={{headerShown:false}}/>
-        <Tab.Screen name="채팅" component={Approve}  options={{headerShown:false}}/>
+        <Tab.Screen name="채팅" component={StoreDetailScreen}  options={{headerShown:false}}/>
         <Tab.Screen name="마이페이지" component={MypageScreen}  options={{headerShown:false}}/>
       </Tab.Navigator>
   );

@@ -52,9 +52,9 @@ const Search = ({ navigation }) => {
             'Authorization': `Bearer ${Token}`,
           },
         });
-
         if (response.ok) {
           const data = await response.json();
+          console.log(data.bookList)
           setbookdata(data.bookList);
           const personal = data.bookList.filter(book => book.userType === 1);
           const business = data.bookList.filter(book => book.userType === 2);
@@ -127,7 +127,7 @@ const Search = ({ navigation }) => {
 
           {/* 검색 결과 */}
           
-<ScrollView style={{ width: '90%', marginTop: 20 }}>
+<ScrollView style={{ width: '90%', marginTop: 20 }} showsVerticalScrollIndicator={false}>
   {/* 개인 판매자 */}
   <Text style={styles.sectionTitle}>개인 판매자</Text>
   {personalBooks.length > 0 && (
