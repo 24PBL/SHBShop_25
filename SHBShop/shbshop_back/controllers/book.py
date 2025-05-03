@@ -30,7 +30,7 @@ def show_book_info(decoded_user_id, user_type, userId, sellerType, bookId):
         seller = db.session.query(Personal).filter_by(pid=book.pid).first()
     elif sellerType == UserType.COMMERCIAL.value:
         book = db.session.query(Cbooktrade).filter_by(bid=bookId).first()
-        seller = db.session.query(Commercial).filter_by(pid=book.cid).first()
+        seller = db.session.query(Commercial).filter_by(cid=book.cid).first()
     else:
         return jsonify({"error": "잘못된 셀러 유형"}), 404
     
