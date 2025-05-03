@@ -42,18 +42,12 @@ const handleLogin = async () => {
         // 로그인 요청에 사용할 데이터 객체
         const loginData = {
             kind: userType,
+            email,
             password,
         };
-
-        // userType이 3이면 acc로, 아니면 email로 필드 설정
-        if (userType === "3") {
-            loginData.acc = email;
-        } else {
-            loginData.email = email;
-        }
+        console.log(loginData.email)
 
         const loginRes = await axios.post(`${API_URL}/auth/login`, loginData);
-
         const token = loginRes.data.token;
         await AsyncStorage.setItem('jwtToken', token);
 
@@ -62,8 +56,6 @@ const handleLogin = async () => {
                 Authorization: `Bearer ${token}`,
             }
         });
-
-        
 
         const userId = startRes.data.decoded_user_id;
 
@@ -78,8 +70,6 @@ const handleLogin = async () => {
 
         if (homeRes.data.user_type == 1 || homeRes.data.user_type == 2) {
             navigation.navigate('Navbar');
-        } else if (homeRes.data.user_type == 3) {
-            navigation.navigate('AdminWebView');
         }
 
     } catch (error) {
@@ -109,7 +99,6 @@ const handleLogin = async () => {
                     >
                 <Picker.Item label="개인 회원" value="1" />
                 <Picker.Item label="사업자 회원" value="2" />
-                <Picker.Item label="관리자" value="3" />
                 </Picker>
                 </View>
                 <Separator />

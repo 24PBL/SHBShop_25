@@ -17,7 +17,6 @@ import FindPW2 from './screens/Find/FindPW2';
 import SuccessID from './screens/Find/SuccessID';
 import KindFindID from './screens/Find/KindFindID';
 import KindFindPW from './screens/Find/KindFindPW';
-import AdminWebView from './screens/AdminWebView';
 import HomeScreen from './screens/Home';
 import StartScreen from './screens/StartScreen';
 import Navbar from './screens/Nav/Navbar';
@@ -44,7 +43,6 @@ const App = () => {
         <Stack.Screen name="SignupCommon" component={SignupCommon} options={{ headerShown:false}} />
         <Stack.Screen name="SignupBusiness" component={SignupBusiness} options={{ headerShown:false}} />        
         <Stack.Screen name="SuccessID" component={SuccessID} options={{ headerShown:false}} />
-        <Stack.Screen name="AdminWebView" component={AdminWebView} options={{ headerShown:false}} />
         
         <Stack.Screen name="Navbar" component={Navbar} options={{headerShown:false}}/>
         <Stack.Screen name="Home" component={HomeScreen} options={{headerShown:false}}/>
