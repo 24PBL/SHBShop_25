@@ -182,6 +182,8 @@ def search_book(decoded_user_id, user_type, userId):
     
     if not region:
         region = "noneRestriction"
+    else:
+        region_pattern = f"%{region}%"
 
     keyword_pattern = f"%{keyword}%"
     
@@ -236,7 +238,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .join(Personal, Pbooktrade.pid == Personal.pid)
                 .filter(
                     and_(
-                        Pbooktrade.region == region,
+                        Pbooktrade.region.ilike(region_pattern),
                         or_(
                             Pbooktrade.title.ilike(keyword_pattern),
                             Pbooktrade.author.ilike(keyword_pattern),
@@ -254,7 +256,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .join(Commercial, Cbooktrade.cid == Commercial.cid)
                 .filter(
                     and_(
-                    Cbooktrade.region == region,
+                        Cbooktrade.region.ilike(region_pattern),
                         or_(
                             Cbooktrade.title.ilike(keyword_pattern),
                             Cbooktrade.author.ilike(keyword_pattern),
@@ -272,7 +274,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .join(Shop, Sbooktrade.sid == Shop.sid)
                 .filter(
                     and_(
-                    Sbooktrade.region == region,
+                        Sbooktrade.region.ilike(region_pattern),
                         or_(
                             Sbooktrade.title.ilike(keyword_pattern),
                             Sbooktrade.author.ilike(keyword_pattern),
@@ -356,6 +358,8 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
     
     if not region:
         region = "noneRestriction"
+    else:
+        region_pattern = f"%{region}%"
 
     keyword_pattern = f"%{keyword}%"
 
@@ -398,7 +402,7 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
                 .filter(
                     and_(
                         Pbooktrade.bid < pfinidx,
-                        Pbooktrade.region == region,
+                        Pbooktrade.region.ilike(region_pattern),
                         or_(
                             Pbooktrade.title.ilike(keyword_pattern),
                             Pbooktrade.author.ilike(keyword_pattern),
@@ -417,7 +421,7 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
                 .filter(
                     and_(
                         Cbooktrade.bid < cfinidx,
-                        Cbooktrade.region == region,
+                        Cbooktrade.region.ilike(region_pattern),
                         or_(
                             Cbooktrade.title.ilike(keyword_pattern),
                             Cbooktrade.author.ilike(keyword_pattern),
@@ -485,6 +489,8 @@ def search_more_sbook(decoded_user_id, user_type, userId, sfinidx):
     
     if not region:
         region = "noneRestriction"
+    else:
+        region_pattern = f"%{region}%"
 
     keyword_pattern = f"%{keyword}%"
     
@@ -511,7 +517,7 @@ def search_more_sbook(decoded_user_id, user_type, userId, sfinidx):
                 .filter(
                     and_(
                         Sbooktrade.bid < sfinidx,
-                        Sbooktrade.region == region,
+                        Sbooktrade.region.ilike(region_pattern),
                         or_(
                             Sbooktrade.title.ilike(keyword_pattern),
                             Sbooktrade.author.ilike(keyword_pattern),
