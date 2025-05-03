@@ -46,6 +46,8 @@ const HomeScreen = ({ navigation }) => {
         'Authorization': `Bearer ${Token}`,
       },
     });
+
+    
   }
 
   const FavoriteDelete = async () => {
@@ -61,9 +63,26 @@ const HomeScreen = ({ navigation }) => {
       },
     });
   }
+
+  const goToBookDetail = async (sellType, bid) =>{
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    const response = await fetch(`${API_URL}/book/${userId}/${sellType}/${bid}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Token}`,
+      },
+    });
+    const data = await response.json();
+    navigation.navigate('BookDetailScreen', {storedata : {data}});
+    
+  }
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ backgroundColor: 'white', flex: 1 }}>
+      <SafeAreaView style={{ backgroundColor:'white', flex : 1 }}>
         <TouchableOpacity onPress={goToBookSearch} style={{ width: 60, height: 50, backgroundColor: '#0091da', borderRadius: 15, justifyContent: 'center', position: 'absolute', zIndex: 999, bottom: 50, right: 30 }}>
           <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 17, textAlign: 'center' }}>글쓰기</Text>
         </TouchableOpacity>
@@ -94,7 +113,7 @@ const HomeScreen = ({ navigation }) => {
               ?.sort((a, b) => new Date(b.createAt) - new Date(a.createAt))
               .map((book, index) => (
                 <View key={`${book.bid}_${index}`}>
-                  <TouchableOpacity style={styles.bookBox}>
+                  <TouchableOpacity style={styles.bookBox} onPress={() => goToBookDetail(book.userType, book.bid)}>
                     <Image source={{ uri: `${API_URL}/${book.bookimg}` }} style={styles.bookImg}></Image>
                     <View style={{ paddingLeft: 20, height: 100, width: 250 }}>
                       <Text style={{ fontSize: 20, paddingBottom: 10 }}>{book.title}</Text>

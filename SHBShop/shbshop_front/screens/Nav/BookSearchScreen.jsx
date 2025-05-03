@@ -18,7 +18,9 @@ const BookSearchScreen = ({navigation}) => {
     }
     try {
       const response = await axios.get('https://openapi.naver.com/v1/search/book.json', {
-        params: { query },
+        params: { query,
+          display : 50
+         },
         headers: {
           'X-Naver-Client-Id': 'I1pUM32yZm8kHwX9pq5J', // 여기에 네이버 앱의 Client ID
           'X-Naver-Client-Secret': '4otGB36xQK', // 여기에 Secret

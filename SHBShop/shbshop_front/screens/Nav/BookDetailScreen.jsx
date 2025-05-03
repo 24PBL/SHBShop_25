@@ -3,20 +3,24 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, 
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 
+const API_URL = Constants.expoConfig.extra.API_URL;
 const { width } = Dimensions.get('window');
 
-const BookDetailScreen = () => {
+const BookDetailScreen = ({route}) => {
   // const navigation = useNavigation();
   const [thumbsUp, setThumbsUp] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-
+  const { storedata } = route.params;
+  const data = storedata.data;
   // 예시 이미지 리스트
   const images = [
-    { id: '1', uri: 'https://via.placeholder.com/400x200.png?text=Book+Image+1' },
-    { id: '2', uri: 'https://via.placeholder.com/400x200.png?text=Book+Image+2' },
-    { id: '3', uri: 'https://via.placeholder.com/400x200.png?text=Book+Image+3' },
+    { id: '1', uri: `${API_URL}${data.book.bookimg1}` },
+    { id: '2', uri: `${API_URL}${data.book.bookimg2}` },
+    { id: '3', uri: `${API_URL}${data.book.bookimg3}` },
   ];
+  
 
   const onViewRef = useRef(({ viewableItems }) => {
     if (viewableItems.length > 0) {
@@ -66,8 +70,8 @@ const BookDetailScreen = () => {
         <View style={styles.profileRow}>
           <View style={styles.avatar} />
           <View style={styles.profileInfo}>
-            <Text style={styles.nickname}>닉네임(서점이름)</Text>
-            <Text style={styles.location}>동네</Text>
+            <Text style={styles.nickname}>{data.seller.nickname}({data.seller.name})</Text>
+            <Text style={styles.location}>{data.book.region}</Text>
           </View>
         </View>
 
@@ -75,9 +79,9 @@ const BookDetailScreen = () => {
 
         {/* 제목 + 설명 */}
         <View style={styles.descriptionContainer}>
-          <Text style={styles.bookTitle}>제목 (책 이름)</Text>
+          <Text style={styles.bookTitle}>{data.book.title}</Text>
           <ScrollView style={{ maxHeight: 200 }} contentContainerStyle={{ paddingBottom: 100 }}>
-            <Text style={styles.description}>도서 관련 설명</Text>
+            <Text style={styles.description}>{data.book.detail}</Text>
           </ScrollView>
         </View>
 
@@ -91,7 +95,7 @@ const BookDetailScreen = () => {
                 color={thumbsUp ? '#0091da' : '#000'}
               />
             </TouchableOpacity>
-            <Text style={styles.priceText}>XXXXX원</Text>
+            <Text style={styles.priceText}>{data.book.price.toLocaleString()}원</Text>
           </View>
           <TouchableOpacity style={styles.chatbutton} onPress={() => {}}>
             <Text style={styles.chatText}>채팅</Text>
