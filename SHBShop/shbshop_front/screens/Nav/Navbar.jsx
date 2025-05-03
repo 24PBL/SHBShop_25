@@ -1,12 +1,10 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import BookScreen from './BookScreen';
 import ChatScreen from './ChatScreen';
 import MypageScreen from './MyPageScreen';
 import HomeStack from './HomeStack';
-import Approve from './Approve';
-import BookDetailScreen from './BookDetailScreen';
+import BookStack from './BookStack'
 import StoreDetailScreen from './StoreDetailScreen';
 const Tab = createBottomTabNavigator()
 
@@ -34,8 +32,8 @@ const Navbar = () => {
         })}
       >
         <Tab.Screen name="홈" component={HomeStack} options={{headerShown:false}} />
-        <Tab.Screen name="책방" component={BookScreen}  options={{headerShown:false}}/>
-        <Tab.Screen name="채팅" component={StoreDetailScreen}  options={{headerShown:false}}/>
+        <Tab.Screen name="책방" component={BookStack}  options={{headerShown:false}}/>
+        <Tab.Screen name="채팅" component={ChatScreen}  options={{headerShown:false}}/>
         <Tab.Screen name="마이페이지" component={MypageScreen}  options={{headerShown:false}}/>
       </Tab.Navigator>
   );

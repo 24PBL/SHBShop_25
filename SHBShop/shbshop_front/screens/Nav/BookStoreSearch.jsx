@@ -2,16 +2,34 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const BookStoreSearch = ({ route }) => {
+const BookStoreSearch = ({ route, navigation }) => {
   const { storedata } = route.params;
   
   // 검색 결과가 없는 경우 message에 "검색 결과가 없습니다."가 들어 있음
   const shopList = storedata.data.shopList;
   const message = storedata.data.message;
 
+  const goTostoreDetail = async (shopId) =>{
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    const response = await fetch(`${API_URL}/shop/${userId}/${shopId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Token}`,
+      },
+    });
+    const data = await response.json();
+    navigation.navigate('StoreDetailScreen', {storedata : {data}});
+    
+  }
 
   return (
     <SafeAreaProvider>
@@ -25,7 +43,7 @@ const BookStoreSearch = ({ route }) => {
             ) : (
               // shopList가 비어 있지 않으면 목록 표시
               shopList.map((shop, index) => (
-                <TouchableOpacity key={index} style={styles.shopCard}>
+                <TouchableOpacity key={index} style={styles.shopCard} onPress={()=>goTostoreDetail(shop.sid)}>
                   <Image source={{ uri: `${API_URL}/${shop.shopimg}` }} style={styles.shopImage} />
                   <Text style={styles.shopName}>{shop.shopName}</Text>
                   <Text style={styles.shopRegion}>{shop.region}</Text>

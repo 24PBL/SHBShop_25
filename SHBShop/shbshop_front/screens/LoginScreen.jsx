@@ -36,7 +36,7 @@ const handleLogin = async () => {
         Alert.alert("입력 오류", "아이디와 비밀번호를 입력하십시오.");
         return;
     }
-
+    
     try {
         console.log(userType, password, email)
         // 로그인 요청에 사용할 데이터 객체
@@ -62,6 +62,8 @@ const handleLogin = async () => {
                 Authorization: `Bearer ${token}`,
             }
         });
+
+        
 
         const userId = startRes.data.decoded_user_id;
 

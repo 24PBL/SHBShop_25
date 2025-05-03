@@ -34,10 +34,9 @@ const BookDetailScreen = ({route}) => {
     <SafeAreaProvider>
       <SafeAreaView style={{backgroundColor:'white', flex:1}}>
       {/* 뒤로가기 버튼 */}
-      <TouchableOpacity style={styles.backButton} onPress={() => {}}>
+      <TouchableOpacity style={{padding:10}} onPress={() => {}}>
         <Ionicons name="chevron-back-outline" size={27} color="#000" />
       </TouchableOpacity>
-
       {/* 상단 이미지 */}
       <View style={styles.imageSection}>
         <FlatList
@@ -68,7 +67,7 @@ const BookDetailScreen = ({route}) => {
       <View style={styles.detailSection}>
         {/* 프로필 */}
         <View style={styles.profileRow}>
-          <View style={styles.avatar} />
+          <Image style={styles.avatar} source={{uri : API_URL + data.seller.img}}/>
           <View style={styles.profileInfo}>
             <Text style={styles.nickname}>{data.seller.nickname}({data.seller.name})</Text>
             <Text style={styles.location}>{data.book.region}</Text>
@@ -112,12 +111,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 10,
-    zIndex: 10,
-  },
   imageSection: {
     backgroundColor: '#ddd',
     height: 250,
@@ -128,7 +121,8 @@ const styles = StyleSheet.create({
   image: {
     width: width,
     height: 250,
-    resizeMode: 'cover',
+    resizeMode: 'contain',
+    backgroundColor: '#f0f0f0'
   },
   dotsContainer: {
     position: 'absolute',

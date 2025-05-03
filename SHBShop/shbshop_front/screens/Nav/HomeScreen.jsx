@@ -45,9 +45,7 @@ const HomeScreen = ({ navigation }) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${Token}`,
       },
-    });
-
-    
+    });  
   }
 
   const FavoriteDelete = async () => {
