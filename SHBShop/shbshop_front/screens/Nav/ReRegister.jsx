@@ -36,7 +36,7 @@ const ReRegister = ({ route, navigation }) => {
     const Token = await AsyncStorage.getItem('jwtToken');
 
     const formData = new FormData();
-    formData.append('name', email);
+    formData.append('name', name);
     formData.append('presidentName', presidentname);
     formData.append('businessmanName', businessname);
     formData.append('businessEmail', email);

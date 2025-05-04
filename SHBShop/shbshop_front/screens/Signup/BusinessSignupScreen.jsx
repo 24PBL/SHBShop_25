@@ -33,7 +33,15 @@ const BusinessSignupScreen = ({route, navigation}) => {
       alert("모든 항목을 입력해주세요.");
       return;
     }
-  
+    
+    const formatCoNumber = (num) => {
+      const onlyDigits = num.replace(/[^0-9]/g, '');
+      if (onlyDigits.length === 10) {
+        return `${onlyDigits.slice(0, 3)}-${onlyDigits.slice(3, 5)}-${onlyDigits.slice(5)}`;
+      }
+      return num;
+    };
+
     const finaladdress = address + ' ' + detailAddress;
   
     const formData = new FormData();
@@ -48,7 +56,7 @@ const BusinessSignupScreen = ({route, navigation}) => {
     formData.append('businessmanName', form.businessName);
     formData.append('presidentName', form.representativeName);
     formData.append('businessEmail', form.businessemail);
-    formData.append('coNumber', form.registrationNumber);
+    formData.append('coNumber', formatCoNumber(form.registrationNumber));
   
     if (img) {
       formData.append('imgfile', {

@@ -52,7 +52,6 @@ const DeleteID1 = ({ navigation, route }) => {
     const parsedData = JSON.parse(userData);
     const userId = parsedData.decoded_user_id;
     setUserId(userId);
-
     try {
       await axios.post(
         `${API_URL}/auth/${userId}/unregister/check-email`,
