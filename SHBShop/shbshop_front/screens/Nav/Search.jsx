@@ -120,12 +120,12 @@ const Search = ({ navigation }) => {
       
     }
 
-    const CommergoToBookDetail = async (cid, bid) =>{
+    const CommergoToBookDetail = async (sid, bid) =>{
       const Data = await AsyncStorage.getItem('UserData');
       const userData = JSON.parse(Data);
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
-      const response = await fetch(`${API_URL}/book/sb/${userId}/${cid}/${bid}`, {
+      const response = await fetch(`${API_URL}/book/sb/${userId}/${sid}/${bid}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
