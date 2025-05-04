@@ -55,11 +55,11 @@ const Search = ({ navigation }) => {
         if (response.ok) {
           const data = await response.json();
           setbookdata(data.bookList);
-          const personal = data.bookList.filter(book => book.userType === 1);
-          const business = data.bookList.filter(book => book.userType === 2);
+          const personal = data.bookList;
+          const business = data.sbookList;
           setPersonalBooks(personal);
           setBusinessBooks(business);
-          console.log(business)
+          console.log(personal)
         } else {
           console.error('API 요청 실패:', response.status);
         }
@@ -88,7 +88,8 @@ const Search = ({ navigation }) => {
 
     const crenderBookList = (list) =>
       list.slice(0, 3).map((book, index) => (
-        <TouchableOpacity key={index} style={styles.bookItem} onPress={()=>{}}>
+        
+        <TouchableOpacity key={index} style={styles.bookItem} onPress={()=> CommergoToBookDetail(book.sid,book.bid)}>
           <Image
             source={{ uri: `${API_URL}/${book.bookimg}` }}
             style={styles.bookImage}
@@ -98,6 +99,7 @@ const Search = ({ navigation }) => {
             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{book.title}</Text>
             <Text style={{ fontSize: 14, color: '#555', marginTop: 5 }}>{book.price}원</Text>
           </View>
+          <Text></Text>
         </TouchableOpacity>
       ));
 
@@ -115,6 +117,24 @@ const Search = ({ navigation }) => {
       });
       const data = await response.json();
       navigation.navigate('pBookDetailScreen', {storedata : {data}});
+      
+    }
+
+    const CommergoToBookDetail = async (cid, bid) =>{
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(`${API_URL}/book/${userId}/${cid}/${bid}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+      const data = await response.json();
+      console.log(data)
+      /*navigation.navigate('cBookDetailScreen', {storedata : {data}});*/
       
     }
 

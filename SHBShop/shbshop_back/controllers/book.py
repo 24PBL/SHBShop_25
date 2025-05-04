@@ -96,6 +96,7 @@ def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
     seller = db.session.query(Commercial).filter_by(cid=book.cid).first()
     shop = db.session.query(Shop).filter_by(sid=book.shopId).first()
     
+    print(f"book.shopId: {book.shopId}, request.shopId: {shopId}")
     if not book:
         return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
     
