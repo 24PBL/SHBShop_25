@@ -61,7 +61,30 @@ const Approve = ({ route, navigation }) => {
         );
       } else if (state === 3) {
         return (
-          <TouchableOpacity style={styles.actionButton} onPress={() => console.log('재요청')}>
+          <TouchableOpacity style={styles.actionButton} onPress={async () => {
+            try {
+              const Data = await AsyncStorage.getItem('UserData');
+              const userData = JSON.parse(Data);
+              const userId = userData.decoded_user_id;
+              const Token = await AsyncStorage.getItem('jwtToken');
+              const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-commer/${certId}`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${Token}`,
+                },
+              });
+
+              if (response.ok) {
+                const result = await response.json();
+                navigation.navigate("ReRegister", { data: { result } });
+              } else {
+                console.error('책방 등록 실패:', response.status);
+              }
+            } catch (error) {
+              console.error('요청 중 오류 발생:', error);
+            }
+          }}>
             <Text style={styles.buttonText}>재요청</Text>
           </TouchableOpacity>
         );
@@ -79,6 +102,7 @@ const Approve = ({ route, navigation }) => {
           <Text style={{ fontSize: 28, fontWeight: 'bold', paddingLeft: 15, paddingTop: 10 }}>
             사업자 승인
           </Text>
+          <Text></Text>
           <ScrollView>
             {sortedCertList.map((cert, index) => {
               const { color, statusText } = getStatusStyle(cert.state);
@@ -104,7 +128,7 @@ const Approve = ({ route, navigation }) => {
                     </Text>
 
                     {/* 최신 항목이라면 버튼 조건부 렌더링 */}
-                    {isLatest && renderActionButton(cert.state, cert.certId, data.isShopExist)}
+                    {isLatest && renderActionButton(cert.state, cert.certId, data.result.isShopExist)}
                   </View>
                   <View
                     style={{

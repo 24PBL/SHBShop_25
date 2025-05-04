@@ -28,6 +28,7 @@ import StoreRegister from './screens/Nav/StoreRegister';
 import pMoreList from './screens/Nav/pMoreList';
 import pBookDetailScreen from './screens/Nav/pBookDetailScreen';
 import cBookDetailScreen from './screens/Nav/cBookDetailScreen';
+import ReRegister from './screens/Nav/ReRegister';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
@@ -57,6 +58,7 @@ const App = () => {
         <Stack.Screen name="pMoreList" component={pMoreList} options={{ headerShown:false}} />
         <Stack.Screen name="pBookDetailScreen" component={pBookDetailScreen} options={{ headerShown:false}} />
         <Stack.Screen name="cBookDetailScreen" component={cBookDetailScreen} options={{ headerShown:false}} />
+        <Stack.Screen name="ReRegister" component={ReRegister} options={{ headerShown:false}} />
       </Stack.Navigator>
     </NavigationContainer>
   );
