@@ -93,7 +93,7 @@ def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
         return jsonify({"error": "잘못된 유저 유형"}), 404
     
     book = db.session.query(Sbooktrade).filter_by(bid=bookId).first()
-    shop = db.session.query(Shop).filter_by(sid=book.shopId).first()
+    shop = db.session.query(Shop).filter_by(sid=book.sid).first()
     seller = db.session.query(Commercial).filter_by(cid=shop.cid).first()
     
     print(f"book.shopId: {book.shopId}, request.shopId: {shopId}")
