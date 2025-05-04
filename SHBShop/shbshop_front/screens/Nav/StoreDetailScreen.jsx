@@ -14,7 +14,6 @@ const StoreDetailScreen = ({route, navigation}) => {
   const [liked, setLiked] = useState(false);
   const { storedata } = route.params;
   const data = storedata.data;
-
   // 예시 이미지 리스트
   const images = [
     { id: '1', uri: `${API_URL}${data.shop.shopimg1}` },
@@ -132,7 +131,7 @@ const StoreDetailScreen = ({route, navigation}) => {
             <Text style={styles.storeName}>{data.shop.shopName}</Text>
             <Text style={styles.address}>{data.shop.address}</Text>
           </View>
-          <TouchableOpacity style={styles.searchIconButton} onPress={()=>{console.log(data.isFavorite)}}>
+          <TouchableOpacity style={styles.searchIconButton} onPress={()=>navigation.navigate("SearchInStore", {shopId : data.shop.shopId, shopName : data.shop.shopName})}>
             <Ionicons name="search-outline" size={25} color="#000" />
           </TouchableOpacity>
         </View>
@@ -163,7 +162,7 @@ const styles = StyleSheet.create({
   image: {
     width: width,
     height: 250,
-    resizeMode: 'contain',
+    resizeMode: 'cover',
     backgroundColor:'#f0f0f0'
   },
   dotsContainer: {

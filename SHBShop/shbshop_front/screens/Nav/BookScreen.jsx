@@ -195,7 +195,7 @@ const BookScreen = ({navigation}) => {
       <SafeAreaView style={{ backgroundColor: 'white', flex: 1 }}>
         <View style={{ width: '90%', height: 40, backgroundColor: '#E8E8E8', borderRadius: 20, alignItems: 'center', flexDirection: 'row', left: 20}}>
           <TextInput 
-            style={{ color: 'gray', fontSize: 17, paddingLeft: 10, width: 330 }} 
+            style={{ color: 'gray', fontSize: 17, paddingLeft: 10, flex:1 }} 
             onChangeText={setSearchText} 
             value={SearchText} 
           />

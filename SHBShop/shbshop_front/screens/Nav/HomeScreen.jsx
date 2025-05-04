@@ -34,33 +34,6 @@ const HomeScreen = ({ navigation }) => {
     navigation.navigate('Search');
   }
 
-  const Favorite = async () => {
-    const Data = await AsyncStorage.getItem('UserData');
-    const userData = JSON.parse(Data);
-    const userId = userData.decoded_user_id;
-    const Token = await AsyncStorage.getItem('jwtToken');
-    const response = await fetch(`${API_URL}/home/${userId}/shop-mode/1/add-shop`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Token}`,
-      },
-    });  
-  }
-
-  const FavoriteDelete = async () => {
-    const Data = await AsyncStorage.getItem('UserData');
-    const userData = JSON.parse(Data);
-    const userId = userData.decoded_user_id;
-    const Token = await AsyncStorage.getItem('jwtToken');
-    const response = await fetch(`${API_URL}/home/${userId}/shop-mode/1/delete-shop`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Token}`,
-      },
-    });
-  }
 
   const goToBookDetail = async (sellType, bid) =>{
     const Data = await AsyncStorage.getItem('UserData');
@@ -89,13 +62,6 @@ const HomeScreen = ({ navigation }) => {
             <Text style={{ fontSize: 28, fontWeight: 'bold', paddingLeft: 15 }}>{userData.region}</Text>
             <Text></Text>
             <View style={{ flexDirection: 'row' }}>
-                {/* 즐겨찾기 기능을 확인하려면 여기 밑에 주석을 풀어주세요~*/}
-            {/*
-              <TouchableOpacity onPress={Favorite}><Text>즐겨찾기 </Text></TouchableOpacity>
-              <TouchableOpacity onPress={FavoriteDelete}><Text>즐찾 삭제 </Text></TouchableOpacity>
-              */}
-
-
               <TouchableOpacity style={{ paddingRight: 5 }}>
                 <Ionicons name="notifications-outline" size={33} color="black" />
               </TouchableOpacity>

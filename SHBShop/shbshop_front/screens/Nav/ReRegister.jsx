@@ -14,6 +14,11 @@ const ReRegister = ({ route, navigation }) => {
   const commerData = data.result;
   const API_URL = Constants.expoConfig.extra.API_URL;
 
+  const [name, setName] = useState(commerData.cert.name); 
+  const [presidentname, setpresidentName] = useState(commerData.cert.presidentName); 
+  const [businessname, setbusinessName] = useState(commerData.cert.businessmanName);
+  const [email, setemail] = useState(commerData.cert.businessEmail);
+  const [coNumber, setcoNumber] = useState(commerData.cert.coNumber);
   const [etc, setetc] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [zipcode, setZipcode] = useState("");
@@ -23,22 +28,39 @@ const ReRegister = ({ route, navigation }) => {
 
   const finaladdress = address + ' ' + detailAddress
 
+
   const ReApprove = async () => {
     const Data = await AsyncStorage.getItem('UserData');
     const userData = JSON.parse(Data);
     const userId = userData.decoded_user_id;
     const Token = await AsyncStorage.getItem('jwtToken');
+
+    const formData = new FormData();
+    formData.append('name', email);
+    formData.append('presidentName', presidentname);
+    formData.append('businessmanName', businessname);
+    formData.append('businessEmail', email);
+    formData.append('coNumber', coNumber);
+    formData.append('address', finaladdress);
+
+    formData.append('licence', {
+      uri: files[0].uri,
+      name: files[0].name,
+      type: 'application/pdf',
+    });
+
+
     try{
       console.log(data.result)
-    const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-commer/${commerData.cert.certId}/regist-shop`, {
+    const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-commer/${commerData.cert.certId}/re-cert`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Token}`
       },
       body : formData,
     });
-    
-      /*navigation.navigate("Navbar")*/
+      console.log("재요청 성공")
+      navigation.navigate("Navbar")
     } catch(error){
       console.error(error)
     }
@@ -84,19 +106,19 @@ const ReRegister = ({ route, navigation }) => {
           </View>
 
           <Text style={styles.Label}>이름</Text>
-          <View style={styles.TextBox}><TextInput style={styles.BoxText}>{commerData.cert.name}</TextInput></View>
+          <View style={styles.TextBox}><TextInput style={styles.BoxText} value={name} onChangeText={setName}></TextInput></View>
 
           <Text style={styles.Label}>대표자 명</Text>
-          <View style={styles.TextBox}><TextInput style={styles.BoxText}>{commerData.cert.presidentName}</TextInput></View>
+          <View style={styles.TextBox}><TextInput style={styles.BoxText} value={presidentname} onChangeText={setpresidentName}></TextInput></View>
 
           <Text style={styles.Label}>사업자 명</Text>
-          <View style={styles.TextBox}><TextInput style={styles.BoxText}>{commerData.cert.businessmanName}</TextInput></View>
+          <View style={styles.TextBox}><TextInput style={styles.BoxText} value={businessname} onChangeText={setbusinessName}></TextInput></View>
 
           <Text style={styles.Label}>사업자 메일</Text>
-          <View style={styles.TextBox}><TextInput style={styles.BoxText}>{commerData.cert.businessEmail}</TextInput></View>
+          <View style={styles.TextBox}><TextInput style={styles.BoxText} value={email} onChangeText={setemail}></TextInput></View>
 
           <Text style={styles.Label}>사업자 번호</Text>
-          <View style={styles.TextBox}><TextInput style={styles.BoxText}>{commerData.cert.coNumber}</TextInput></View>
+          <View style={styles.TextBox}><TextInput style={styles.BoxText} value={coNumber} onChangeText={setcoNumber}></TextInput></View>
 
           <Text style={styles.Label}>주소</Text>
           <View>

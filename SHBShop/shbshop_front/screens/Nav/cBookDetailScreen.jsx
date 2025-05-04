@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   image: {
     width: width,
     height: 250,
-    resizeMode: 'contain',
+    resizeMode: 'cover',
     backgroundColor: '#f0f0f0'
   },
   dotsContainer: {

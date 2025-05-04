@@ -64,7 +64,6 @@ const BusinessSignupScreen = ({route, navigation}) => {
       type: 'application/pdf',
     });
   
-    console.log("폼데이터 준비 완료:", formData);
 
     try{
       const response = axios.post(

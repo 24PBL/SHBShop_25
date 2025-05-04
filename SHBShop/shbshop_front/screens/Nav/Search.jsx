@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     color: 'gray',
     fontSize: 17,
     paddingLeft: 10,
-    width: 200,
+    flex : 1
   },
   searchBtn: {
     backgroundColor: '#0091da',
