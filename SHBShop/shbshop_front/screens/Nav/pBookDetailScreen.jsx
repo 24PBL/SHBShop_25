@@ -8,7 +8,7 @@ import Constants from 'expo-constants';
 const API_URL = Constants.expoConfig.extra.API_URL;
 const { width } = Dimensions.get('window');
 
-const BookDetailScreen = ({route}) => {
+const pBookDetailScreen = ({route, navigation}) => {
   // const navigation = useNavigation();
   const [thumbsUp, setThumbsUp] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -34,7 +34,7 @@ const BookDetailScreen = ({route}) => {
     <SafeAreaProvider>
       <SafeAreaView style={{backgroundColor:'white', flex:1}}>
       {/* 뒤로가기 버튼 */}
-      <TouchableOpacity style={{padding:10}} onPress={() => {}}>
+      <TouchableOpacity style={{padding:10}} onPress={() => {navigation.goBack()}}>
         <Ionicons name="chevron-back-outline" size={27} color="#000" />
       </TouchableOpacity>
       {/* 상단 이미지 */}
@@ -217,4 +217,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BookDetailScreen;
+export default pBookDetailScreen;

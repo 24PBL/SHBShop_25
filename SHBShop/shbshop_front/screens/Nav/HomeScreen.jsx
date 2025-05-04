@@ -75,7 +75,7 @@ const HomeScreen = ({ navigation }) => {
       },
     });
     const data = await response.json();
-    navigation.navigate('BookDetailScreen', {storedata : {data}});
+    navigation.navigate('pBookDetailScreen', {storedata : {data}});
     
   }
   return (

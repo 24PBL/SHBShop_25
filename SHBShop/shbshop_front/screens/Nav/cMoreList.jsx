@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const MoreList = ({ route, navigation }) => {
+const cMoreList = ({ route, navigation }) => {
   const { list, title } = route.params; // 넘어온 책 리스트랑 제목
 
   const goToback = () => navigation.goBack();
@@ -49,7 +49,7 @@ const MoreList = ({ route, navigation }) => {
   );
 };
 
-export default MoreList;
+export default cMoreList;
 
 const styles = StyleSheet.create({
   header: {

@@ -54,12 +54,12 @@ const Search = ({ navigation }) => {
         });
         if (response.ok) {
           const data = await response.json();
-          console.log(data.bookList)
           setbookdata(data.bookList);
           const personal = data.bookList.filter(book => book.userType === 1);
           const business = data.bookList.filter(book => book.userType === 2);
           setPersonalBooks(personal);
           setBusinessBooks(business);
+          console.log(business)
         } else {
           console.error('API 요청 실패:', response.status);
         }
@@ -71,9 +71,9 @@ const Search = ({ navigation }) => {
     }
   };
 
-  const renderBookList = (list) =>
+  const prenderBookList = (list) =>
     list.slice(0, 3).map((book, index) => (
-      <TouchableOpacity key={index} style={styles.bookItem}>
+      <TouchableOpacity key={index} style={styles.bookItem} onPress={()=> goToBookDetail(book.userType, book.bid)}>
         <Image
           source={{ uri: `${API_URL}/${book.bookimg}` }}
           style={styles.bookImage}
@@ -85,6 +85,38 @@ const Search = ({ navigation }) => {
         </View>
       </TouchableOpacity>
     ));
+
+    const crenderBookList = (list) =>
+      list.slice(0, 3).map((book, index) => (
+        <TouchableOpacity key={index} style={styles.bookItem} onPress={()=>{}}>
+          <Image
+            source={{ uri: `${API_URL}/${book.bookimg}` }}
+            style={styles.bookImage}
+            resizeMode="cover"
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{book.title}</Text>
+            <Text style={{ fontSize: 14, color: '#555', marginTop: 5 }}>{book.price}원</Text>
+          </View>
+        </TouchableOpacity>
+      ));
+
+    const goToBookDetail = async (sellType, bid) =>{
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(`${API_URL}/book/${userId}/${sellType}/${bid}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+      const data = await response.json();
+      navigation.navigate('pBookDetailScreen', {storedata : {data}});
+      
+    }
 
   return (
     <SafeAreaProvider>
@@ -131,12 +163,12 @@ const Search = ({ navigation }) => {
   {/* 개인 판매자 */}
   <Text style={styles.sectionTitle}>개인 판매자</Text>
   {personalBooks.length > 0 && (
-    <TouchableOpacity onPress={() => navigation.navigate('MoreList', { list: personalBooks, title: "개인 판매자" })}>
-      <Text style={styles.moreBtn}>전체보기</Text>
+    <TouchableOpacity onPress={() => navigation.navigate('pMoreList', { list: personalBooks, title: "개인 판매자" })}>
+      <Text style={styles.moreBtn}>더보기</Text>
     </TouchableOpacity>
   )}
   {personalBooks.length > 0 ? (
-    renderBookList(personalBooks)
+    prenderBookList(personalBooks)
   ) : (
     <Text style={styles.noResultText}>개인 판매자 책이 없습니다.</Text>
   )}
@@ -145,12 +177,12 @@ const Search = ({ navigation }) => {
   {/* 사업자 판매자 */}
   <Text style={styles.sectionTitle}>사업자 판매자</Text>
   {businessBooks.length > 0 && (
-    <TouchableOpacity onPress={() => navigation.navigate('MoreList', { list: businessBooks, title: "사업자 판매자" })}>
+    <TouchableOpacity onPress={() => navigation.navigate('cMoreList', { list: businessBooks, title: "사업자 판매자" })}>
       <Text style={styles.moreBtn}>더보기</Text>
     </TouchableOpacity>
   )}
   {businessBooks.length > 0 ? (
-    renderBookList(businessBooks)
+    crenderBookList(businessBooks)
   ) : (
     <Text style={styles.noResultText}>사업자 판매자 책이 없습니다.</Text>
   )}
