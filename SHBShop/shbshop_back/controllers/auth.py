@@ -901,15 +901,23 @@ def unregister(decoded_user_id, user_type, userId, email, authCode, choice):
             return jsonify({"error": "잘못된 유저 유형"}), 404
         
         if choice == UrChocie.EXECUTE.value:
-            try:
-                db.session.query(Commercialcert).filter_by(cid=exUser.cid).delete()
-                db.session.query(Commercial).filter_by(cid=exUser.cid).delete()
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                print(str(e))  # 또는 로그에 기록
-                return jsonify({"error": str(e)}), 500
-
+            if user_type == UserType.PERSONAL.value:
+                try:
+                    db.session.query(Personal).filter_by(pid=exUser.pid).delete()
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    print(str(e))  # 또는 로그에 기록
+                    return jsonify({"error": str(e)}), 500
+            else:
+                try:
+                    db.session.query(Commercialcert).filter_by(cid=exUser.cid).delete()
+                    db.session.query(Commercial).filter_by(cid=exUser.cid).delete()
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    print(str(e))  # 또는 로그에 기록
+                    return jsonify({"error": str(e)}), 500
             return jsonify({"message": "회원탈퇴 완료"}), 200
         elif choice == UrChocie.CANCEL.value:
             return jsonify({"message": "회원탈퇴 취소"}), 200
