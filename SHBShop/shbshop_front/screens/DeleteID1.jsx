@@ -118,7 +118,7 @@ const DeleteID1 = ({ navigation, route }) => {
               const userData = await AsyncStorage.getItem('UserData');
               const parsedData = JSON.parse(userData);
               const userId = parsedData.decoded_user_id;
-
+  
               // 서버에 DELETE 요청 보내기
               await axios.delete(
                 `${API_URL}/auth/${userId}/unregister/check-final/${inputValue}/${verificationCode}/1`,
@@ -139,28 +139,9 @@ const DeleteID1 = ({ navigation, route }) => {
         },
         {
           text: '취소',
-          onPress: async () => {
-            try {
-              const Token = await AsyncStorage.getItem('jwtToken');
-              const userData = await AsyncStorage.getItem('UserData');
-              const parsedData = JSON.parse(userData);
-              const userId = parsedData.decoded_user_id;
-
-              // 서버에 DELETE 요청 보내기
-              await axios.delete(
-                `${API_URL}/auth/${userId}/unregister/check-final/${inputValue}/${verificationCode}/2`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${Token}`,
-                  },
-                }
-              );
-
-              navigation.navigate('Navbar');
-            } catch (error) {
-              console.error('탈퇴 요청 실패:', error);
-              Alert.alert('오류', '탈퇴 요청에 실패했습니다.');
-            }
+          onPress: () => {
+            // 취소 시 Navbar로 돌아가기
+            navigation.navigate('Navbar');
           },
           style: 'cancel', // 취소 버튼을 취소 스타일로 설정
         },
@@ -168,6 +149,7 @@ const DeleteID1 = ({ navigation, route }) => {
       { cancelable: false }
     );
   };
+  
 
   return (
     <SafeAreaProvider>
