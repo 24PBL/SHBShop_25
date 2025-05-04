@@ -24,53 +24,53 @@ const Approve = ({ route, navigation }) => {
   };
 
   // 버튼 렌더링 함수
-  const renderActionButton = (state, certId) => {
-    if (state === 2) {
-      
-      return (
-        
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={async () => {
-            try {
-              const Data = await AsyncStorage.getItem('UserData');
-              const userData = JSON.parse(Data);
-              const userId = userData.decoded_user_id;
-              const Token = await AsyncStorage.getItem('jwtToken');
-              const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-commer/${certId}`, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${Token}`
-                },
-              });
-  
-              if (response.ok) {
-                const result = await response.json();
-                navigation.navigate("StoreRegister",{data:{result}})
-                
-              } else {
-                console.error('책방 등록 실패:', response.status);
+  const renderActionButton = (state, certId, isShopExist) => {
+    // isShopExist 값이 1이면 버튼을 표시하고, 2이면 숨깁니다
+    if (isShopExist === 1) {
+      if (state === 2) {
+        return (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={async () => {
+              try {
+                const Data = await AsyncStorage.getItem('UserData');
+                const userData = JSON.parse(Data);
+                const userId = userData.decoded_user_id;
+                const Token = await AsyncStorage.getItem('jwtToken');
+                const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-commer/${certId}`, {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Token}`,
+                  },
+                });
+
+                if (response.ok) {
+                  const result = await response.json();
+                  navigation.navigate("StoreRegister", { data: { result } });
+                } else {
+                  console.error('책방 등록 실패:', response.status);
+                }
+              } catch (error) {
+                console.error('요청 중 오류 발생:', error);
               }
-            } catch (error) {
-              console.error('요청 중 오류 발생:', error);
-            }
-          }}
-        >
-          <Text style={styles.buttonText}>책방 등록</Text>
-        </TouchableOpacity>
-      );
-    } else if (state === 3) {
-      return (
-        <TouchableOpacity style={styles.actionButton} onPress={() => console.log('재요청')}>
-          <Text style={styles.buttonText}>재요청</Text>
-        </TouchableOpacity>
-      );
+            }}
+          >
+            <Text style={styles.buttonText}>책방 등록</Text>
+          </TouchableOpacity>
+        );
+      } else if (state === 3) {
+        return (
+          <TouchableOpacity style={styles.actionButton} onPress={() => console.log('재요청')}>
+            <Text style={styles.buttonText}>재요청</Text>
+          </TouchableOpacity>
+        );
+      }
     }
-  
+
+    // isShopExist가 2일 경우 버튼을 숨깁니다.
     return null;
   };
-  
 
   return (
     <SafeAreaProvider>
@@ -104,7 +104,7 @@ const Approve = ({ route, navigation }) => {
                     </Text>
 
                     {/* 최신 항목이라면 버튼 조건부 렌더링 */}
-                    {isLatest && renderActionButton(cert.state, cert.certId)}
+                    {isLatest && renderActionButton(cert.state, cert.certId, data.isShopExist)}
                   </View>
                   <View
                     style={{

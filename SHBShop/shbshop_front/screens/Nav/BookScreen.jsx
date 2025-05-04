@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Constants from 'expo-constants';
+import { useFocusEffect } from '@react-navigation/native';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
@@ -82,42 +83,44 @@ const BookScreen = ({navigation}) => {
     }
   }, [location]); // location이 업데이트될 때마다 실행
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await AsyncStorage.getItem('UserData');
-      const parsedData = JSON.parse(data);
-      const userId = parsedData.decoded_user_id;
-
-      const currentAddress = '경남 진주시 진주대로 501'; // 예시로 현재 주소는 진주대로로 가정
-      const encodedAddress = encodeURIComponent(currentAddress);
-      const Token = await AsyncStorage.getItem('jwtToken'); // JWT 토큰 가져오기
-
-      try {
-        const response = await fetch(`${API_URL}/home/${userId}/shop-mode/main?currentAddress=${encodedAddress}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Token}`, 
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setfavorite(data.favorite_list); // 받아온 즐겨찾기 리스트 상태에 저장
-          setlocallist(data.localShop_list); // 받아온 지역 리스트 상태에 저장
-        } else {
-          const errorData = await response.json();
-          console.error("API 요청 실패:", errorData);
-          Alert.alert('서버 요청 실패', '매장 정보를 가져오는 데 실패했습니다.');
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchData = async () => {
+        const data = await AsyncStorage.getItem('UserData');
+        const parsedData = JSON.parse(data);
+        const userId = parsedData.decoded_user_id;
+  
+        const currentAddress = '경남 진주시 진주대로 501'; // 예시로 현재 주소는 진주대로로 가정
+        const encodedAddress = encodeURIComponent(currentAddress);
+        const Token = await AsyncStorage.getItem('jwtToken'); // JWT 토큰 가져오기
+  
+        try {
+          const response = await fetch(`${API_URL}/home/${userId}/shop-mode/main?currentAddress=${encodedAddress}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Token}`, 
+            },
+          });
+  
+          if (response.ok) {
+            const data = await response.json();
+            setfavorite(data.favorite_list); // 받아온 즐겨찾기 리스트 상태에 저장
+            setlocallist(data.localShop_list); // 받아온 지역 리스트 상태에 저장
+          } else {
+            const errorData = await response.json();
+            console.error("API 요청 실패:", errorData);
+            Alert.alert('서버 요청 실패', '매장 정보를 가져오는 데 실패했습니다.');
+          }
+        } catch (error) {
+          console.error("Fetch 오류:", error);
+          Alert.alert('네트워크 오류', '서버와의 연결에 실패했습니다.');
         }
-      } catch (error) {
-        console.error("Fetch 오류:", error);
-        Alert.alert('네트워크 오류', '서버와의 연결에 실패했습니다.');
-      }
-    };
-
-    fetchData(); 
-  }, []); 
+      };
+  
+      fetchData(); 
+    }, []) // 빈 배열을 넣으면 컴포넌트가 포커스를 받을 때마다 fetchData 실행
+  ); 
 
   const getAddressFromCoords = async (longitude, latitude) => {
     const REST_API_KEY = 'e4fc79ddd963f9332126d385ab256cdf'; // 여기에 본인 키 입력
@@ -158,7 +161,35 @@ const BookScreen = ({navigation}) => {
     }
   }, [location]);
 
-  
+  useEffect(() => {
+    const focusListener = navigation.addListener('focus', () => {
+      setSearchText(''); // 화면 포커스시 SearchText 초기화
+    });
+
+    return () => {
+      focusListener(); // 컴포넌트가 언마운트될 때 리스너 해제
+    };
+  }, [navigation]);
+
+
+  const goTostoreDetail = async (shopId) =>{
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    const response = await fetch(`${API_URL}/shop/${userId}/${shopId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Token}`,
+      },
+    });
+    const data = await response.json();
+    navigation.navigate('StoreDetailScreen', {storedata : {data}});
+    
+  }
+
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ backgroundColor: 'white', flex: 1 }}>
@@ -206,7 +237,7 @@ const BookScreen = ({navigation}) => {
 
         <ScrollView horizontal style={{ marginTop: 10 }} showsHorizontalScrollIndicator={false}>
           {favorite.map((shop, idx) => (
-            <TouchableOpacity key={idx} style={{ padding: 10 }}>
+            <TouchableOpacity key={idx} style={{ padding: 10 }} onPress={()=>goTostoreDetail(shop.sid)}>
               <View style={{ backgroundColor: '#d9d9d9', width: 80, height: 80, borderRadius: 50 }}>
                 <Image
                   source={{ uri: `${API_URL}/${shop.shopimg1}` }} // 실제 이미지 URL을 사용

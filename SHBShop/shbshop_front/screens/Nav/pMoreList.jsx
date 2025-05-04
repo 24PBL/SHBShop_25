@@ -17,7 +17,7 @@ const pMoreList = ({ route, navigation }) => {
     const userData = JSON.parse(Data);
     const userId = userData.decoded_user_id;
     const Token = await AsyncStorage.getItem('jwtToken');
-    const response = await fetch(`${API_URL}/book/${userId}/${sellType}/${bid}`, {
+    const response = await fetch(`${API_URL}/book/pb/${userId}/${sellType}/${bid}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

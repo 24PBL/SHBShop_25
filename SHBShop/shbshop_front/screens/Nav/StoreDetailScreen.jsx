@@ -1,7 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, FlatList, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -59,6 +58,14 @@ const StoreDetailScreen = ({route, navigation}) => {
     });
   }
 
+  useEffect(() => {
+    if (data?.isFavorite === 1) {
+      setLiked(true);
+    } else {
+      setLiked(false);
+    }
+  }, [data?.isFavorite]);
+  
   
   return (
     <SafeAreaProvider>
@@ -125,7 +132,7 @@ const StoreDetailScreen = ({route, navigation}) => {
             <Text style={styles.storeName}>{data.shop.shopName}</Text>
             <Text style={styles.address}>{data.shop.address}</Text>
           </View>
-          <TouchableOpacity style={styles.searchIconButton} onPress={()=>{}}>
+          <TouchableOpacity style={styles.searchIconButton} onPress={()=>{console.log(data.isFavorite)}}>
             <Ionicons name="search-outline" size={25} color="#000" />
           </TouchableOpacity>
         </View>

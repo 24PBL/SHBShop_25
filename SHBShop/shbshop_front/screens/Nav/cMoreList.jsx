@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
@@ -11,8 +12,27 @@ const cMoreList = ({ route, navigation }) => {
 
   const goToback = () => navigation.goBack();
 
+  const CommergoToBookDetail = async (sid, bid) =>{
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    const response = await fetch(`${API_URL}/book/sb/${userId}/${sid}/${bid}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Token}`,
+      },
+    });
+    const data = await response.json();
+    console.log(data)
+    navigation.navigate('cBookDetailScreen', {storedata : {data}});
+    
+  }
+
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.bookItem}>
+    <TouchableOpacity style={styles.bookItem} onPress={()=>CommergoToBookDetail(item.sid,item.bid)}>
       <Image
         source={{ uri: `${API_URL}/${item.bookimg}` }}
         style={styles.bookImage}

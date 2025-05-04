@@ -27,6 +27,7 @@ import cMoreList from './screens/Nav/cMoreList';
 import StoreRegister from './screens/Nav/StoreRegister';
 import pMoreList from './screens/Nav/pMoreList';
 import pBookDetailScreen from './screens/Nav/pBookDetailScreen';
+import cBookDetailScreen from './screens/Nav/cBookDetailScreen';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
@@ -55,6 +56,7 @@ const App = () => {
         <Stack.Screen name="StoreRegister" component={StoreRegister} options={{ headerShown:false}} />
         <Stack.Screen name="pMoreList" component={pMoreList} options={{ headerShown:false}} />
         <Stack.Screen name="pBookDetailScreen" component={pBookDetailScreen} options={{ headerShown:false}} />
+        <Stack.Screen name="cBookDetailScreen" component={cBookDetailScreen} options={{ headerShown:false}} />
       </Stack.Navigator>
     </NavigationContainer>
   );

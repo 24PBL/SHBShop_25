@@ -69,7 +69,7 @@ const pBookDetailScreen = ({route, navigation}) => {
         <View style={styles.profileRow}>
           <Image style={styles.avatar} source={{uri : API_URL + data.seller.img}}/>
           <View style={styles.profileInfo}>
-            <Text style={styles.nickname}>{data.seller.nickname}({data.seller.name})</Text>
+            <Text style={styles.nickname}>{data.seller.name} ({data.shop.shopName})</Text>
             <Text style={styles.location}>{data.book.region}</Text>
           </View>
         </View>
@@ -96,7 +96,7 @@ const pBookDetailScreen = ({route, navigation}) => {
             </TouchableOpacity>
             <Text style={styles.priceText}>{data.book.price.toLocaleString()}원</Text>
           </View>
-          <TouchableOpacity style={styles.chatbutton} onPress={() => {}}>
+          <TouchableOpacity style={styles.chatbutton} onPress={() => {console.log(data)}}>
             <Text style={styles.chatText}>채팅</Text>
           </TouchableOpacity>
         </View>

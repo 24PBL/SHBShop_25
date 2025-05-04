@@ -37,7 +37,7 @@ def show_shop_main_page(decoded_user_id, user_type, userId, shopId):
         return jsonify({"error": "잘못된 유저 유형"}), 404
     
     if not favoriteInfo:
-        isFavorite = Favorite.No.value
+        isFavorite = Favorite.NO.value
     else:
         isFavorite = Favorite.YES.value
 

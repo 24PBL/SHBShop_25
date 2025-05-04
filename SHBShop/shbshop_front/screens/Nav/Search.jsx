@@ -134,7 +134,7 @@ const Search = ({ navigation }) => {
       });
       const data = await response.json();
       console.log(data)
-      /*navigation.navigate('cBookDetailScreen', {storedata : {data}});*/
+      navigation.navigate('cBookDetailScreen', {storedata : {data}});
       
     }
 
