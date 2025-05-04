@@ -323,6 +323,7 @@ def search_book(decoded_user_id, user_type, userId):
     
     sbook_list = [{
         "bid": book.bid,
+        "sid": book.sid,
         "title": book.title,
         "author": book.author,
         "publish": book.publish,
@@ -536,6 +537,7 @@ def search_more_sbook(decoded_user_id, user_type, userId, sfinidx):
     
     sbook_list = [{
         "bid": book.bid,
+        "sid": book.sid,
         "title": book.title,
         "author": book.author,
         "publish": book.publish,

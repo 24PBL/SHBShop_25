@@ -106,6 +106,8 @@ def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
         return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
     
     bookInfo = {
+                "bid": book.bid,
+                "sid": book.sid,
                 "title": book.title,
                 "author": book.author,
                 "publish": book.publish,

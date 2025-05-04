@@ -100,6 +100,7 @@ def search_sbook_in_shop(decoded_user_id, user_type, userId, shopId):
     
     sbook_list = [{
         "bid": book.bid,
+        "sid": book.sid,
         "title": book.title,
         "author": book.author,
         "publish": book.publish,
