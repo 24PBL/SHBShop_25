@@ -12,7 +12,7 @@ class UserType(Enum):
     COMMERCIAL = 2
     ADMIN = 3
 
-@book_bp.route("/<int:userId>/<int:sellerType>/<int:bookId>", methods=["GET"])
+@book_bp.route("/pb/<int:userId>/<int:sellerType>/<int:bookId>", methods=["GET"])
 @token_required
 def show_book_info(decoded_user_id, user_type, userId, sellerType, bookId):
     if str(decoded_user_id) != str(userId):
@@ -79,7 +79,7 @@ def show_book_info(decoded_user_id, user_type, userId, sellerType, bookId):
         "book": bookInfo
     }), 200
 
-@book_bp.route("/<int:userId>/<int:shopId>/<int:bookId>", methods=["GET"])
+@book_bp.route("/sb/<int:userId>/<int:shopId>/<int:bookId>", methods=["GET"])
 @token_required
 def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
     if str(decoded_user_id) != str(userId):
