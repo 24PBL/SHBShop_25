@@ -14,6 +14,10 @@ class UserType(Enum):
     COMMERCIAL = 2
     ADMIN = 3
 
+class Favorite(Enum):
+    YES = 1
+    NO = 2
+
 @shop_bp.route("/<int:userId>/<int:shopId>", methods=["GET"])
 @token_required
 def show_shop_main_page(decoded_user_id, user_type, userId, shopId):
@@ -25,6 +29,17 @@ def show_shop_main_page(decoded_user_id, user_type, userId, shopId):
     if not shop:
         return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
     
+    if user_type == UserType.PERSONAL.value:
+        favoriteInfo = db.session.query(Favorite4p).filter_by(sid=shopId, pid=userId).first()
+    elif user_type == UserType.COMMERCIAL.value:
+        favoriteInfo = db.session.query(Favorite4c).filter_by(sid=shopId, cid=userId).first()
+    else:
+        return jsonify({"error": "잘못된 유저 유형"}), 404
+    
+    if not favoriteInfo:
+        isFavorite = Favorite.No.value
+    else:
+        isFavorite = Favorite.YES.value
 
     shopInfo = {
                     "shopId": shop.sid,
@@ -44,6 +59,7 @@ def show_shop_main_page(decoded_user_id, user_type, userId, shopId):
     return jsonify({
         "decoded_user_id": decoded_user_id,
         "user_type": user_type,
+        "isFavorite": isFavorite,
         "shop": shopInfo
     }), 200
 

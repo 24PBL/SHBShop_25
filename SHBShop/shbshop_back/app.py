@@ -24,4 +24,4 @@ db.init_app(app)
 # 디버그모드 자동 활성화 (실행은 - python app.py)
 # flask run 하면 활성화 안 됨.
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True)

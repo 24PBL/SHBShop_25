@@ -20,6 +20,10 @@ class UserType(Enum):
     COMMERCIAL = 2
     ADMIN = 3
 
+class CoUserType(Enum):
+    JUSTUSER = 1
+    SHOPUSER = 2
+
 @home_bp.route("/<int:userId>", methods=["GET"])
 @token_required
 def show_user_home(decoded_user_id, user_type, userId):
@@ -782,6 +786,13 @@ def get_my_cert(decoded_user_id, user_type, userId):
     if not userData:
         return jsonify({"error": "일치하는 회원이 없습니다."}), 404
     
+    shopData = db.session.query(Shop).filter_by(cid=decoded_user_id).first()
+
+    if not shopData:
+        isShopExist = CoUserType.JUSTUSER.value
+    else:
+        isShopExist = CoUserType.SHOPUSER.value
+    
     comCerts = (
         db.session.query(Commercialcert)
             .filter_by(cid=decoded_user_id)
@@ -802,7 +813,7 @@ def get_my_cert(decoded_user_id, user_type, userId):
         } for cert in comCerts
     ]
 
-    return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo, "cert_list": cert_list}), 200
+    return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo, "isShopExist": isShopExist, "cert_list": cert_list}), 200
 
 @home_bp.route("/<int:userId>/my-page/check-my-commer/<int:certId>", methods=["GET"])
 @token_required
@@ -945,6 +956,7 @@ def make_my_shop(decoded_user_id, user_type, userId, certId):
     imgfile1 = request.files.get("imgfile1")
     imgfile2 = request.files.get("imgfile2")
     imgfile3 = request.files.get("imgfile3")
+
     if not all([presidentName, businessmanName, businessEmail, address, shopName, shoptel, shopOpen, shopClose, holiday, etc, imgfile1, imgfile2, imgfile3]):
         return jsonify({"error": "모든 정보를 입력해주세요."}), 400
     
@@ -972,6 +984,7 @@ def make_my_shop(decoded_user_id, user_type, userId, certId):
 
     if str(decoded_user_id) != str(userId):
         return jsonify({"error": "권한이 없습니다."}), 403
+    
     if user_type == UserType.COMMERCIAL.value:
         userData = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
     else:
@@ -993,6 +1006,7 @@ def make_my_shop(decoded_user_id, user_type, userId, certId):
         )
     
     exShop = db.session.query(Shop).filter_by(cid=userData.cid).first()
+
     if (cert.cid != userData.cid) or (cert.idx != currentCert.idx) or (userData.state != 2) or (exShop):
         return jsonify({"error": "잘못된 요청입니다."}), 403
 
