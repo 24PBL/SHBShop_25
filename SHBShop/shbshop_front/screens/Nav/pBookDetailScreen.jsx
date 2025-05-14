@@ -89,9 +89,9 @@ const pBookDetailScreen = ({route, navigation}) => {
           <View style={styles.thumb}>
             <TouchableOpacity style={{ marginRight: 15 }} onPress={() => setThumbsUp(!thumbsUp)}>
               <Ionicons
-                name={thumbsUp ? 'thumbs-up-outline' : 'thumbs-up-outline'}
+                name={thumbsUp ? 'heart' : 'heart-outline'}
                 size={28}
-                color={thumbsUp ? '#0091da' : '#000'}
+                color={thumbsUp ? 'red' : 'black'}
               />
             </TouchableOpacity>
             <Text style={styles.priceText}>{data.book.price.toLocaleString()}원</Text>

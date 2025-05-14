@@ -133,7 +133,7 @@ const MyPageCommon = ({navigation}) => {
             <Ionicons name="camera-outline" size={24} color="#000" style={styles.cameraIcon} />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.nicknameRow}>
+        <TouchableOpacity style={styles.nicknameRow} onPress={() => navigation.navigate('CommonPWConfirm')}>
           <View style={styles.nicknameTextContainer}>
             <Text style={styles.nickname}>{nickname}</Text>
             <Text style={styles.bookstoreName}>{bookstoreName}</Text>
@@ -151,18 +151,33 @@ const MyPageCommon = ({navigation}) => {
           <Ionicons name="chevron-forward" size={18} color="#000" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}>관심 목록</Text>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('AddCart')}>
+          <Text style={styles.menuText}>장바구니</Text>
           <Ionicons name="chevron-forward" size={18} color="#000" />
         </TouchableOpacity>
-        
-        {userData?.user_type === 2 && (<TouchableOpacity style={styles.menuItem}>
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('BuyList')}>
+          <Text style={styles.menuText}>구매 내역</Text>
+          <Ionicons name="chevron-forward" size={18} color="#000" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ChangePWScreen')}>
+          <Text style={styles.menuText}>비밀번호 변경</Text>
+          <Ionicons name="chevron-forward" size={18} color="#000" />
+        </TouchableOpacity>
+
+        {userData?.user_type === 2 && (<TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ManageStore')}>
           <Text style={styles.menuText}>매장 관리</Text>
           <Ionicons name="chevron-forward" size={18} color="#000" />
         </TouchableOpacity>
       )}
         {userData?.user_type === 2 && (<TouchableOpacity style={styles.menuItem} onPress={goToApprove}>
-          <Text style={styles.menuText}>승인 요청</Text>
+          <Text style={styles.menuText}>사업자 승인</Text>
+          <Ionicons name="chevron-forward" size={18} color="#000" />
+        </TouchableOpacity>
+      )}
+        {userData?.user_type === 2 && (<TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('BSPWConfirm')}>
+          <Text style={styles.menuText}>사업자 정보 수정</Text>
           <Ionicons name="chevron-forward" size={18} color="#000" />
         </TouchableOpacity>
       )}

@@ -104,7 +104,7 @@ const SearchInStore = ({ navigation, route }) => {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity onPress={goToback}>
               <Ionicons
-                name="arrow-back-outline"
+                name="chevron-back-outline"
                 size={23}
                 color="gray"
                 style={{ marginLeft: -20, paddingRight: 10 }}

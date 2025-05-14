@@ -3,6 +3,16 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MyPageScreen from './MyPageScreen'
 import Approve from './Approve';
+import AddCart from './AddCart';
+import CommonPWConfirm from './CommonPWConfirm';
+import EditProfileScreen from './EditProfileScreen';
+import ChangePWScreen from './ChangePWScreen';
+import BuyList from './BuyList';
+import BSPWConfirm from './BSPWConfirm';
+import ManageStore from './ManageStore';
+import ExcelUploadScreen from './ExcelUploadScreen';
+import StoreBookRegister from './StoreBookRegister';
+import ChangeStoreInfo from './ChangeStoreInfo'
 const Stack = createNativeStackNavigator();
 
 const MyPageStack = () => {
@@ -10,6 +20,16 @@ const MyPageStack = () => {
     <Stack.Navigator>
       <Stack.Screen name="BookScreen" component={MyPageScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Approve" component={Approve} options={{ headerShown: false }} />
+      <Stack.Screen name="AddCart" component={AddCart} options={{ headerShown: false }} />
+      <Stack.Screen name="CommonPWConfirm" component={CommonPWConfirm} options={{ headerShown: false }} />
+      <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChangePWScreen" component={ChangePWScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BuyList" component={BuyList} options={{ headerShown: false }} />
+      <Stack.Screen name="BSPWConfirm" component={BSPWConfirm} options={{ headerShown: false }} />
+      <Stack.Screen name="ManageStore" component={ManageStore} options={{ headerShown: false }} />
+      <Stack.Screen name="ExcelUploadScreen" component={ExcelUploadScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="StoreBookRegister" component={StoreBookRegister} options={{ headerShown: false }} />
+      <Stack.Screen name="ChangeStoreInfo" component={ChangeStoreInfo} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

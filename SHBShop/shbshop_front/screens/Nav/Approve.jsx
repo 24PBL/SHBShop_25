@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { Ionicons } from '@expo/vector-icons';
 
 const Approve = ({ route, navigation }) => {
   const { data } = route.params;
@@ -99,10 +100,12 @@ const Approve = ({ route, navigation }) => {
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
         <View style={styles.container}>
-          <Text style={{ fontSize: 28, fontWeight: 'bold', paddingLeft: 15, paddingTop: 10 }}>
+          <View style={{flexDirection:'row', alignItems:'center'}}>
+          <Ionicons name="chevron-back" size={28} color="black" onPress={() => navigation.goBack()} />  
+            <Text style={{ fontSize: 28, fontWeight: 'bold', paddingLeft: 15}}>
             사업자 승인
           </Text>
-          <Text></Text>
+          </View>
           <ScrollView>
             {sortedCertList.map((cert, index) => {
               const { color, statusText } = getStatusStyle(cert.state);

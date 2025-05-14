@@ -145,7 +145,7 @@ const Search = ({ navigation }) => {
           {/* 검색창 */}
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity onPress={goToback}>
-              <Ionicons name="arrow-back-outline" size={23} color="gray" style={{ marginLeft: -20, paddingRight: 10 }} />
+              <Ionicons name="chevron-back-outline" size={23} color="gray" style={{ marginLeft: -20, paddingRight: 10 }} />
             </TouchableOpacity>
             <View style={styles.searchBox}>
               <Ionicons name="search-outline" size={23} color="gray" style={{ paddingLeft: 10 }} />

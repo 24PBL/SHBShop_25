@@ -51,7 +51,7 @@ const cMoreList = ({ route, navigation }) => {
         {/* 상단 바 */}
         <View style={styles.header}>
           <TouchableOpacity onPress={goToback}>
-            <Ionicons name="arrow-back-outline" size={24} color="gray" />
+            <Ionicons name="chevron-back-outline" size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{title}</Text>
         </View>
