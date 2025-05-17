@@ -1281,7 +1281,7 @@ def modi_shop_addr(decoded_user_id, user_type, userId):
 @home_bp.route("/<int:userId>/my-page/modify-img", methods=["POST"])
 @token_required
 def modify_profile(decoded_user_id, user_type, userId):
-    imgfile = request.files.get("imgfile1")
+    imgfile = request.files.get("imgfile")
     if not imgfile:
         return jsonify({"error": "이미지 파일이 없습니다."}), 400
 

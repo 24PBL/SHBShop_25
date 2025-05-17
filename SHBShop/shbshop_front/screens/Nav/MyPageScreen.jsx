@@ -43,7 +43,7 @@ const uploadProfileImage = async (uri) => {
   const match = /\.(\w+)$/.exec(filename);
   const type = match ? `image/${match[1]}` : 'image';
 
-  data.append('imgfile1', {
+  data.append('imgfile', {
     uri,
     name: filename,
     type,
