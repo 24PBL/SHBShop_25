@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, FlatList } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { useFocusEffect } from '@react-navigation/native';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
@@ -11,24 +12,29 @@ const HomeScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const [bookList, setBookList] = useState([]);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const jsonValue = await AsyncStorage.getItem('UserData');
-        if (jsonValue != null) {
-          const parsed = JSON.parse(jsonValue);
-          setUserData(parsed);
-          if (parsed.bookList) {
-            const sortedBooks = parsed.bookList.sort((a, b) => new Date(b.createAt) - new Date(a.createAt));
-            setBookList(sortedBooks);
+  // 화면이 focus 될 때마다 실행되는 loadData 함수
+  useFocusEffect(
+    useCallback(() => {
+      const loadData = async () => {
+        try {
+          const jsonValue = await AsyncStorage.getItem('UserData');
+          if (jsonValue != null) {
+            const parsed = JSON.parse(jsonValue);
+            setUserData(parsed);
+            if (parsed.bookList) {
+              const sortedBooks = parsed.bookList.sort(
+                (a, b) => new Date(b.createAt) - new Date(a.createAt)
+              );
+              setBookList(sortedBooks);
+            }
           }
+        } catch (e) {
+          console.error('JSON 파싱 에러', e);
         }
-      } catch (e) {
-        console.error('JSON 파싱 에러', e);
-      }
-    };
-    loadData();
-  }, []);
+      };
+      loadData();
+    }, [])
+  );
 
   const goToBookSearch = () => {
     navigation.navigate('BookSearch');
@@ -49,7 +55,7 @@ const HomeScreen = ({ navigation }) => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Token}`,
+          Authorization: `Bearer ${Token}`,
         },
       });
 
@@ -91,7 +97,9 @@ const HomeScreen = ({ navigation }) => {
             right: 30,
           }}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 17, textAlign: 'center' }}>글쓰기</Text>
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 17, textAlign: 'center' }}>
+            글쓰기
+          </Text>
         </TouchableOpacity>
 
         {userData ? (

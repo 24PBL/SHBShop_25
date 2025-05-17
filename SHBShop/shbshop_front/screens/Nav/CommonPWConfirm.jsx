@@ -2,12 +2,39 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+import axios from 'axios';
+
+const API_URL = Constants.expoConfig.extra.API_URL;
 
 const CommonPWConfirm = ({navigation}) => {
 
-  const goToinfoChange = () =>{
-    navigation.navigate('EditProfileScreen');
-  }
+  const [PW, setPW] = useState(''); // 비밀번호 상태 관리
+
+  const goToinfoChange = async () =>{
+    try{
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await axios.post(`${API_URL}/home/${userId}/my-page/modify-info/check-pw`,
+      { password: PW }, 
+      {
+        headers: {
+          Authorization: `Bearer ${Token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+      const data = response.data;
+      console.log(data)
+      navigation.navigate("EditProfileScreen", {data : {result : data}});
+  } catch (error) {
+      console.error('오류 발생:', error);
+      Alert.alert("비밀번호 인증 실패", "비밀번호를 다시 확인해주세요.");
+      
+    }}
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white'}}>
@@ -27,6 +54,8 @@ const CommonPWConfirm = ({navigation}) => {
           placeholder="비밀번호"
           placeholderTextColor="rgba(0, 0, 0, 0.2)"
           secureTextEntry
+          onChangeText={setPW}
+          value={PW}
         />
       </View>
     </SafeAreaView>

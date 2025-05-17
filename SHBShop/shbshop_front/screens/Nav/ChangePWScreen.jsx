@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+import axios from 'axios';  
+
+const API_URL = Constants.expoConfig.extra.API_URL;
 
 const ChangePWScreen = ({navigation}) => {
   const [currentPwd, setCurrentPwd] = useState('');
@@ -20,10 +25,35 @@ const ChangePWScreen = ({navigation}) => {
     }
   }, [currentPwd, newPwd, confirmPwd]);
 
-  const handleSubmit = () => {
-    console.log({ currentPwd, newPwd });
-    // 비밀번호 변경 API 연동 코드 작성
-  };
+  const handleSubmit = async () => {
+  try {
+    // 사용자 정보 및 토큰 가져오기
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+
+    // API 요청
+    const response = await axios.put(
+      `${API_URL}/home/${userId}/my-page/modify-pw`,
+      {
+        curPassword: currentPwd,
+        newPassword: newPwd,},
+      {
+        headers: {
+          Authorization: `Bearer ${Token}`,
+        },
+      }
+    );
+
+    console.log(response);
+    navigation.navigate("MyPageScreen");
+  } catch (error) {
+    console.error('오류 발생:', error);
+    Alert.alert("정보 수정 실패", "다시 시도해주세요.");
+  }
+};
+
 
   return (
     <SafeAreaProvider>
@@ -64,7 +94,7 @@ const ChangePWScreen = ({navigation}) => {
 
       />
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text style={styles.errorText}>{error}</Text> : <Text style={{color: '#0091da', fontSize: 13, marginLeft: 40}}> 비밀번호가 일치합니다. </Text>}
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: isValid && !error ? '#0091DA' : '#ccc' }]}
@@ -111,9 +141,8 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-    fontSize: 12,
-    marginBottom: 10,
-    marginLeft: 4,
+    fontSize: 13,
+    marginLeft: 40
   },
   button: {
     paddingVertical: 14,
