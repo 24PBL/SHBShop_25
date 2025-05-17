@@ -10,23 +10,23 @@ if TYPE_CHECKING:
 class Commercialcert(Base):
     __tablename__ = 'commercialcert'
     __table_args__ = (
-        ForeignKeyConstraint(['cid'], ['commercial.cid'], name='FK_commercial_TO_commercialcert_1'),
+        ForeignKeyConstraint(['cid'], ['commercial.cid'], ondelete='CASCADE', onupdate='RESTRICT', name='FK_commercial_TO_commercialcert_1'),
         Index('FK_commercial_TO_commercialcert_1', 'cid')
     )
 
     idx: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     cid: Mapped[int] = mapped_column(BigInteger)
-    name: Mapped[str] = mapped_column(String(13))
-    presidentName: Mapped[str] = mapped_column(String(13))
-    businessmanName: Mapped[str] = mapped_column(String(13))
-    birth: Mapped[str] = mapped_column(String(10))
-    tel: Mapped[str] = mapped_column(String(13))
-    email: Mapped[str] = mapped_column(String(255))
-    businessEmail: Mapped[str] = mapped_column(String(255))
-    address: Mapped[str] = mapped_column(String(255))
-    coNumber: Mapped[str] = mapped_column(String(255))
-    licence: Mapped[str] = mapped_column(String(255))
-    reason: Mapped[str] = mapped_column(String(255), server_default=text("'심사중'"))
+    name: Mapped[str] = mapped_column(String(13, 'utf8mb4_general_ci'))
+    presidentName: Mapped[str] = mapped_column(String(13, 'utf8mb4_general_ci'))
+    businessmanName: Mapped[str] = mapped_column(String(13, 'utf8mb4_general_ci'))
+    birth: Mapped[str] = mapped_column(String(10, 'utf8mb4_general_ci'))
+    tel: Mapped[str] = mapped_column(String(13, 'utf8mb4_general_ci'))
+    email: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    businessEmail: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    address: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    coNumber: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    licence: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    reason: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), server_default=text("'심사중'"))
     state: Mapped[int] = mapped_column(Integer, server_default=text("1"))
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
 

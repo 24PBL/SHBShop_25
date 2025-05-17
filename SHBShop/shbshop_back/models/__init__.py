@@ -21,6 +21,21 @@ from .favorite4p import Favorite4p
 from .cbooktrade import Cbooktrade
 from .pbooktrade import Pbooktrade
 from .sbooktrade import Sbooktrade
+from .modiaddress import Modiaddress
+from .vaild4pmd import Vaild4pmd
+from .vaild4cmd import Vaild4cmd
+from .pbasket2p import Pbasket2p
+from .pbasket2c import Pbasket2c
+from .pbasket2s import Pbasket2s
+from .cbasket2p import Cbasket2p
+from .cbasket2c import Cbasket2c
+from .cbasket2s import Cbasket2s
+from .preceipt2p import Preceipt2p
+from .preceipt2c import Preceipt2c
+from .preceipt2s import Preceipt2s
+from .creceipt2p import Creceipt2p
+from .creceipt2c import Creceipt2c
+from .creceipt2s import Creceipt2s
 
 __all__ = [
     "Base",
@@ -45,5 +60,20 @@ __all__ = [
     "Favorite4p",
     "Cbooktrade",
     "Pbooktrade",
-    "Sbooktrade"
+    "Sbooktrade",
+    "Modiaddress",
+    "Vaild4pmd",
+    "Vaild4cmd",
+    "Pbasket2p",
+    "Pbasket2c",
+    "Pbasket2s",
+    "Cbasket2p",
+    "Cbasket2c",
+    "Cbasket2s",
+    "Preceipt2p",
+    "Preceipt2c",
+    "Preceipt2s",
+    "Creceipt2p",
+    "Creceipt2c",
+    "Creceipt2s"
 ]

@@ -13,26 +13,26 @@ if TYPE_CHECKING:
 class Shop(Base):
     __tablename__ = 'shop'
     __table_args__ = (
-        ForeignKeyConstraint(['cid'], ['commercial.cid'], name='FK_commercial_TO_shop_1'),
+        ForeignKeyConstraint(['cid'], ['commercial.cid'], ondelete='CASCADE', onupdate='RESTRICT', name='FK_commercial_TO_shop_1'),
         Index('FK_commercial_TO_shop_1', 'cid')
     )
 
     sid: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     cid: Mapped[int] = mapped_column(BigInteger)
-    presidentName: Mapped[str] = mapped_column(String(13))
-    businessmanName: Mapped[str] = mapped_column(String(13))
-    shopName: Mapped[str] = mapped_column(String(255))
-    shoptel: Mapped[str] = mapped_column(String(255))
-    businessEmail: Mapped[str] = mapped_column(String(255))
-    address: Mapped[str] = mapped_column(String(255))
-    region: Mapped[str] = mapped_column(String(64))
-    open: Mapped[str] = mapped_column(String(16))
-    close: Mapped[str] = mapped_column(String(16))
-    holiday: Mapped[str] = mapped_column(String(255))
-    shopimg1: Mapped[str] = mapped_column(String(255))
-    shopimg2: Mapped[str] = mapped_column(String(255))
-    shopimg3: Mapped[str] = mapped_column(String(255))
-    etc: Mapped[str] = mapped_column(String(255))
+    presidentName: Mapped[str] = mapped_column(String(13, 'utf8mb4_general_ci'))
+    businessmanName: Mapped[str] = mapped_column(String(13, 'utf8mb4_general_ci'))
+    shopName: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    shoptel: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    businessEmail: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    address: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    region: Mapped[str] = mapped_column(String(64, 'utf8mb4_general_ci'))
+    open: Mapped[str] = mapped_column(String(16, 'utf8mb4_general_ci'))
+    close: Mapped[str] = mapped_column(String(16, 'utf8mb4_general_ci'))
+    holiday: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    shopimg1: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    shopimg2: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    shopimg3: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    etc: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
 
     commercial: Mapped['Commercial'] = relationship('Commercial', back_populates='shop')

@@ -6,6 +6,6 @@ class Adminacc(Base):
     __tablename__ = 'adminacc'
 
     aid: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    name: Mapped[str] = mapped_column(String(13))
-    acc: Mapped[str] = mapped_column(String(255))
-    password: Mapped[str] = mapped_column(String(255))
+    name: Mapped[str] = mapped_column(String(13, 'utf8mb4_general_ci'))
+    acc: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    password: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))

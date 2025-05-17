@@ -9,7 +9,7 @@ from enum import Enum
 
 # 에디터에서 에러 표시 나와도 무시하면 됩니다.
 # 절대 경로 파악이 안 되는 것. 실행은 정상적으로 됩니다.
-from models import Personal, Commercial, Commercialcert, Adminacc, Shop, Pbooktrade, Cbooktrade, Sbooktrade
+from models import Personal, Commercial, Commercialcert, Adminacc, Shop, Pbooktrade, Cbooktrade, Sbooktrade, Vaild4pur, Vaild4cur, Modiaddress, Preceipt2p, Preceipt2c, Preceipt2s, Creceipt2p, Creceipt2c, Creceipt2s
 from extensions import db
 
 test_bp = Blueprint("test", __name__)
@@ -613,3 +613,313 @@ def change_book(kind, bookId):
     db.session.commit()
 
     return jsonify({"message": "주소 변경 완료"}), 200
+
+@test_bp.route("/add-vur", methods=["POST"])
+def add_vur():
+    data = request.get_json()
+    email = data.get("email")
+    authCode = data.get("authCode")
+
+    authCode = int(authCode)
+
+    new_user = Vaild4pur(
+        email = email,
+        authCode = authCode
+    )
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({"message": "회원가입 완료"}), 201
+
+@test_bp.route("/add-modiadr", methods=["POST"])
+def add_modiadr():
+    cid = request.form.get("cid")
+    cid = int(cid)
+    name = request.form.get("name")
+    presidentName = request.form.get("presidentName")
+    businessmanName = request.form.get("businessmanName")
+    businessEmail = request.form.get("businessEmail")
+    coNumber = request.form.get("coNumber")
+    address = request.form.get("address")
+    licence = request.files.get("licence")
+    
+    pdf_filename = secure_filename(f"{uuid4().hex}_{licence.filename}")
+    pdf_save_path = os.path.join(LICENCE_UPLOAD_FOLDER, pdf_filename)
+
+    try:
+        licence.save(pdf_save_path)
+    except Exception as e:
+        return jsonify({"error": f"PDF 저장 실패: {str(e)}"}), 500
+
+    pdf_url = f"/{LICENCE_UPLOAD_FOLDER}/{pdf_filename}"
+
+    new_modi_addr_req = Modiaddress(
+        name = name,
+        presidentName = presidentName,
+        businessmanName = businessmanName,
+        businessEmail = businessEmail,
+        coNumber = coNumber,
+        address = address,
+        licence=pdf_url,
+        cid=cid
+    )
+
+    db.session.add(new_modi_addr_req)
+    db.session.commit()
+
+    return jsonify({"message": "업장 변경 신청 완료" }), 201
+
+@test_bp.route("/add-p2p", methods=["POST"])
+def add_p2p():
+    pid = request.form.get("pid")
+    pid = int(pid)
+    bid = request.form.get("bid")
+    bid = int(bid)
+    sellerid = request.form.get("sellerid")
+    sellerid = int(sellerid)
+
+    newRe = Preceipt2p(
+        pid=pid,
+        bid=bid,
+        sellerid=sellerid
+    )
+
+    db.session.add(newRe)
+    db.session.commit()
+
+    return jsonify({"message": "구매 신청 완료" }), 201
+
+@test_bp.route("/add-p2c", methods=["POST"])
+def add_p2c():
+    pid = request.form.get("pid")
+    pid = int(pid)
+    bid = request.form.get("bid")
+    bid = int(bid)
+    sellerid = request.form.get("sellerid")
+    sellerid = int(sellerid)
+
+    newRe = Preceipt2c(
+        pid=pid,
+        bid=bid,
+        sellerid=sellerid
+    )
+
+    db.session.add(newRe)
+    db.session.commit()
+
+    return jsonify({"message": "구매 신청 완료" }), 201
+
+@test_bp.route("/add-p2s", methods=["POST"])
+def add_p2s():
+    pid = request.form.get("pid")
+    pid = int(pid)
+    bid = request.form.get("bid")
+    bid = int(bid)
+    shopid = request.form.get("shopid")
+    shopid = int(shopid)
+
+    newRe = Preceipt2s(
+        pid=pid,
+        bid=bid,
+        shopid=shopid
+    )
+
+    db.session.add(newRe)
+    db.session.commit()
+
+    return jsonify({"message": "구매 신청 완료" }), 201
+
+@test_bp.route("/add-c2p", methods=["POST"])
+def add_c2p():
+    cid = request.form.get("cid")
+    cid = int(cid)
+    bid = request.form.get("bid")
+    bid = int(bid)
+    sellerid = request.form.get("sellerid")
+    sellerid = int(sellerid)
+
+    newRe = Creceipt2p(
+        cid=cid,
+        bid=bid,
+        sellerid=sellerid
+    )
+
+    db.session.add(newRe)
+    db.session.commit()
+
+    return jsonify({"message": "구매 신청 완료" }), 201
+
+@test_bp.route("/add-c2c", methods=["POST"])
+def add_c2c():
+    cid = request.form.get("cid")
+    cid = int(cid)
+    bid = request.form.get("bid")
+    bid = int(bid)
+    sellerid = request.form.get("sellerid")
+    sellerid = int(sellerid)
+
+    newRe = Creceipt2c(
+        cid=cid,
+        bid=bid,
+        sellerid=sellerid
+    )
+
+    db.session.add(newRe)
+    db.session.commit()
+
+    return jsonify({"message": "구매 신청 완료" }), 201
+
+@test_bp.route("/add-c2s", methods=["POST"])
+def add_c2s():
+    cid = request.form.get("cid")
+    cid = int(cid)
+    bid = request.form.get("bid")
+    bid = int(bid)
+    shopid = request.form.get("shopid")
+    shopid = int(shopid)
+
+    newRe = Creceipt2s(
+        cid=cid,
+        bid=bid,
+        shopid=shopid
+    )
+
+    db.session.add(newRe)
+    db.session.commit()
+
+    return jsonify({"message": "구매 신청 완료" }), 201
+
+@test_bp.route("/read-p2p/<int:pid>", methods=["GET"])
+def read_p2p(pid):
+    pp = db.session.query(Preceipt2p).filter_by(pid = pid).all()
+
+    cs_list = [
+        {   
+            "rid": css.rid,
+            "pid": css.pid,
+            "bid": css.bid,
+            "sellerid": css.sellerid,
+            "state": css.state,
+            "reason": css.reason,
+            "createAt": css.createAt
+        }
+        for css in pp
+    ]
+
+    return jsonify({"cs_list": cs_list }), 200
+
+@test_bp.route("/read-p2c/<int:pid>", methods=["GET"])
+def read_p2c(pid):
+    pc = db.session.query(Preceipt2c).filter_by(pid = pid).all()
+
+    cs_list = [
+        {
+            "rid": css.rid,
+            "pid": css.pid,
+            "bid": css.bid,
+            "sellerid": css.sellerid,
+            "state": css.state,
+            "reason": css.reason,
+            "createAt": css.createAt
+        }
+        for css in pc
+    ]
+
+    return jsonify({"cs_list": cs_list }), 200
+
+@test_bp.route("/read-p2s/<int:pid>", methods=["GET"])
+def read_p2s(pid):
+    ps = db.session.query(Preceipt2s).filter_by(pid = pid).all()
+
+    cs_list = [
+        {
+            "rid": css.rid,
+            "pid": css.pid,
+            "bid": css.bid,
+            "shopid": css.shopid,
+            "state": css.state,
+            "reason": css.reason,
+            "createAt": css.createAt
+        }
+        for css in ps
+    ]
+
+    return jsonify({"cs_list": cs_list }), 200
+
+@test_bp.route("/read-c2p/<int:cid>", methods=["GET"])
+def read_c2p(cid):
+    cp = db.session.query(Creceipt2p).filter_by(cid = cid).all()
+
+    cs_list = [
+        {
+            "rid": css.rid,
+            "cid": css.cid,
+            "bid": css.bid,
+            "sellerid": css.sellerid,
+            "state": css.state,
+            "reason": css.reason,
+            "createAt": css.createAt
+        }
+        for css in cp
+    ]
+
+    return jsonify({"cs_list": cs_list }), 200
+
+@test_bp.route("/read-c2c/<int:cid>", methods=["GET"])
+def read_c2c(cid):
+    cc = db.session.query(Creceipt2c).filter_by(cid = cid).all()
+
+    cs_list = [
+        {
+            "rid": css.rid,
+            "cid": css.cid,
+            "bid": css.bid,
+            "sellerid": css.sellerid,
+            "state": css.state,
+            "reason": css.reason,
+            "createAt": css.createAt
+        }
+        for css in cc
+    ]
+
+    return jsonify({"cs_list": cs_list }), 200
+
+@test_bp.route("/read-c2s/<int:cid>", methods=["GET"])
+def read_c2s(cid):
+    cs = db.session.query(Creceipt2s).filter_by(cid = cid).all()
+
+    cs_list = [
+        {
+            "rid": css.rid,
+            "cid": css.cid,
+            "bid": css.bid,
+            "shopid": css.shopid,
+            "state": css.state,
+            "reason": css.reason,
+            "createAt": css.createAt
+        }
+        for css in cs
+    ]
+
+    return jsonify({"cs_list": cs_list }), 200
+
+@test_bp.route("/read-modiadr/<int:idx>", methods=["GET"])
+def read_modiadr(idx):
+    modi = db.session.query(Modiaddress).filter_by(idx = idx).first()
+
+    modi_info = {
+            "idx": modi.idx,
+            "cid": modi.cid,
+            "name": modi.name,
+            "presidentName": modi.presidentName,
+            "businessmanName": modi.businessmanName,
+            "coNumber": modi.coNumber,
+            "address": modi.address,
+            "licence": modi.licence,
+            "reason": modi.reason,
+            "state": modi.state,
+            "createAt": modi.createAt
+        }
+
+    return jsonify({"modi": modi_info }), 200

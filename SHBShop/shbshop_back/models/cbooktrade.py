@@ -1,11 +1,15 @@
 from sqlalchemy import BigInteger, ForeignKeyConstraint, Index, Integer, String, text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from .base import Base
 
 if TYPE_CHECKING:
     from .commercial import Commercial
+    from .cbasket2p import Cbasket2c
+    from .pbasket2p import Pbasket2c
+    from .creceipt2c import Creceipt2c
+    from .preceipt2c import Preceipt2c
 
 class Cbooktrade(Base):
     __tablename__ = 'cbooktrade'
@@ -16,16 +20,24 @@ class Cbooktrade(Base):
 
     bid: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     cid: Mapped[int] = mapped_column(BigInteger)
-    title: Mapped[str] = mapped_column(String(255))
-    author: Mapped[str] = mapped_column(String(255))
-    publish: Mapped[str] = mapped_column(String(255))
-    isbn: Mapped[str] = mapped_column(String(255))
+    title: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    author: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    publish: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    isbn: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     price: Mapped[int] = mapped_column(Integer)
-    detail: Mapped[str] = mapped_column(String(255))
-    region: Mapped[str] = mapped_column(String(64))
-    img1: Mapped[str] = mapped_column(String(255))
-    img2: Mapped[str] = mapped_column(String(255))
-    img3: Mapped[str] = mapped_column(String(255))
+    detail: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    region: Mapped[str] = mapped_column(String(64, 'utf8mb4_general_ci'))
+    img1: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    img2: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    img3: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
 
     commercial: Mapped['Commercial'] = relationship('Commercial', back_populates='cbooktrade')
+    cbasket2c: Mapped[List['Cbasket2c']] = relationship('Cbasket2c', foreign_keys='[Cbasket2c.bid]', back_populates='cbooktrade')
+    cbasket2c_: Mapped[List['Cbasket2c']] = relationship('Cbasket2c', foreign_keys='[Cbasket2c.sellerid]', back_populates='cbooktrade_')
+    creceipt2c: Mapped[List['Creceipt2c']] = relationship('Creceipt2c', foreign_keys='[Creceipt2c.bid]', back_populates='cbooktrade')
+    creceipt2c_: Mapped[List['Creceipt2c']] = relationship('Creceipt2c', foreign_keys='[Creceipt2c.sellerid]', back_populates='cbooktrade_')
+    pbasket2c: Mapped[List['Pbasket2c']] = relationship('Pbasket2c', foreign_keys='[Pbasket2c.bid]', back_populates='cbooktrade')
+    pbasket2c_: Mapped[List['Pbasket2c']] = relationship('Pbasket2c', foreign_keys='[Pbasket2c.sellerid]', back_populates='cbooktrade_')
+    preceipt2c: Mapped[List['Preceipt2c']] = relationship('Preceipt2c', foreign_keys='[Preceipt2c.bid]', back_populates='cbooktrade')
+    preceipt2c_: Mapped[List['Preceipt2c']] = relationship('Preceipt2c', foreign_keys='[Preceipt2c.sellerid]', back_populates='cbooktrade_')

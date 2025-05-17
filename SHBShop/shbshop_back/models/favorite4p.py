@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 class Favorite4p(Base):
     __tablename__ = 'favorite4p'
     __table_args__ = (
-        ForeignKeyConstraint(['pid'], ['personal.pid'], name='FK_personal_TO_favorite4p_1'),
-        ForeignKeyConstraint(['sid'], ['shop.sid'], name='FK_shop_TO_favorite4p_1'),
+        ForeignKeyConstraint(['pid'], ['personal.pid'], ondelete='CASCADE', onupdate='RESTRICT', name='FK_personal_TO_favorite4p_1'),
+        ForeignKeyConstraint(['sid'], ['shop.sid'], ondelete='CASCADE', onupdate='RESTRICT', name='FK_shop_TO_favorite4p_1'),
         Index('FK_personal_TO_favorite4p_1', 'pid'),
         Index('FK_shop_TO_favorite4p_1', 'sid')
     )
