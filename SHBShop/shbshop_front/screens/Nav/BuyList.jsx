@@ -22,33 +22,57 @@ const BuyList = ({ navigation, route }) => {
     fnlSRid: null
   });
 
+  const isWithinThreeMonths = (dateStr) => {
+    const date = new Date(dateStr);
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return date >= threeMonthsAgo;
+  };
+
+  // 가공 함수들
+  const processSellerType1 = (list) => {
+    return list.filter(item => item.sellerType === 1 && isWithinThreeMonths(item.createAt)).map(item => ({
+      ...item,
+      origin: '개인 거래',
+    }));
+  };
+
+  const processSellerType2 = (list) => {
+    return list.filter(item => item.sellerType === 2 && isWithinThreeMonths(item.createAt)).map(item => ({
+      ...item,
+      origin: '개인 사업자 거래',
+    }));
+  };
+
+  const processStoreList = (list) => {
+    return (list || []).filter(item => isWithinThreeMonths(item.createAt)).map(item => ({
+      ...item,
+      origin: '매장',
+    }));
+  };
+
+  const getLastRid = (list) => {
+    return list.length > 0 ? list[list.length - 1].rid : null;
+  };
+
   useEffect(() => {
-    const initPersonal = receiptData.book_list || [];
-    const initStore = receiptData.sbook_list || [];
+    const initPersonal1 = processSellerType1(receiptData.book_list || []);
+    const initPersonal2 = processSellerType2(receiptData.book_list || []);
+    const initStore = processStoreList(receiptData.sbook_list || []);
 
     const combined = [
-      ...initPersonal.map(item => ({
-        ...item,
-        origin: '개인'   // sellerType 구분 없이 모두 ‘개인’
-      })),
-      ...initStore.map(item => ({
-        ...item,
-        origin: '매장'
-      })),
+      ...initPersonal1,
+      ...initPersonal2,
+      ...initStore,
     ];
     setMergedList(combined);
 
     setLastIds({
-      fnlPRid: getLastRid(initPersonal, 1),
-      fnlCRid: getLastRid(initPersonal, 2),
+      fnlPRid: getLastRid(initPersonal1),
+      fnlCRid: getLastRid(initPersonal2),
       fnlSRid: getLastRid(initStore),
     });
   }, [receiptData]);
-
-  const getLastRid = (list, sellerType = null) => {
-    const filtered = sellerType !== null ? list.filter(item => item.sellerType === sellerType) : list;
-    return filtered.length > 0 ? filtered[filtered.length - 1].rid : null;
-  };
 
   const fetchMore = async () => {
     if (!hasMore || loadingMore) return;
@@ -84,31 +108,27 @@ const BuyList = ({ navigation, route }) => {
 
       const result = await response.json();
 
-      const newPersonal = result.book_list || [];
-      const newStore = result.sbook_list || [];
+      const newPersonal1 = processSellerType1(result.book_list || []);
+      const newPersonal2 = processSellerType2(result.book_list || []);
+      const newStore = processStoreList(result.sbook_list || []);
 
-      if (newPersonal.length === 0 && newStore.length === 0) {
+      if (newPersonal1.length === 0 && newPersonal2.length === 0 && newStore.length === 0) {
         setHasMore(false);
         setLoadingMore(false);
         return;
       }
 
       const newCombined = [
-        ...newPersonal.map(item => ({
-          ...item,
-          origin: '개인'  // 동일하게 ‘개인’
-        })),
-        ...newStore.map(item => ({
-          ...item,
-          origin: '매장'
-        })),
+        ...newPersonal1,
+        ...newPersonal2,
+        ...newStore,
       ];
 
       setMergedList(prev => [...prev, ...newCombined]);
 
       setLastIds({
-        fnlPRid: getLastRid(newPersonal, 1) || lastIds.fnlPRid,
-        fnlCRid: getLastRid(newPersonal, 2) || lastIds.fnlCRid,
+        fnlPRid: getLastRid(newPersonal1) || lastIds.fnlPRid,
+        fnlCRid: getLastRid(newPersonal2) || lastIds.fnlCRid,
         fnlSRid: getLastRid(newStore) || lastIds.fnlSRid,
       });
     } catch (error) {
@@ -118,26 +138,94 @@ const BuyList = ({ navigation, route }) => {
     }
   };
 
-  const renderBookItem = ({ item }) => (
-    <TouchableOpacity style={styles.bookItem}>
-      <View>
-        <Image
-          source={{ uri: `${API_URL}${item.bookimg}` }}
-          style={styles.bookImage}
-          resizeMode="cover"
-        />
-        <Text style={styles.statusBadge}>{item.reason}</Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.price}>{item.price}원</Text>
-        <Text style={styles.state}>
-          상태 : <Text style={styles.stateHighlight}>{item.reason}</Text>
-        </Text>
-        <Text style={styles.originLabel}>거래방식 : {item.origin}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const goToBookDetail = async (sellType, bid) => {
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+
+      const response = await fetch(`${API_URL}/book/pb/${userId}/${sellType}/${bid}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${Token}`,
+        },
+      });
+
+      const data = await response.json();
+      navigation.navigate('pBookDetailScreen', { storedata: data, bid });
+    } catch (error) {
+      console.error('책 상세 정보 가져오기 실패:', error);
+      Alert.alert('오류', '책 상세 정보를 불러오는 데 실패했습니다.');
+    }
+  };
+
+   const CommergoToBookDetail = async (sid, bid) =>{
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(`${API_URL}/book/sb/${userId}/${sid}/${bid}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+      const data = await response.json();
+      console.log(data)
+      navigation.navigate('cBookDetailScreen', {storedata : {data}});
+      
+    }
+
+  // 클릭 핸들러들
+  const handleClickSellerType1 = (item) => {
+    goToBookDetail(item.sellerType, item.bid);
+  };
+
+  const handleClickSellerType2 = (item) => {
+    goToBookDetail(item.sellerType, item.bid);
+  };
+
+  const handleClickStore = (item) => {
+    CommergoToBookDetail(item.sid, item.bid);
+  };
+
+  const renderBookItem = ({ item }) => {
+    const onPressHandler = () => {
+      if (item.origin === '매장') {
+        handleClickStore(item);
+      } else if (item.sellerType === 1) {
+        handleClickSellerType1(item);
+      } else if (item.sellerType === 2) {
+        handleClickSellerType2(item);
+      } else {
+        console.log('알 수 없는 타입 클릭:', item);
+      }
+    };
+
+    return (
+      <TouchableOpacity style={styles.bookItem} onPress={onPressHandler}>
+        <View>
+          <Image
+            source={{ uri: `${API_URL}${item.bookimg}` }}
+            style={styles.bookImage}
+            resizeMode="cover"
+          />
+          <Text style={styles.statusBadge}>{item.reason}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.price}>{item.price}원</Text>
+          <Text style={styles.state}>
+            상태 : <Text style={styles.stateHighlight}>{item.reason}</Text>
+          </Text>
+          <Text style={styles.originLabel}>거래방식 : {item.origin}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaProvider>

@@ -2,8 +2,29 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function ManageStore({navigation}) {
+const API_URL = Constants.expoConfig.extra.API_URL;
+
+const  ManageStore = ({navigation}) => {
+
+  const goToStoreInvenotry = async () =>{
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    const response = await fetch(`${API_URL}/shop/${userId}/${shopId}/check-stock`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Token}`,
+      },
+    });
+    const data = await response.json();
+    navigation.navigate('StoreInventoryView', {storedata : {data}});
+    
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white'}}>
@@ -11,7 +32,7 @@ export default function ManageStore({navigation}) {
           <Ionicons name="chevron-back-outline" size={28} onPress={() => navigation.goBack()} />
           <Text style={{fontSize:28, marginLeft:10, fontWeight:'bold'}}>매장관리</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
+        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={goToStoreInvenotry}>
           <Text>매장 재고 조회</Text>
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>
@@ -43,3 +64,5 @@ export default function ManageStore({navigation}) {
 const styles = StyleSheet.create({
 
 });
+
+export default ManageStore;
