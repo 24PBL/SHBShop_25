@@ -81,20 +81,20 @@
       };
 
       try {
-        // 로그인 API 요청
-        const response = await axios.post('http://172.30.1.9:5000/auth/login', loginData, {
+
+        const response = await axios.post('http://192.168.0.7:5000/auth/login', loginData, {
           headers: {
             'Content-Type': 'application/json'
           }
         });
 
-        // 로그인 성공 시 JWT 토큰을 로컬 스토리지에 저장
+     
         localStorage.setItem('jwtToken', response.data.token);
 
-        // 로그인 성공 후 대시보드 또는 관리자 화면으로 이동
-        window.location.href = './admin.html'; // 원하는 URL로 이동
+    
+        window.location.href = './admin-menu.html'; 
       } catch (error) {
-        // 로그인 실패 시 오류 메시지 출력
+     
         console.error('로그인 실패:', error.response ? error.response.data.error : error.message);
         alert('로그인 실패: ' + (error.response ? error.response.data.error : error.message));
       }

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>주소 수정 요청 리스트</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .item {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: #fafafa;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .item:hover {
+      background-color: #e0f0ff;
+    }
+    .state {
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: white;
+      display: inline-block;
+      margin-top: 5px;
+    }
+    .state.pending {
+      background-color: #777; 
+    }
+    .state.approved {
+      background-color: #0091da; 
+    }
+    .state.rejected {
+      background-color: #F44336; 
+    }
+    .state.unknown {
+      background-color: #777; 
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>주소 수정 요청 리스트</h2>
+    <div id="listContainer">로딩 중...</div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('jwtToken');
+
+    function getStateLabel(state) {
+      switch(state) {
+        case 1: return { text: "심사중", className: "pending" };
+        case 2: return { text: "승인 완료", className: "approved" };
+        case 3: return { text: "거절", className: "rejected" };
+        default: return { text: "알 수 없음", className: "unknown" };
+      }
+    }
+
+    async function fetchList() {
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      try {
+        const response = await fetch('http://192.168.0.7:5000/admin/check-modi-address', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("응답 데이터:", data);
+
+        if (!data.modiReqList || !Array.isArray(data.modiReqList)) {
+          throw new Error("데이터 형식 오류: modiReqList가 없습니다.");
+        }
+
+        const list = data.modiReqList.sort((a, b) => new Date(b.createAt) - new Date(a.createAt));
+
+        const container = document.getElementById('listContainer');
+        container.innerHTML = list.map(item => {
+          const stateInfo = getStateLabel(item.state);
+          return `
+            <div class="item" onclick="location.href='modi-detail.html?idx=${item.idx}'">
+              <strong>${item.businessmanName}</strong> (${item.businessEmail})<br/>
+              주소: ${item.address}<br/>
+              등록일: ${new Date(item.createAt).toLocaleString()}<br/>
+              <span class="state ${stateInfo.className}">${stateInfo.text}</span>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error("에러:", err);
+        document.getElementById('listContainer').innerText = "데이터를 불러오는데 실패했습니다.";
+      }
+    }
+
+    fetchList();
+  </script>
+</body>
+</html>

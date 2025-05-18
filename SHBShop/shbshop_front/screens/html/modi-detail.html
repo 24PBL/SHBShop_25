@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>수정 요청 상세 보기</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    .container {
+      background-color: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #0091da;
+    }
+    .info p {
+      margin: 8px 0;
+    }
+    .state-1 { color: gray; }
+    .state-2 { color: #0091da; }
+    .state-3 { color: red; }
+    iframe {
+      width: 100%;
+      height: 600px;
+      margin-top: 20px;
+      border: 1px solid #ccc;
+    }
+    .buttons {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .buttons button {
+      margin: 0 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+    }
+    .approve {
+      background-color: #4caf50;
+    }
+    .reject {
+      background-color: #f44336;
+    }
+    #reasonInput {
+      display: block;
+      width: 100%;
+      margin-top: 15px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    label {
+      margin-top: 20px;
+      display: block;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>수정 요청 상세</h1>
+    <div class="info" id="info">로딩 중...</div>
+
+    <h2>첨부된 사업자등록증</h2>
+    <iframe id="pdfViewer"></iframe>
+
+    <!-- 승인/거절 사유 입력 및 버튼 영역 -->
+    <div id="reviewSection" style="display:none;">
+      <label for="reasonInput">승인/거절 사유 입력</label>
+      <textarea id="reasonInput" rows="3" placeholder="승인 시 입력 하지 않아도 되고, 거절 시 사유를 작성하세요."></textarea>
+
+      <div class="buttons">
+        <button class="approve" onclick="handleDecision(true)">승인</button>
+        <button class="reject" onclick="handleDecision(false)">거절</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("jwtToken");
+    const urlParams = new URLSearchParams(window.location.search);
+    const idx = urlParams.get("idx");
+
+    let currentItem = null;
+
+    async function fetchDetail() {
+      if (!token || !idx) {
+        document.getElementById("info").innerHTML = "<p>토큰 또는 idx 없음</p>";
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://192.168.0.7:5000/admin/check-modi-address/${idx}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await res.json();
+
+        console.log("상세 응답 데이터:", data);
+
+        const item = data.modiReq || data.data || data;
+        const detail = item.licenceInfo || item;
+
+        currentItem = detail;
+
+        if (!detail || !detail.businessmanName) {
+          document.getElementById("info").innerHTML = "<p>데이터 형식 오류</p>";
+          return;
+        }
+
+        // 상태 텍스트 및 클래스 결정
+        let stateText = '';
+        let stateClass = '';
+        let reasonHtml = '';
+
+        if (detail.state === 1) {  // 심사중
+          stateText = '심사중';
+          stateClass = 'state-1';
+          reasonHtml = `<p><strong>사유:</strong> ${detail.reason || '-'}</p>`;
+        } else if (detail.state === 2) {  // 승인됨
+          stateText = '승인됨';
+          stateClass = 'state-2';
+
+          // 승인일 정보는 reason 필드에서 "승인일: ..." 형식으로 저장되어 있다고 가정
+          // 없으면 createAt으로 대체
+          const approveDate = detail.reason?.startsWith('승인일:') 
+            ? detail.reason.replace('승인일: ', '') 
+            : new Date(detail.createAt).toLocaleString();
+          reasonHtml = `<p><strong>승인일:</strong> ${approveDate}</p>`;
+        } else if (detail.state === 3) {  // 거절됨
+          stateText = '거절됨';
+          stateClass = 'state-3';
+          reasonHtml = `<p><strong>사유:</strong> ${detail.reason || '-'}</p>`;
+        } else {
+          stateText = '알 수 없음';
+          stateClass = '';
+          reasonHtml = `<p><strong>사유:</strong> ${detail.reason || '-'}</p>`;
+        }
+
+        document.getElementById("info").innerHTML = `
+          <p><strong>가게명:</strong> ${detail.name}</p>
+          <p><strong>사업자명:</strong> ${detail.businessmanName}</p>
+          <p><strong>대표자명:</strong> ${detail.presidentName}</p>
+          <p><strong>이메일:</strong> ${detail.businessEmail}</p>
+          <p><strong>주소:</strong> ${detail.address}</p>
+          <p><strong>사업자 번호:</strong> ${detail.coNumber}</p>
+          <p><strong>신청일:</strong> ${new Date(detail.createAt).toLocaleString()}</p>
+          <p class="${stateClass}"><strong>상태:</strong> ${stateText}</p>
+          ${reasonHtml}
+        `;
+
+        const pdfUrl = `http://192.168.0.7:5000${detail.licence}`;
+        document.getElementById("pdfViewer").src = pdfUrl;
+
+        // 심사중일 때만 승인/거절 섹션 보여주기
+        if (detail.state === 1) {
+          document.getElementById("reviewSection").style.display = "block";
+        } else {
+          document.getElementById("reviewSection").style.display = "none";
+        }
+
+      } catch (err) {
+        console.error("상세 정보 로딩 실패:", err);
+        document.getElementById("info").innerHTML = "<p>데이터 요청 실패</p>";
+      }
+    }
+
+    async function handleDecision(isApprove) {
+      if (!currentItem) {
+        alert("상세 데이터가 없습니다.");
+        return;
+      }
+
+      const reasonInput = document.getElementById("reasonInput");
+      let reason = reasonInput.value.trim();
+
+      if (isApprove) {
+        // 승인 시 reason이 비어있으면 자동으로 현재 날짜와 시간 입력
+        if (!reason) {
+          const now = new Date();
+          reason = `승인일: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+          reasonInput.value = reason; // 입력창에도 표시
+        }
+      } else {
+        // 거절 시 reason이 비어있으면 요청 차단
+        if (!reason) {
+          alert("거절 사유를 반드시 입력해야 합니다.");
+          reasonInput.focus();
+          return;
+        }
+      }
+
+      const decision = isApprove ? 2 : 3;
+
+      try {
+        const res = await fetch(`http://192.168.0.7:5000/admin/check-modi-address/${currentItem.idx}/review`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            decision: decision,
+            reason: reason
+          }),
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+          throw new Error(result.message || "서버 에러");
+        }
+
+        alert(isApprove ? "승인 완료!" : "거절 완료!");
+        window.location.href = "modi-manage.html";
+
+      } catch (err) {
+        console.error("처리 실패:", err);
+        alert("처리 중 오류 발생: " + err.message);
+      }
+    }
+
+    fetchDetail();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>관리자 메뉴</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      display: flex;
+      gap: 30px;
+    }
+    .box {
+      background-color: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 200px;
+    }
+    .box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .box h2 {
+      margin: 0 0 10px;
+      color: #0091da;
+    }
+    .box p {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="box" onclick="location.href='admin.html'">
+      <h2>사업자 승인 관리</h2>
+      <p>사업자 승인 목록</p>
+    </div>
+    <div class="box" onclick="location.href='modi-manage.html'">
+      <h2>사업자 주소 변경</h2>
+      <p>사업자 주소 변경 요청 관리</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>관리자 대시보드</title>
+  <title>사업자 승인 요청 리스트</title>
   <style>
     body {
       font-family: sans-serif;
@@ -15,6 +15,7 @@
       align-items: center;
     }
     .dashboard-container {
+      position: relative; /* 절대 위치 지정 기준 */
       background-color: white;
       padding: 30px;
       border-radius: 10px;
@@ -43,6 +44,9 @@
       background-color: #e0e0e0;
     }
     .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
       padding: 10px 20px;
       background-color: #0091da;
       border: none;
@@ -70,7 +74,9 @@
 </head>
 <body>
   <div class="dashboard-container">
-    <h2>관리자 대시보드</h2>
+    <button class="logout-btn" id="logoutBtn">로그아웃</button>
+
+    <h2>사업자 승인 요청 리스트</h2>
     
     <div id="userInfo" class="user-info">
       <!-- 사용자 정보가 여기 표시됩니다 -->
@@ -79,8 +85,6 @@
     <div id="licenceList" class="licence-list">
       <!-- 상업자 리스트가 여기에 표시됩니다 -->
     </div>
-
-    <button class="logout-btn" id="logoutBtn">로그아웃</button>
   </div>
 
   <script>
@@ -95,7 +99,7 @@
       }
     
       try {
-        const response = await fetch('http://172.30.1.9:5000/admin/check-licence', {
+        const response = await fetch('http://192.168.0.7:5000/admin/check-licence', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -164,7 +168,7 @@
       }
 
       try {
-        const response = await fetch(`http://172.30.1.9:5000/admin/check-licence/${licenceId}`, {
+        const response = await fetch(`http://192.168.0.7:5000/admin/check-licence/${licenceId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

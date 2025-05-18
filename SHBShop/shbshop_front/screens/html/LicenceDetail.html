@@ -85,7 +85,7 @@
       }
 
       try {
-        const response = await fetch(`http://172.30.1.9:5000/admin/check-licence/${licenceId}`, {
+        const response = await fetch(`http://192.168.0.7:5000/admin/check-licence/${licenceId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -146,7 +146,7 @@
         }
 
         if (data.licenceInfo.licence) {
-          const pdfUrl = `http://172.30.1.9:5000${data.licenceInfo.licence}`;
+          const pdfUrl = `http://192.168.0.7:5000${data.licenceInfo.licence}`;
           renderPDF(pdfUrl);
         }
 
@@ -200,7 +200,7 @@
       }
 
       try {
-        const response = await fetch(`http://172.30.1.9:5000/admin/check-licence/${licenceId}/review`, {
+        const response = await fetch(`http://192.168.0.7:5000/admin/check-licence/${licenceId}/review`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,

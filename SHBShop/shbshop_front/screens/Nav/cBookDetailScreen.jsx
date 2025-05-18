@@ -4,6 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 const { width } = Dimensions.get('window');
@@ -29,6 +32,51 @@ const pBookDetailScreen = ({route, navigation}) => {
   });
 
   const viewConfigRef = useRef({ viewAreaCoveragePercentThreshold: 50 });
+
+  const handleLike = async () => {
+     try {
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    const response = await axios.post(
+      `${API_URL}/book/sb/${userId}/${data.book.sid}/${data.book.bid}/add-basket`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${Token}`,
+        },
+      }
+    );
+    console.log("장바구니 추가성공")
+  } catch (error) {
+    console.error('오류 발생:', error);
+    Alert.alert("장바구니 추가 실패", "다시 시도해주세요.");
+  }
+  }
+
+  const handleUnlike = async () => {
+  try {
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+
+    const response = await axios.delete(
+      `${API_URL}/book/sb/${userId}/${data.book.sid}/${data.book.bid}/delete-basket`,
+      {
+        headers: {
+          Authorization: `Bearer ${Token}`,
+        },
+      }
+    );
+
+    console.log("장바구니 제거 성공");
+  } catch (error) {
+    console.error('오류 발생:', error.response?.data || error.message);
+    Alert.alert("장바구니 제거 실패", "다시 시도해주세요.");
+  }
+};
 
   return (
     <SafeAreaProvider>
@@ -87,13 +135,23 @@ const pBookDetailScreen = ({route, navigation}) => {
         {/* 가격 , 좋아요 */}
         <View style={styles.bottomRow}>
           <View style={styles.thumb}>
-            <TouchableOpacity style={{ marginRight: 15 }} onPress={() => setThumbsUp(!thumbsUp)}>
-              <Ionicons
-                name={thumbsUp ? 'heart' : 'heart-outline'}
-                size={28}
-                color={thumbsUp ? 'red' : 'black'}
-              />
-            </TouchableOpacity>
+            <TouchableOpacity
+  onPress={() => {
+    if (thumbsUp) {
+      handleUnlike();  
+    } else {
+      handleLike();    
+    }
+    setThumbsUp(!thumbsUp); 
+  }}
+>
+  <Ionicons
+    name={thumbsUp ? 'heart' : 'heart-outline'}
+    size={28}
+    color={thumbsUp ? 'red' : 'black'}
+  />
+</TouchableOpacity>
+
             <Text style={styles.priceText}>{data.book.price.toLocaleString()}원</Text>
           </View>
           <TouchableOpacity style={styles.chatbutton} onPress={() => {console.log(data)}}>
