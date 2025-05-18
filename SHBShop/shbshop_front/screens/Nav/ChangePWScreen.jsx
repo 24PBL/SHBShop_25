@@ -94,7 +94,14 @@ const ChangePWScreen = ({navigation}) => {
 
       />
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : <Text style={{color: '#0091da', fontSize: 13, marginLeft: 40}}> 비밀번호가 일치합니다. </Text>}
+      {error ? (
+  <Text style={styles.errorText}>{error}</Text>
+) : newPwd && confirmPwd ? (
+  <Text style={{ color: '#0091da', fontSize: 13, marginLeft: 40 }}>
+    비밀번호가 일치합니다.
+  </Text>
+) : null}
+
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: isValid && !error ? '#0091DA' : '#ccc' }]}

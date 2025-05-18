@@ -152,6 +152,27 @@ const uploadProfileImage = async (uri) => {
     }, [userData])
   );
 
+  const goToAddCart = async () => {
+    try {
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/show-basket`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+      const result = await response.json();
+      console.log(result);
+      console.log("이거맞나")
+      /*navigation.navigate("Approve", { data: { result } });*/
+    } catch (error) {
+      console.error('오류 발생:', error);
+    }
+  };
+
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
@@ -187,7 +208,7 @@ const uploadProfileImage = async (uri) => {
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('AddCart')}>
+            <TouchableOpacity style={styles.menuItem} onPress={goToAddCart}>
               <Text style={styles.menuText}>장바구니</Text>
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>
