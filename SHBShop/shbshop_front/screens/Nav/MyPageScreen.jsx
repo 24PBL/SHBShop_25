@@ -172,6 +172,27 @@ const uploadProfileImage = async (uri) => {
     }
   };
 
+  const goToBuyList = async () => {
+    try {
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+      const result = await response.json();
+      console.log(result);
+      navigation.navigate('BuyList', { receiptData: result });
+
+    } catch (error) {
+      console.error('오류 발생:', error);
+    }
+  };
+
+
 
   return (
     <SafeAreaProvider>
@@ -213,7 +234,7 @@ const uploadProfileImage = async (uri) => {
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('BuyList')}>
+            <TouchableOpacity style={styles.menuItem} onPress={goToBuyList}>
               <Text style={styles.menuText}>구매 내역</Text>
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>

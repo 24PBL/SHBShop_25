@@ -235,10 +235,10 @@ def add_sbk_in_basket(decoded_user_id, user_type, userId, shopId, bookId):
     
     if (user_type == UserType.PERSONAL.value):
         basketInfo = db.session.query(Pbasket2s).filter_by(pid=userId, bid=bookId).first()
-        new_basket = Pbasket2s(pid=decoded_user_id, bid=bookId, shopId=bookInfo.sid)
+        new_basket = Pbasket2s(pid=decoded_user_id, bid=bookId, shopid=bookInfo.sid)
     elif (user_type == UserType.COMMERCIAL.value):
         basketInfo = db.session.query(Cbasket2s).filter_by(cid=userId, bid=bookId).first()
-        new_basket = Cbasket2s(cid=decoded_user_id, bid=bookId, shopId=bookInfo.sid)
+        new_basket = Cbasket2s(cid=decoded_user_id, bid=bookId, shopid=bookInfo.sid)
     else:
        return jsonify({"error": "잘못된 접근"}), 403
     

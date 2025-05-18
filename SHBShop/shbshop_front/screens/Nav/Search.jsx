@@ -116,7 +116,7 @@ const Search = ({ navigation }) => {
         },
       });
       const data = await response.json();
-      navigation.navigate('pBookDetailScreen', {storedata : {data}});
+      navigation.navigate('pBookDetailScreen', { storedata: data, bid });
       
     }
 
