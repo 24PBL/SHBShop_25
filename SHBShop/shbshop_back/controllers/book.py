@@ -12,6 +12,10 @@ class UserType(Enum):
     COMMERCIAL = 2
     ADMIN = 3
 
+class basketExist(Enum):
+    EXIST = 1
+    NO = 2
+
 @book_bp.route("/pb/<int:userId>/<int:sellerType>/<int:bookId>", methods=["GET"])
 @token_required
 def show_book_info(decoded_user_id, user_type, userId, sellerType, bookId):
@@ -27,18 +31,32 @@ def show_book_info(decoded_user_id, user_type, userId, sellerType, bookId):
     
     if sellerType == UserType.PERSONAL.value:
         book = db.session.query(Pbooktrade).filter_by(bid=bookId).first()
+        if not book:
+            return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
         seller = db.session.query(Personal).filter_by(pid=book.pid).first()
+        if user_type == UserType.PERSONAL.value:
+            basketInfo = db.session.query(Pbasket2p).filter_by(pid=userId, bid=bookId).first()
+        else:
+            basketInfo = db.session.query(Cbasket2p).filter_by(cid=userId, bid=bookId).first()
     elif sellerType == UserType.COMMERCIAL.value:
         book = db.session.query(Cbooktrade).filter_by(bid=bookId).first()
+        if not book:
+            return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
         seller = db.session.query(Commercial).filter_by(cid=book.cid).first()
+        if user_type == UserType.PERSONAL.value:
+            basketInfo = db.session.query(Pbasket2c).filter_by(pid=userId, bid=bookId).first()
+        else:
+            basketInfo = db.session.query(Cbasket2c).filter_by(cid=userId, bid=bookId).first()
     else:
         return jsonify({"error": "잘못된 셀러 유형"}), 404
     
-    if not book:
-        return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
-    
     if not seller:
         return jsonify({"error": "판매자 정보가 존재하지 않습니다."}), 404
+    
+    if not basketInfo:
+        basket_exist = basketExist.NO.value
+    else:
+        basket_exist = basketExist.EXIST.value
     
     bookInfo = {
                 "title": book.title,
@@ -75,6 +93,7 @@ def show_book_info(decoded_user_id, user_type, userId, sellerType, bookId):
         "decoded_user_id": decoded_user_id,
         "user_type": user_type,
         "region": userInfo.region,
+        "basket_exist": basket_exist,
         "seller": sellerInfo,
         "book": bookInfo
     }), 200
@@ -87,23 +106,27 @@ def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
     
     if user_type == UserType.PERSONAL.value:
         userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+        basketInfo = db.session.query(Pbasket2s).filter_by(pid=userId, bid=bookId).first()
     elif user_type == UserType.COMMERCIAL.value:
         userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+        basketInfo = db.session.query(Cbasket2s).filter_by(cid=userId, bid=bookId).first()
     else:
         return jsonify({"error": "잘못된 유저 유형"}), 404
     
-    book = db.session.query(Sbooktrade).filter_by(bid=bookId).first()
-    shop = db.session.query(Shop).filter_by(sid=book.sid).first()
-    seller = db.session.query(Commercial).filter_by(cid=shop.cid).first()
-    
+    book = db.session.query(Sbooktrade).filter_by(bid=bookId, sid=shopId).first()
     if not book:
         return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
-    
+    shop = db.session.query(Shop).filter_by(sid=shopId).first()
+    if not shop:
+        return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
+    seller = db.session.query(Commercial).filter_by(cid=shop.cid).first()
     if not seller:
         return jsonify({"error": "판매자 정보가 존재하지 않습니다."}), 404
     
-    if not shop:
-        return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
+    if not basketInfo:
+        basket_exist = basketExist.NO.value
+    else:
+        basket_exist = basketExist.EXIST.value
     
     bookInfo = {
                 "bid": book.bid,
@@ -142,6 +165,7 @@ def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
         "decoded_user_id": decoded_user_id,
         "user_type": user_type,
         "region": userInfo.region,
+        "basket_exist": basket_exist,
         "seller": sellerInfo,
         "book": bookInfo,
         "shop": shopInfo
