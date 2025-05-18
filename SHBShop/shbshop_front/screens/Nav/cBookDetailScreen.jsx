@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -77,6 +77,14 @@ const pBookDetailScreen = ({route, navigation}) => {
     Alert.alert("장바구니 제거 실패", "다시 시도해주세요.");
   }
 };
+
+useEffect(() => {
+      if (data?.basket_exist == 1) {
+        setThumbsUp(true);
+      } else {
+        setThumbsUp(false);
+      }
+    }, [data?.basket_exist]);
 
   return (
     <SafeAreaProvider>

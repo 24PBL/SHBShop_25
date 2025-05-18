@@ -126,7 +126,7 @@ const StoreDetailScreen = ({route, navigation}) => {
       {/* 서점 정보 */}
       <View style={styles.infoSection}>
         <View style={styles.profileRow}>
-          <View style={styles.avatar} />
+          <Image style={styles.avatar} source={{uri : API_URL + data.shop.shopimg1}}/>
           <View style={styles.profileText}>
             <Text style={styles.storeName}>{data.shop.shopName}</Text>
             <Text style={styles.address}>{data.shop.address}</Text>

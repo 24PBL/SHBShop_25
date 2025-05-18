@@ -165,8 +165,7 @@ const uploadProfileImage = async (uri) => {
       });
       const result = await response.json();
       console.log(result);
-      console.log("이거맞나")
-      /*navigation.navigate("Approve", { data: { result } });*/
+      navigation.navigate("AddCart", { data: { result } });
     } catch (error) {
       console.error('오류 발생:', error);
     }

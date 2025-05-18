@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -56,12 +56,11 @@ const pBookDetailScreen = ({route, navigation}) => {
   }
 
   const handleUnlike = async () => {
-  try {
+    try {
     const Data = await AsyncStorage.getItem('UserData');
     const userData = JSON.parse(Data);
     const userId = userData.decoded_user_id;
     const Token = await AsyncStorage.getItem('jwtToken');
-
     const response = await axios.delete(
       `${API_URL}/book/pb/${userId}/${data.seller.userType}/${bid}/delete-basket`,
       {
@@ -70,14 +69,20 @@ const pBookDetailScreen = ({route, navigation}) => {
         },
       }
     );
-
-    console.log("장바구니 제거 성공");
+    console.log("장바구니 제거 성공")
   } catch (error) {
-    console.error('오류 발생:', error.response?.data || error.message);
+    console.error('오류 발생:', error);
     Alert.alert("장바구니 제거 실패", "다시 시도해주세요.");
   }
-};
+  }
 
+  useEffect(() => {
+      if (data?.basket_exist == 1) {
+        setThumbsUp(true);
+      } else {
+        setThumbsUp(false);
+      }
+    }, [data?.basket_exist]);
 
   return (
     <SafeAreaProvider>
