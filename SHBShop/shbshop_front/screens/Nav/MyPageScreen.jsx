@@ -169,6 +169,7 @@ const MyPageScreen = ({ navigation }) => {
         },
       });
       const result = await response.json();
+      console.log(result);
       navigation.navigate("AddCart", { data: { result } });
     } catch (error) {
       console.error('오류 발생:', error);

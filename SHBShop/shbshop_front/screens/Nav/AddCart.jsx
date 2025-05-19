@@ -26,6 +26,7 @@ const AddCart = ({ navigation, route }) => {
   const [bookList, setBookList] = useState(sortByDateDesc(result.book_list || []));
   const [sbookList, setSbookList] = useState(sortByDateDesc(result.sbook_list || []));
 
+
   const goToBookDetail = async (sellType, bid) => {
     try {
       const Data = await AsyncStorage.getItem('UserData');
@@ -127,7 +128,7 @@ const AddCart = ({ navigation, route }) => {
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20 }}>
           {/* 개인 거래 책 리스트 */}
           {bookList.map((item) => (
-            <TouchableOpacity key={item.idx} style={styles.bookItem} onPress={() => goToBookDetail(item.sellerType, item.bid)}>
+            <TouchableOpacity key={`p-${item.sellerType}-${item.bid}`} style={styles.bookItem} onPress={() => goToBookDetail(item.sellerType, item.bid)}>
               <Image
                 source={{ uri: API_URL + item.bookimg }}
                 style={styles.bookImage}
