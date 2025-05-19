@@ -787,9 +787,21 @@ def get_my_page(decoded_user_id, user_type, userId):
             isShopExist = CoUserType.SHOPUSER.value
             shop_info = {
                 "shopId": shopData.sid,
+                "presidentName": shopData.presidentName,
+                "businessmanName": shopData.businessmanName,
                 "shopName": shopData.shopName,
+                "shoptel": shopData.shoptel,
+                "businessEmail": shopData.businessEmail,
                 "address": shopData.address,
-                "region": shopData.region
+                "region": shopData.region,
+                "open": shopData.open,
+                "close": shopData.close,
+                "holiday": shopData.holiday,
+                "shopimg1": shopData.shopimg1,
+                "shopimg2": shopData.shopimg2,
+                "shopimg3": shopData.shopimg3,
+                "etc": shopData.etc,
+                "createAt": shopData.createAt.isoformat()
             }
     else:
         return jsonify({"error": "잘못된 유저 유형"}), 404
