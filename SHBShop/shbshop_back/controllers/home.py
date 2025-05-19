@@ -774,8 +774,23 @@ def get_my_page(decoded_user_id, user_type, userId):
     
     if user_type == UserType.PERSONAL.value:
         userData = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+        isShopExist = 3
+        shop_info = {}
     elif user_type == UserType.COMMERCIAL.value:
         userData = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+    
+        shopData = db.session.query(Shop).filter_by(cid=decoded_user_id).first()
+        if not shopData:
+            isShopExist = CoUserType.JUSTUSER.value
+            shop_info = {}
+        else:
+            isShopExist = CoUserType.SHOPUSER.value
+            shop_info = {
+                "shopId": shopData.sid,
+                "shopName": shopData.shopName,
+                "address": shopData.address,
+                "region": shopData.region
+            }
     else:
         return jsonify({"error": "잘못된 유저 유형"}), 404
 
@@ -790,7 +805,7 @@ def get_my_page(decoded_user_id, user_type, userId):
         "profile": userData.img
     }
 
-    return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo}), 200
+    return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo, "isShopExist": isShopExist, "shop_info": shop_info}), 200
 
 @home_bp.route("/<int:userId>/my-page/check-my-commer", methods=["GET"])
 @token_required
