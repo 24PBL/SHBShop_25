@@ -1,112 +1,139 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useRef } from 'react';
+import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 
-const StoreInventoryView = ({ route }) => {
-  const { storeId = 'test-id', storeName = '테스트 매장' } = route?.params || {};
-  const [inventory, setInventory] = useState([]);
-  const [loading, setLoading] = useState(true);
+const StoreInventoryView = ({ route, navigation }) => {
+  const { storedata } = route.params;
+  const data = storedata.data;
+  const API_URL = Constants.expoConfig.extra.API_URL;
+  const userId = data.decoded_user_id;
+  const shopId = data.shop_info.shopId;
 
-  useEffect(() => {
-    // 테스트용: 데이터 없이 1초 후 로딩 종료
-    const timer = setTimeout(() => {
-      setInventory([]); // 데이터 없음 상태
-      setLoading(false);
-    }, 1000);
+  const [inventory, setInventory] = useState(data.sbook_list || []);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-    return () => clearTimeout(timer);
-  }, []);
-
+  const onEndReachedCalledDuringMomentum = useRef(false);
 
   const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
-      <View style={styles.itemInfo}>
+    <TouchableOpacity style={styles.itemContainer} onPress={() => handleItemClick(item)}>
+      <Image source={{ uri: `${API_URL}${item.bookimg}` }} style={styles.image} />
+      <View style={styles.textContainer}>
         <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.quantity}>수량: {item.quantity}</Text>
-        <Text style={styles.price}>{item.price}원</Text>
+        <Text style={styles.author}>{item.author}</Text>
+        {/* 등록일 추가 */}
+        {item.createAt && (
+          <Text style={styles.registrationDate}>등록일: {new Date(item.createAt).toLocaleDateString()}</Text>
+        )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>{storeName} 재고 목록</Text>
+  const handleItemClick = (item) => {
+    console.log(`Clicked on item: ${item.title}`);
+    // navigation.navigate('BookDetailScreen', { itemId: item.id });
+  };
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#000" />
-      ) : inventory.length === 0 ? (
-        <Text style={styles.noData}>재고가 없습니다.</Text>
-      ) : (
+  const fetchMoreBooks = async () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    const finalBid = inventory[inventory.length - 1]?.bid;
+
+    try {
+      const response = await fetch(`${API_URL}/shop/${userId}/${shopId}/check-stock/${finalBid}`);
+      const result = await response.json();
+
+      if (result.sbook_list && result.sbook_list.length > 0) {
+        setInventory((prev) => [...prev, ...result.sbook_list]);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('추가 데이터 로딩 실패:', error);
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back-outline" size={24} />
+          </TouchableOpacity>
+          <Text style={styles.titleHeader}>매장 재고 조회</Text>
+        </View>
+
         <FlatList
           data={inventory}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.bid.toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          onEndReached={fetchMoreBooks}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={loading ? <ActivityIndicator size="small" color="#000" /> : null}
+          contentContainerStyle={styles.listContainer}
         />
-      )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
+    backgroundColor: 'white',
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 16,
-    textAlign: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
-  list: {
-    paddingBottom: 20,
+  titleHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 10,
   },
   itemContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-    paddingBottom: 12,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+    alignItems: 'center',
+    borderBottomWidth: 0.3,
   },
-  itemImage: {
-    width: 60,
-    height: 90,
-    marginRight: 16,
-    borderRadius: 5,
-    backgroundColor: '#ddd',
+  image: {
+    width: 70,
+    height: 100,
+    resizeMode: 'cover',
+    marginRight: 10,
+    borderRadius: 4,
   },
-  itemInfo: {
-    flex: 1,
+  textContainer: {
+    flexShrink: 1,
     justifyContent: 'center',
   },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-  quantity: {
+  author: {
+    fontSize: 14,
+    color: '#666',
     marginTop: 4,
-    color: '#555',
   },
-  price: {
-    marginTop: 4,
-    color: '#000',
+  registrationDate: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 6,
   },
-  noData: {
-    marginTop: 40,
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#888',
+  listContainer: {
+    padding: 10,
   },
 });
 

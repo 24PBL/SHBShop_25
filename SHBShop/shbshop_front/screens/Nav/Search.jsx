@@ -1,300 +1,166 @@
-// 생략된 import들 포함
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Switch, Alert, ScrollView, Image } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = Constants.expoConfig.extra.API_URL;
+const StoreInventoryView = ({ navigation, route }) => {
+  const API_URL = Constants.expoConfig.extra.API_URL;
+  const { storedata } = route.params;
 
-const Search = ({ navigation }) => {
-  const [SearchText, setSearchText] = useState("");
-  const [isRegionFilterOn, setIsRegionFilterOn] = useState(false);
-  const [regionText, setRegionText] = useState("");
-  const [noregion, setnoregion] = useState("");
-  const [bookdata, setbookdata] = useState([]);
-  const [personalBooks, setPersonalBooks] = useState([]);
-  const [businessBooks, setBusinessBooks] = useState([]);
+  const [books, setBooks] = useState(storedata.sbook_list || []);
+  const [loading, setLoading] = useState(false);
+  const [fetchingMore, setFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [isAuthError, setIsAuthError] = useState(false);
 
-  const goToback = () => navigation.goBack();
+  const userId = storedata.decoded_user_id;
+  const shopId = storedata.shop_info?.shopId;
+
+  const fetchMoreBooks = useCallback(async () => {
+    if (fetchingMore || !hasMore || isAuthError) return;
+
+    setFetchingMore(true);
+
+    try {
+      const lastBid = books.length ? books[books.length - 1].bid : 0;
+      const url = `${API_URL}/shop/${userId}/${shopId}/check-stock/${lastBid}`;
+
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        Alert.alert('인증 오류', '로그인이 필요합니다.');
+        setHasMore(false);
+        setIsAuthError(true);
+        setFetchingMore(false);
+        return;
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          Alert.alert('인증 오류', '로그인이 필요합니다.');
+          setHasMore(false);
+          setIsAuthError(true);
+        } else {
+          Alert.alert('오류', '서버 응답 오류입니다.');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        setBooks(prev => [...prev, ...data]);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error(error);
+      if (!hasMore) return;
+      Alert.alert('오류', '데이터를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setFetchingMore(false);
+      setLoading(false);
+    }
+  }, [fetchingMore, hasMore, books, API_URL, userId, shopId, isAuthError]);
 
   useEffect(() => {
-    if (!isRegionFilterOn) {
-      setRegionText('');
-      if (regionText === "") {
-        setnoregion("noneRestriction");
-      }
-    }
-  }, [isRegionFilterOn]);
+    setLoading(false);
+  }, []);
 
-  const BookSearch = async () => {
-    if (!SearchText) {
-      Alert.alert("검색어 없음", "검색어를 입력하세요.");
-      return;
-    }
+  const onPressItem = (isbn) => {
+    navigation.navigate('BookDetailList', { isbn, allBooks: books });
+  };
 
-    const Data = await AsyncStorage.getItem('UserData');
-    const userData = JSON.parse(Data);
-    const userId = userData.decoded_user_id;
-    const Token = await AsyncStorage.getItem('jwtToken');
+  const renderItem = ({ item }) => (
+    <TouchableOpacity style={styles.itemContainer} onPress={() => onPressItem(item.isbn)}>
+      <Image
+        source={{ uri: `${API_URL}${item.bookimg}` }}
+        style={styles.itemImage}
+        resizeMode="cover"
+      />
+      <View style={styles.itemInfo}>
+        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+          {item.title}
+        </Text>
+        <Text style={styles.author}>{item.author}</Text>
+        <Text style={styles.createAt}>등록일: {item.createAt?.slice(0, 10)}</Text>
+      </View>
+      <Text style={styles.bid}>Bid: {item.bid}</Text>
+    </TouchableOpacity>
+  );
 
-    if (Token) {
-      try {
-        let url = isRegionFilterOn
-          ? `${API_URL}/home/${userId}/search-book?keyword=${SearchText}&region=${regionText}`
-          : `${API_URL}/home/${userId}/search-book?keyword=${SearchText}&region=${noregion}`;
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Token}`,
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setbookdata(data.bookList);
-          const personal = data.bookList;
-          const business = data.sbookList;
-          setPersonalBooks(personal);
-          setBusinessBooks(business);
-          console.log(personal)
-        } else {
-          console.error('API 요청 실패:', response.status);
-        }
-      } catch (error) {
-        console.error('Fetch 오류:', error);
-      }
-    } else {
-      console.log('토큰이 없습니다.');
+  const handleEndReached = () => {
+    if (!fetchingMore && hasMore && !isAuthError) {
+      fetchMoreBooks();
     }
   };
 
-  const prenderBookList = (list) =>
-    list.slice(0, 3).map((book, index) => (
-      <TouchableOpacity key={index} style={styles.bookItem} onPress={()=> goToBookDetail(book.userType, book.bid)}>
-        <Image
-          source={{ uri: `${API_URL}/${book.bookimg}` }}
-          style={styles.bookImage}
-          resizeMode="cover"
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{book.title}</Text>
-          <Text style={{ fontSize: 14, color: '#555', marginTop: 5 }}>{book.price}원</Text>
-        </View>
-      </TouchableOpacity>
-    ));
-
-    const crenderBookList = (list) =>
-      list.slice(0, 3).map((book, index) => (
-        
-        <TouchableOpacity key={index} style={styles.bookItem} onPress={()=> CommergoToBookDetail(book.sid,book.bid)}>
-          <Image
-            source={{ uri: `${API_URL}/${book.bookimg}` }}
-            style={styles.bookImage}
-            resizeMode="cover"
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{book.title}</Text>
-            <Text style={{ fontSize: 14, color: '#555', marginTop: 5 }}>{book.price}원</Text>
-          </View>
-          <Text></Text>
-        </TouchableOpacity>
-      ));
-
-    const goToBookDetail = async (sellType, bid) =>{
-      const Data = await AsyncStorage.getItem('UserData');
-      const userData = JSON.parse(Data);
-      const userId = userData.decoded_user_id;
-      const Token = await AsyncStorage.getItem('jwtToken');
-      const response = await fetch(`${API_URL}/book/pb/${userId}/${sellType}/${bid}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Token}`,
-        },
-      });
-      const data = await response.json();
-      navigation.navigate('pBookDetailScreen', { storedata: data, bid });
-      
-    }
-
-    const CommergoToBookDetail = async (sid, bid) =>{
-      const Data = await AsyncStorage.getItem('UserData');
-      const userData = JSON.parse(Data);
-      const userId = userData.decoded_user_id;
-      const Token = await AsyncStorage.getItem('jwtToken');
-      const response = await fetch(`${API_URL}/book/sb/${userId}/${sid}/${bid}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Token}`,
-        },
-      });
-      const data = await response.json();
-      console.log(data)
-      navigation.navigate('cBookDetailScreen', {storedata : {data}});
-      
-    }
-
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ backgroundColor: 'white', flex: 1 }}>
-        <View style={styles.container}>
-          {/* 검색창 */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity onPress={goToback}>
-              <Ionicons name="chevron-back-outline" size={23} color="gray" style={{ marginLeft: -20, paddingRight: 10 }} />
-            </TouchableOpacity>
-            <View style={styles.searchBox}>
-              <Ionicons name="search-outline" size={23} color="gray" style={{ paddingLeft: 10 }} />
-              <TextInput
-                style={styles.searchInput}
-                onChangeText={setSearchText}
-                value={SearchText}
-                placeholder="책 제목을 입력하세요"
-                placeholderTextColor="#999"
-              />
-              <TouchableOpacity style={styles.searchBtn} onPress={BookSearch}>
-                <Text style={{ fontWeight: 'bold', color: 'white' }}>검색</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* 지역 필터 */}
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>지역 설정</Text>
-            <Switch value={isRegionFilterOn} onValueChange={setIsRegionFilterOn} />
-          </View>
-
-          {isRegionFilterOn && (
-            <TextInput
-              style={styles.regionInput}
-              placeholder="지역명을 입력하세요"
-              value={regionText}
-              onChangeText={setRegionText}
-            />
-          )}
-
-          {/* 검색 결과 */}
-          
-<ScrollView style={{ width: '90%', marginTop: 20 }} showsVerticalScrollIndicator={false}>
-  {/* 개인 판매자 */}
-  <Text style={styles.sectionTitle}>개인 판매자</Text>
-  {personalBooks.length > 0 && (
-    <TouchableOpacity onPress={() => navigation.navigate('pMoreList', { list: personalBooks, title: "개인 판매자" })}>
-      <Text style={styles.moreBtn}>더보기</Text>
-    </TouchableOpacity>
-  )}
-  {personalBooks.length > 0 ? (
-    prenderBookList(personalBooks)
-  ) : (
-    <Text style={styles.noResultText}>개인 판매자 책이 없습니다.</Text>
-  )}
-  
-
-  {/* 사업자 판매자 */}
-  <Text style={styles.sectionTitle}>사업자 판매자</Text>
-  {businessBooks.length > 0 && (
-    <TouchableOpacity onPress={() => navigation.navigate('cMoreList', { list: businessBooks, title: "사업자 판매자" })}>
-      <Text style={styles.moreBtn}>더보기</Text>
-    </TouchableOpacity>
-  )}
-  {businessBooks.length > 0 ? (
-    crenderBookList(businessBooks)
-  ) : (
-    <Text style={styles.noResultText}>사업자 판매자 책이 없습니다.</Text>
-  )}
-  
-</ScrollView>
-
-        </View>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.header}>보유 중인 도서</Text>
+      {loading && !books.length ? (
+        <ActivityIndicator size="large" color="#000" />
+      ) : books.length === 0 ? (
+        <Text style={styles.noData}>등록된 책이 없습니다.</Text>
+      ) : (
+        <FlatList
+          data={books}
+          keyExtractor={(item) => item.bid.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            fetchingMore ? <ActivityIndicator size="small" color="#000" /> : null
+          }
+        />
+      )}
+    </SafeAreaView>
   );
 };
 
-export default Search;
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    paddingTop: 20,
-  },
-  searchBox: {
-    width: '80%',
-    height: 40,
-    backgroundColor: '#E8E8E8',
-    borderRadius: 20,
-    alignItems: 'center',
+  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16 },
+  header: { fontSize: 24, fontWeight: 'bold', marginTop: 20, marginBottom: 16, textAlign: 'center' },
+  list: { paddingBottom: 20 },
+  itemContainer: {
     flexDirection: 'row',
-  },
-  searchInput: {
-    color: 'gray',
-    fontSize: 17,
-    paddingLeft: 10,
-    flex : 1
-  },
-  searchBtn: {
-    backgroundColor: '#0091da',
-    borderRadius: 10,
-    width: 50,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  switchLabel: {
-    fontSize: 16,
-    marginRight: 10,
-  },
-  regionInput: {
-    marginTop: 5,
-    width: '80%',
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-  },
-  bookItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
     borderBottomWidth: 1,
-    borderColor: '#ccc',
-    paddingBottom: 10,
+    borderColor: '#eee',
+    paddingBottom: 12,
+    alignItems: 'center',
   },
-  bookImage: {
-    width: 60,
-    height: 90,
-    marginRight: 15,
-    borderRadius: 5,
-  },
-  sectionTitle: {
-    fontSize: 18,
+  itemImage: { width: 50, height: 75, marginRight: 16, borderRadius: 5, backgroundColor: '#ddd' },
+  itemInfo: { flex: 1.5, justifyContent: 'center' },
+  title: { fontSize: 16, fontWeight: 'bold', flexShrink: 1 },
+  author: { marginTop: 4, fontSize: 14, color: '#333' },
+  createAt: { marginTop: 4, fontSize: 12, color: '#666' },
+  bid: {
+    marginLeft: 10,
+    color: '#555',
     fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 10,
+    position: 'absolute',
+    right: 0,
+    bottom: 5,
   },
-  moreBtn: {
-    color: '#0091da',
-    fontWeight: 'bold',
-    textAlign: 'right',
-    marginBottom: 20,
-  },
-  noResultText: {
-    fontSize: 16,
-    color: 'gray',
-    marginTop: 10,
-    textAlign: 'center',
-  }
-  
+  noData: { marginTop: 40, fontSize: 16, textAlign: 'center', color: '#888' },
 });
+
+export default StoreInventoryView;

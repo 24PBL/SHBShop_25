@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -11,67 +11,65 @@ const API_URL = Constants.expoConfig.extra.API_URL;
 
 const MyPageScreen = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState(null);
-  const [nickname, setNickname] = useState('닉네임'); 
+  const [nickname, setNickname] = useState('닉네임');
   const [bookstoreName, setBookstoreName] = useState('');
-  const [userData, setUserData] = useState(null); 
+  const [userData, setUserData] = useState(null);
+  const [shopId, setShopId] = useState(null);
 
   const pickImage = async () => {
-  const result = await ImagePicker.launchImageLibraryAsync({
-    allowsEditing: true,
-    quality: 1,
-  });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
 
-  if (!result.canceled) {
-  const imageUri = result.assets[0].uri;
-  try {
-    const res = await uploadProfileImage(imageUri); // 서버 응답 받음
-    // 서버가 저장된 이미지 경로를 알려주면 그걸로 바로 상태 변경
-    const fullImageUrl = `${API_URL}${res.img}`;  
-    setSelectedImage(fullImageUrl);
+    if (!result.canceled) {
+      const imageUri = result.assets[0].uri;
+      try {
+        const res = await uploadProfileImage(imageUri);
+        const fullImageUrl = `${API_URL}${res.img}`;
+        setSelectedImage(fullImageUrl);
+        Alert.alert('성공', '프로필 사진이 변경되었습니다.');
+      } catch (error) {
+        Alert.alert('오류', '프로필 사진 변경에 실패했습니다.');
+      }
+    }
+  };
 
-    Alert.alert('성공', '프로필 사진이 변경되었습니다.');
-  } catch (error) {
-    Alert.alert('오류', '프로필 사진 변경에 실패했습니다.');
-  }
-}
+  const uploadProfileImage = async (uri) => {
+    const data = new FormData();
+    const filename = uri.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image';
 
-};
+    data.append('imgfile', {
+      uri,
+      name: filename,
+      type,
+    });
 
-const uploadProfileImage = async (uri) => {
-  const data = new FormData();
-  const filename = uri.split('/').pop();
-  const match = /\.(\w+)$/.exec(filename);
-  const type = match ? `image/${match[1]}` : 'image';
+    if (!userData) throw new Error('유저 정보가 없습니다.');
 
-  data.append('imgfile', {
-    uri,
-    name: filename,
-    type,
-  });
+    const userId = userData.decoded_user_id;
+    const token = await AsyncStorage.getItem('jwtToken');
 
-  const userId = userData.decoded_user_id;
-  const token = await AsyncStorage.getItem('jwtToken');
+    const response = await fetch(`${API_URL}/home/${userId}/my-page/modify-img`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: data,
+    });
 
-  const response = await fetch(`${API_URL}/home/${userId}/my-page/modify-img`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: data,
-  });
+    if (!response.ok) {
+      throw new Error('서버 업로드 실패');
+    }
 
-  if (!response.ok) {
-    throw new Error('서버 업로드 실패');
-  }
-
-  return response.json();
-};
-
+    return response.json();
+  };
 
   const Logout = async () => {
     try {
       await AsyncStorage.removeItem('jwtToken');
-      console.log('로그아웃 성공');
       navigation.navigate("LoginScreen");
     } catch (error) {
       console.error('데이터 삭제 중 오류 발생:', error);
@@ -80,6 +78,7 @@ const uploadProfileImage = async (uri) => {
 
   const goToApprove = async () => {
     try {
+      if (!userData) return;
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
       const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-commer`, {
@@ -90,7 +89,6 @@ const uploadProfileImage = async (uri) => {
         },
       });
       const result = await response.json();
-      console.log(result.cert_list);
       navigation.navigate("Approve", { data: { result } });
     } catch (error) {
       console.error('오류 발생:', error);
@@ -108,7 +106,6 @@ const uploadProfileImage = async (uri) => {
         setUserData(JSON.parse(data));
       }
     };
-
     fetchUserData();
   }, []);
 
@@ -116,9 +113,11 @@ const uploadProfileImage = async (uri) => {
     useCallback(() => {
       const fetchMyPageData = async () => {
         try {
-          if (!userData) return;
+          const storedUserData = await AsyncStorage.getItem('UserData');
+          if (!storedUserData) return;
+          const parsedUserData = JSON.parse(storedUserData);
 
-          const userId = userData.decoded_user_id;
+          const userId = parsedUserData.decoded_user_id;
           const Token = await AsyncStorage.getItem('jwtToken');
 
           const response = await fetch(`${API_URL}/home/${userId}/my-page`, {
@@ -135,7 +134,6 @@ const uploadProfileImage = async (uri) => {
           }
 
           const result = await response.json();
-          console.log('마이페이지 데이터:', result);
 
           if (result.user_info.nickname) setNickname(result.user_info.nickname);
           if (result.user_info.bookstoreName) setBookstoreName(`(${result.user_info.bookstoreName})`);
@@ -143,17 +141,24 @@ const uploadProfileImage = async (uri) => {
             const fullProfileUri = `${API_URL}${result.user_info.profile}`;
             setSelectedImage(fullProfileUri);
           }
+          if (result.shop_info.shopId) setShopId(result.shop_info.shopId);
+          setUserData((prev) => ({
+            ...prev,
+            ...parsedUserData,
+            isShopExist: result.isShopExist,
+          }));
         } catch (error) {
           console.error('유저 데이터 불러오기 오류:', error);
         }
       };
 
       fetchMyPageData();
-    }, [userData])
+    }, [])
   );
 
   const goToAddCart = async () => {
     try {
+      if (!userData) return;
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
       const response = await fetch(`${API_URL}/home/${userId}/my-page/show-basket`, {
@@ -164,7 +169,6 @@ const uploadProfileImage = async (uri) => {
         },
       });
       const result = await response.json();
-      console.log(result);
       navigation.navigate("AddCart", { data: { result } });
     } catch (error) {
       console.error('오류 발생:', error);
@@ -173,6 +177,7 @@ const uploadProfileImage = async (uri) => {
 
   const goToBuyList = async () => {
     try {
+      if (!userData) return;
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
       const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt`, {
@@ -183,15 +188,11 @@ const uploadProfileImage = async (uri) => {
         },
       });
       const result = await response.json();
-      console.log(result);
       navigation.navigate('BuyList', { receiptData: result });
-
     } catch (error) {
       console.error('오류 발생:', error);
     }
   };
-
-
 
   return (
     <SafeAreaProvider>
@@ -223,7 +224,7 @@ const uploadProfileImage = async (uri) => {
           <View style={{ width: 415, height: 5, backgroundColor: '#ddd', position: 'absolute', top: 160 }} />
 
           <View style={styles.menuList}>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={()=>{console.log(shopId)}}>
               <Text style={styles.menuText}>내 판매목록</Text>
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>
@@ -243,8 +244,8 @@ const uploadProfileImage = async (uri) => {
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>
 
-            {userData?.user_type === 2 && (
-              <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ManageStore')}>
+            {userData?.user_type === 2 && userData?.isShopExist === 2 && (
+              <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ManageStore', {shopId : shopId})}>
                 <Text style={styles.menuText}>매장 관리</Text>
                 <Ionicons name="chevron-forward" size={18} color="#000" />
               </TouchableOpacity>

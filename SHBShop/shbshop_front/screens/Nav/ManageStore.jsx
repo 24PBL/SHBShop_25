@@ -7,13 +7,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const  ManageStore = ({navigation}) => {
-
+const  ManageStore = ({navigation, route}) => {
+  const { shopId } = route.params;
   const goToStoreInvenotry = async () =>{
     const Data = await AsyncStorage.getItem('UserData');
     const userData = JSON.parse(Data);
     const userId = userData.decoded_user_id;
     const Token = await AsyncStorage.getItem('jwtToken');
+    
     const response = await fetch(`${API_URL}/shop/${userId}/${shopId}/check-stock`, {
       method: 'GET',
       headers: {
@@ -22,6 +23,7 @@ const  ManageStore = ({navigation}) => {
       },
     });
     const data = await response.json();
+    console.log(data);
     navigation.navigate('StoreInventoryView', {storedata : {data}});
     
   }
@@ -46,7 +48,7 @@ const  ManageStore = ({navigation}) => {
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>
 
-        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
+        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={()=>{console.log(shopId)}}>
           <Text>예약 주문 목록 조회</Text>
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>
