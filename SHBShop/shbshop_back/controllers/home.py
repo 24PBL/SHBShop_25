@@ -1359,7 +1359,7 @@ def get_basket_main(decoded_user_id, user_type, userId):
 
         pbp_results = (
             db.session.query(Pbasket2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Pbasket2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Pbasket2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .order_by(Pbasket2p.idx.desc())
             .all()
@@ -1367,7 +1367,7 @@ def get_basket_main(decoded_user_id, user_type, userId):
 
         pbc_results = (
             db.session.query(Pbasket2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Pbasket2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Pbasket2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .order_by(Pbasket2c.idx.desc())
             .all()
@@ -1375,7 +1375,7 @@ def get_basket_main(decoded_user_id, user_type, userId):
 
         pbs_results = (
             db.session.query(Pbasket2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Pbasket2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Pbasket2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .order_by(Pbasket2s.idx.desc())
             .all()
@@ -1442,7 +1442,7 @@ def get_basket_main(decoded_user_id, user_type, userId):
 
         cbp_results = (
             db.session.query(Cbasket2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Cbasket2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Cbasket2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .order_by(Cbasket2p.idx.desc())
             .all()
@@ -1450,7 +1450,7 @@ def get_basket_main(decoded_user_id, user_type, userId):
 
         cbc_results = (
             db.session.query(Cbasket2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Cbasket2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Cbasket2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .order_by(Cbasket2c.idx.desc())
             .all()
@@ -1458,7 +1458,7 @@ def get_basket_main(decoded_user_id, user_type, userId):
 
         cbs_results = (
             db.session.query(Cbasket2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Cbasket2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Cbasket2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .order_by(Cbasket2s.idx.desc())
             .all()
@@ -1552,7 +1552,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
         userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
         prp_results = (
             db.session.query(Preceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Preceipt2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .order_by(Preceipt2p.rid.desc())
             .limit(6)
@@ -1561,7 +1561,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
 
         prc_results = (
             db.session.query(Preceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Preceipt2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .order_by(Preceipt2c.rid.desc())
             .limit(6)
@@ -1570,7 +1570,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
 
         prs_results = (
             db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .order_by(Preceipt2s.rid.desc())
             .limit(6)
@@ -1642,7 +1642,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
         userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
         crp_results = (
             db.session.query(Creceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Creceipt2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .order_by(Creceipt2p.rid.desc())
             .limit(6)
@@ -1651,7 +1651,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
 
         crc_results = (
             db.session.query(Creceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Creceipt2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .order_by(Creceipt2c.rid.desc())
             .limit(6)
@@ -1660,7 +1660,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
 
         crs_results = (
             db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .order_by(Creceipt2s.rid.desc())
             .limit(6)
@@ -1761,7 +1761,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
         userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
         prp_results = (
             db.session.query(Preceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Preceipt2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(Preceipt2p.rid < fnlPRid)
             .order_by(Preceipt2p.rid.desc())
@@ -1771,7 +1771,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
 
         prc_results = (
             db.session.query(Preceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Preceipt2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(Preceipt2c.rid < fnlCRid)
             .order_by(Preceipt2c.rid.desc())
@@ -1781,7 +1781,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
 
         prs_results = (
             db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(Preceipt2s.rid < fnlSRid)
             .order_by(Preceipt2s.rid.desc())
@@ -1854,7 +1854,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
         userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
         crp_results = (
             db.session.query(Creceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Creceipt2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(Creceipt2p.rid < fnlPRid)
             .order_by(Creceipt2p.rid.desc())
@@ -1864,7 +1864,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
 
         crc_results = (
             db.session.query(Creceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Creceipt2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(Creceipt2c.rid < fnlCRid)
             .order_by(Creceipt2c.rid.desc())
@@ -1874,7 +1874,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
 
         crs_results = (
             db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(Creceipt2s.rid < fnlSRid)
             .order_by(Creceipt2s.rid.desc())
@@ -1983,7 +1983,7 @@ def search_receipt(decoded_user_id, user_type, userId):
         userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
         prp_results = (
             db.session.query(Preceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Preceipt2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(
                 or_(
@@ -2000,7 +2000,7 @@ def search_receipt(decoded_user_id, user_type, userId):
 
         prc_results = (
             db.session.query(Preceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Preceipt2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(
                 or_(
@@ -2017,7 +2017,7 @@ def search_receipt(decoded_user_id, user_type, userId):
 
         prs_results = (
             db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(
                 or_(
@@ -2096,7 +2096,7 @@ def search_receipt(decoded_user_id, user_type, userId):
         userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
         crp_results = (
             db.session.query(Creceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Creceipt2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(
                 or_(
@@ -2113,7 +2113,7 @@ def search_receipt(decoded_user_id, user_type, userId):
 
         crc_results = (
             db.session.query(Creceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Creceipt2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(
                 or_(
@@ -2130,7 +2130,7 @@ def search_receipt(decoded_user_id, user_type, userId):
 
         crs_results = (
             db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(
                 or_(
@@ -2239,7 +2239,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, sellerType, rid
     if (user_type == UserType.PERSONAL.value) and (sellerType == UserType.PERSONAL.value):
         receiptInfo = (
             db.session.query(Preceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Preceipt2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(Preceipt2p.pid == userId, Preceipt2p.rid == rid)
             .first()
@@ -2247,7 +2247,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, sellerType, rid
     elif (user_type == UserType.PERSONAL.value) and (sellerType == UserType.COMMERCIAL.value):
         receiptInfo = (
             db.session.query(Preceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Preceipt2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(Preceipt2c.pid == userId, Preceipt2c.rid == rid)
             .first()
@@ -2255,7 +2255,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, sellerType, rid
     elif (user_type == UserType.PERSONAL.value) and (sellerType == 3):
         receiptInfo = (
             db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(Preceipt2s.pid == userId, Preceipt2s.rid == rid)
             .first()
@@ -2263,7 +2263,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, sellerType, rid
     elif (user_type == UserType.COMMERCIAL.value) and (sellerType == UserType.PERSONAL.value):
         receiptInfo = (
             db.session.query(Creceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Creceipt2p.sellerid == Pbooktrade.pid)
+            .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(Creceipt2p.cid == userId, Creceipt2p.rid == rid)
             .first()
@@ -2271,7 +2271,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, sellerType, rid
     elif (user_type == UserType.COMMERCIAL.value) and (sellerType == UserType.COMMERCIAL.value):
         receiptInfo = (
             db.session.query(Creceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Creceipt2c.sellerid == Cbooktrade.cid)
+            .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(Creceipt2c.cid == userId, Creceipt2c.rid == rid)
             .first()
@@ -2279,7 +2279,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, sellerType, rid
     elif (user_type == UserType.COMMERCIAL.value) and (sellerType == 3):
         receiptInfo = (
             db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(Creceipt2s.cid == userId, Creceipt2s.rid == rid)
             .first()
