@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const pMoreList = ({ route, navigation }) => {
+const PMoreList = ({ route, navigation }) => {
   const { list, title } = route.params; // 넘어온 책 리스트랑 제목
 
   const goToback = () => navigation.goBack();
@@ -25,7 +25,7 @@ const pMoreList = ({ route, navigation }) => {
       },
     });
     const data = await response.json();
-    navigation.navigate('pBookDetailScreen', { storedata: data, bid });
+    navigation.navigate('PBookDetailScreen', { storedata: data, bid });
     
   }
 
@@ -68,7 +68,7 @@ const pMoreList = ({ route, navigation }) => {
   );
 };
 
-export default pMoreList;
+export default PMoreList;
 
 const styles = StyleSheet.create({
   header: {

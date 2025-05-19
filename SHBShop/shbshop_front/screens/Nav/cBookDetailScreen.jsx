@@ -11,7 +11,7 @@ import axios from 'axios';
 const API_URL = Constants.expoConfig.extra.API_URL;
 const { width } = Dimensions.get('window');
 
-const pBookDetailScreen = ({route, navigation}) => {
+const CBookDetailScreen = ({route, navigation}) => {
   // const navigation = useNavigation();
   const [thumbsUp, setThumbsUp] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -283,4 +283,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default pBookDetailScreen;
+export default CBookDetailScreen;

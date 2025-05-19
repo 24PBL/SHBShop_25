@@ -14,7 +14,8 @@ import StoreBookRegister from './StoreBookRegister';
 import ChangeStoreInfo from './ChangeStoreInfo'
 import ChangeShopAddress from './ChangeShopAddress';
 import StoreInventoryView from './StoreInventoryView';
-import BookDetailList from './BookDetailList';
+import BookDetailScreen from './BookDetailScreen';
+import ISBNBookListScreen from './ISBNBookListScreen';
 const Stack = createNativeStackNavigator();
 
 const MyPageStack = () => {
@@ -33,7 +34,8 @@ const MyPageStack = () => {
       <Stack.Screen name="ChangeStoreInfo" component={ChangeStoreInfo} options={{ headerShown: false }} />
       <Stack.Screen name="ChangeShopAddress" component={ChangeShopAddress} options={{ headerShown: false }} />
       <Stack.Screen name="StoreInventoryView" component={StoreInventoryView} options={{ headerShown: false }} />
-      <Stack.Screen name="BookDetailList" component={BookDetailList} options={{ headerShown: false }} />
+      <Stack.Screen name="BookDetailScreen" component={BookDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ISBNBookListScreen" component={ISBNBookListScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

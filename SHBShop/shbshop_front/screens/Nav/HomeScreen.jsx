@@ -60,7 +60,7 @@ const HomeScreen = ({ navigation }) => {
       });
 
       const data = await response.json();
-      navigation.navigate('pBookDetailScreen', { storedata: data, bid });
+      navigation.navigate('PBookDetailScreen', { storedata: data, bid });
     } catch (error) {
       console.error('책 상세 정보 가져오기 실패:', error);
       Alert.alert('오류', '책 상세 정보를 불러오는 데 실패했습니다.');

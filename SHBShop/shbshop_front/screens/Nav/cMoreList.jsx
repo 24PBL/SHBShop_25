@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const cMoreList = ({ route, navigation }) => {
+const CMoreList = ({ route, navigation }) => {
   const { list, title } = route.params; // 넘어온 책 리스트랑 제목
 
   const goToback = () => navigation.goBack();
@@ -26,7 +26,7 @@ const cMoreList = ({ route, navigation }) => {
     });
     const data = await response.json();
     console.log(data)
-    navigation.navigate('cBookDetailScreen', {storedata : {data}});
+    navigation.navigate('CBookDetailScreen', {storedata : {data}});
     
   }
 
@@ -69,7 +69,7 @@ const cMoreList = ({ route, navigation }) => {
   );
 };
 
-export default cMoreList;
+export default CMoreList;
 
 const styles = StyleSheet.create({
   header: {

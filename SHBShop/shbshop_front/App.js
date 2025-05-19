@@ -23,11 +23,11 @@ import Navbar from './screens/Nav/Navbar';
 import DeleteID from './screens/Nav/DeleteID';
 import DeleteID1 from './screens/Nav/DeleteID1';
 import BookStoreSearch from './screens/Nav/BookStoreSearch';
-import cMoreList from './screens/Nav/cMoreList';
+import CMoreList from './screens/Nav/CMoreList';
 import StoreRegister from './screens/Nav/StoreRegister';
-import pMoreList from './screens/Nav/pMoreList';
-import pBookDetailScreen from './screens/Nav/pBookDetailScreen';
-import cBookDetailScreen from './screens/Nav/cBookDetailScreen';
+import PMoreList from './screens/Nav/PMoreList';
+import PBookDetailScreen from './screens/Nav/PBookDetailScreen';
+import CBookDetailScreen from './screens/Nav/CBookDetailScreen';
 import ReRegister from './screens/Nav/ReRegister';
 const Stack = createNativeStackNavigator();
 
@@ -53,11 +53,11 @@ const App = () => {
         <Stack.Screen name="DeleteID" component={DeleteID} options={{headerShown:false}}/>
         <Stack.Screen name="DeleteID1" component={DeleteID1} options={{headerShown:false}}/>
         <Stack.Screen name="BookStoreSearch" component={BookStoreSearch} options={{headerShown:false}}/>
-        <Stack.Screen name="cMoreList" component={cMoreList} options={{ headerShown:false}} />
+        <Stack.Screen name="CMoreList" component={CMoreList} options={{ headerShown:false}} />
         <Stack.Screen name="StoreRegister" component={StoreRegister} options={{ headerShown:false}} />
-        <Stack.Screen name="pMoreList" component={pMoreList} options={{ headerShown:false}} />
-        <Stack.Screen name="pBookDetailScreen" component={pBookDetailScreen} options={{ headerShown:false}} />
-        <Stack.Screen name="cBookDetailScreen" component={cBookDetailScreen} options={{ headerShown:false}} />
+        <Stack.Screen name="PMoreList" component={PMoreList} options={{ headerShown:false}} />
+        <Stack.Screen name="PBookDetailScreen" component={PBookDetailScreen} options={{ headerShown:false}} />
+        <Stack.Screen name="CBookDetailScreen" component={CBookDetailScreen} options={{ headerShown:false}} />
         <Stack.Screen name="ReRegister" component={ReRegister} options={{ headerShown:false}} />
       </Stack.Navigator>
     </NavigationContainer>
