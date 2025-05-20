@@ -38,19 +38,39 @@ const BookDetailScreen = ({ route, navigation }) => {
         }
       );
     Alert.alert('삭제 완료', '재고가 삭제되었습니다.');
-    navigation.navigate('StoreInventoryView');
+    const response = await fetch(`${API_URL}/shop/${userId}/${detailData.shop_info.shopId}/check-stock`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Token}`,
+      },
+    });
+    const data = await response.json();
+    console.log(data);
+    navigation.reset({
+  index: 0,
+  routes: [
+    {
+      name: 'StoreInventoryView',
+      params: { storedata: { data } }
+    }
+  ],
+});
+
   }
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
           {/* 뒤로가기 버튼 */}
-          <View style={{flexDirection:'row', flex:1, justifyContent:'space-between', alignItems:'center', paddingLeft:20, paddingRight:20}}>
+          <View style={{flexDirection:'row', flex:1, justifyContent:'space-between', alignItems:'center', paddingLeft:10, paddingRight:20}}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
 
-
+          <TouchableOpacity onPress={()=> navigation.navigate('EditBookDetail', {data : detailData})}>
+            <Ionicons name="create-outline" size={24} color="black" style={{left:120, marginBottom:20}}/>
+          </TouchableOpacity>
           <TouchableOpacity onPress={()=>{Alert.alert(
   '재고 삭제',
   '해당 재고를 삭제하시겠습니까?',

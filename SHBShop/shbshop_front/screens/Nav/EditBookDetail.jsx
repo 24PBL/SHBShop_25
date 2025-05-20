@@ -8,10 +8,11 @@ import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const StoreBookRegister = ({ route, navigation }) => {
-  const { title, author, publisher, ISBN, shopId } = route.params;
-  const [price, setPrice] = useState('');
-  const [description, setDescription] = useState(''); 
+const EditBookDetail = ({ route, navigation }) => {
+  const {data} = route.params;
+  const book = data.book_info;
+  const [price, setPrice] = useState(String(book.price));
+  const [description, setDescription] = useState(book.detail); 
   const [selectedImages, setSelectedImages] = useState([]);
 
   // pickImage 함수 수정
@@ -54,10 +55,10 @@ const pickImage = async () => {
 
   const formData = new FormData();
 
-  formData.append('title', title);
-  formData.append('author', author);
-  formData.append('publish', publisher);
-  formData.append('isbn', ISBN);
+  formData.append('title', book.title);
+  formData.append('author', book.author);
+  formData.append('publish', book.publish);
+  formData.append('isbn', book.isbn);
   formData.append('price', price);
   formData.append('detail', description);
 
@@ -77,7 +78,7 @@ const pickImage = async () => {
   });
 
   try {
-    const response = await fetch(`${API_URL}/shop/${userId}/${shopId}/check-stock/add-sbook`, {
+    const response = await fetch(`${API_URL}/shop/${userId}/${data.shop_info.shopId}/check-stock/${book.bid}/modify-sbook`, {
       method: 'POST',
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -86,26 +87,26 @@ const pickImage = async () => {
       body: formData,
     });
 
-    const data = await response.json();
+    const responsedata = await response.json();
 
     if (response.ok) {
       Alert.alert(
-        '등록 성공',
-        '성공적으로 등록되었습니다.'
+        '정보 수정',
+        '재고 정보가 수정되었습니다'
       );
       navigation.reset({
   index: 0,
   routes: [
     {
       name: 'ManageStore',
-      params: { shopId: shopId },
+      params: { shopId: data.shop_info.shopId },
     },
   ],
 });
 
     } else {
-      console.error(data);
-      alert('등록 실패: ' + (data?.message || '알 수 없는 오류'));
+      console.error(responsedata);
+      alert('등록 실패: ' + (responsedata?.message || '알 수 없는 오류'));
     }
   } catch (error) {
     console.error(error);
@@ -121,41 +122,40 @@ const pickImage = async () => {
           <TouchableOpacity onPress={goToHome}>
             <Ionicons name="chevron-back-outline" size={30} color="black" style={{ marginLeft: -20, paddingRight: 10 }} />
           </TouchableOpacity>
-          <Text style={{ fontWeight: 'bold', fontSize: 28 }}>매장 재고 개별 등록</Text>
+          <Text style={{ fontWeight: 'bold', fontSize: 28 }}>매장 재고 정보 수정</Text>
         </View>
 
         <ScrollView style={{ width: '90%' }} showsVerticalScrollIndicator={false}>
           <View style={{ height: 20 }}></View>
           <Text style={styles.inputtitle} numberOfLines={1} ellipsizeMode='tail'>제목</Text>
           <View style={{ borderWidth: 1, width: '90%', height: 70, borderRadius: 10, justifyContent: 'center', left:20 }}>
-            <Text style={{ paddingLeft: 20, fontSize: 20, color:'gray' }}>{title}</Text>
+            <Text style={{ paddingLeft: 20, fontSize: 20, color:'gray' }}>{book.title}</Text>
           </View>
-
           <Text style={styles.inputtitle}>저자</Text>
           <View style={{ borderWidth: 1, width: '90%', height: 50, borderRadius: 10, justifyContent: 'center', left:20 }}>
-            <Text style={{ paddingLeft: 20, fontSize: 20, color:'gray' }}>{author}</Text>
+            <Text style={{ paddingLeft: 20, fontSize: 20, color:'gray' }}>{book.author}</Text>
           </View>
 
           <Text style={styles.inputtitle}>출판사</Text>
           <View style={{ borderWidth: 1, width: '90%', height: 50, borderRadius: 10, justifyContent: 'center', left:20 }}>
-            <Text style={{ paddingLeft: 20, fontSize: 20, color:'gray' }}>{publisher}</Text>
+            <Text style={{ paddingLeft: 20, fontSize: 20, color:'gray' }}>{book.publish}</Text>
           </View>
 
           <Text style={styles.inputtitle}>가격</Text>
           <View style={{ borderWidth: 1, width: '90%', height: 50, borderRadius: 10, justifyContent: 'center', left:20 }}>
-            <TextInput style={{ paddingLeft: 20, fontSize: 20 }} placeholder="숫자만 입력" onChangeText={setPrice}></TextInput>
+            <TextInput style={{ paddingLeft: 20, fontSize: 20 }} placeholder="숫자만 입력" onChangeText={setPrice} value={price}></TextInput>
           </View>
 
           <Text style={styles.inputtitle}>설명</Text>
           <View style={{ borderWidth: 1, width: '90%', height: 300, borderRadius: 10, left:20 }}>
-            <TextInput style={{ paddingLeft: 20, fontSize: 20 }} placeholder="ex)책 상태, 사용 여부 등" onChangeText={setDescription}></TextInput>
+            <TextInput style={{ paddingLeft: 20, fontSize: 20 }} placeholder="ex)책 상태, 사용 여부 등" onChangeText={setDescription} value={description}></TextInput>
           </View>
           {/* 이미지 첨부 버튼이 선택되지 않은 경우에만 표시 */}
    
        
             <View>
               {/* 사진 첨부 UI 수정 */}
-              <Text style={styles.inputtitle}>사진 첨부</Text>
+              <Text style={styles.inputtitle}>사진 첨부 <Text style={{fontSize:12, color:'gray'}}>(미첨부시, 기존 이미지가 유지됩니다)</Text></Text>
               {selectedImages.length < 3 && (
                 <TouchableOpacity onPress={pickImage} style={styles.imagePickerButton}>
                   <Ionicons name="add-outline" size={30} color="black" />
@@ -180,7 +180,7 @@ const pickImage = async () => {
 )}
           <View style={{height:20}}></View>
           <TouchableOpacity style={{width:'90%', backgroundColor:'#0091da', height:50, alignItems:'center', justifyContent:'center', borderRadius:10 , left:20}} onPress={handleSubmit}>
-            <Text style={{color:'white', fontWeight:'bold'}}>재고 등록</Text>
+            <Text style={{color:'white', fontWeight:'bold'}}>재고 정보 수정</Text>
             </TouchableOpacity>
           <View style={{height:20}}></View>
         </ScrollView>
@@ -189,7 +189,7 @@ const pickImage = async () => {
   );
 };
 
-export default StoreBookRegister;
+export default EditBookDetail;
 
 const styles = StyleSheet.create({
   inputtitle: {

@@ -31,7 +31,7 @@ const  ManageStore = ({navigation, route}) => {
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white'}}>
         <TouchableOpacity style={{flexDirection:'row', alignItems:'center', marginBottom:30, paddingTop:10, paddingLeft:10}}>
-          <Ionicons name="chevron-back-outline" size={28} onPress={() => navigation.goBack()} />
+          <Ionicons name="chevron-back-outline" size={28} onPress={() => navigation.navigate("MyPageScreen")} />
           <Text style={{fontSize:28, marginLeft:10, fontWeight:'bold'}}>매장관리</Text>
         </TouchableOpacity>
         <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={goToStoreInvenotry}>
