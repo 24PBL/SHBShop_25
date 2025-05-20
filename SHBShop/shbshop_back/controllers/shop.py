@@ -585,7 +585,8 @@ def delete_stock(decoded_user_id, user_type, userId, shopId, bookId):
     if not bookInfo:
         return jsonify({"error": "존재하지 않는 재고"}), 404
     
-    db.session.delete(bookInfo)
+    db.session.query(Sbooktrade).filter_by(sid=shopId, bid=bookId).delete()
+    #db.session.delete(bookInfo)
     db.session.commit()
     
     # 책 추가 후 다시 재고 리스트를 띄우기 위한 데이터
