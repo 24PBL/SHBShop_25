@@ -128,7 +128,7 @@ const AddCart = ({ navigation, route }) => {
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20 }}>
           {/* 개인 거래 책 리스트 */}
           {bookList.map((item) => (
-            <TouchableOpacity key={`p-${item.sellerType}-${item.bid}`} style={styles.bookItem} onPress={() => goToBookDetail(item.sellerType, item.bid)}>
+            <TouchableOpacity key={item.idx} style={styles.bookItem} onPress={() => goToBookDetail(item.sellerType, item.bid)}>
               <Image
                 source={{ uri: API_URL + item.bookimg }}
                 style={styles.bookImage}

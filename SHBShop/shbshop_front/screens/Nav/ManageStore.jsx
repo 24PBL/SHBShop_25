@@ -38,7 +38,7 @@ const  ManageStore = ({navigation, route}) => {
           <Text>매장 재고 조회</Text>
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>
-        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={()=> navigation.navigate("StoreBookRegister")}>
+        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={()=> navigation.navigate("CBookSearchScreen", {shopId: shopId})}>
           <Text>매장 재고 개별 등록</Text>
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>

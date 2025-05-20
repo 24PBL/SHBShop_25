@@ -7,10 +7,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Alert
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -23,15 +26,58 @@ const BookDetailScreen = ({ route, navigation }) => {
     .filter(Boolean)
     .map((img) => API_URL + img);
 
+  const deleteStock = async () => {
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    await axios.delete(
+        `${API_URL}/shop/${userId}/${detailData.shop_info.shopId}/check-stock/${book.bid}/delete-sbook`,
+        {
+          headers: { Authorization: `Bearer ${Token}` },
+        }
+      );
+    Alert.alert('삭제 완료', '재고가 삭제되었습니다.');
+    navigation.navigate('StoreInventoryView');
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
           {/* 뒤로가기 버튼 */}
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <View style={{flexDirection:'row', flex:1, justifyContent:'space-between', alignItems:'center', paddingLeft:20, paddingRight:20}}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
 
+
+          <TouchableOpacity onPress={()=>{Alert.alert(
+  '재고 삭제',
+  '해당 재고를 삭제하시겠습니까?',
+  [
+    {
+      text: '삭제',
+      onPress: () => {
+        // 삭제 로직 실행
+        deleteStock(); 
+      },
+      style: 'destructive', 
+    },
+    {
+      text: '취소',
+      style: 'cancel', 
+    },
+    
+  ],
+  { cancelable: true }
+);
+}}>
+            <Ionicons
+              name="trash-outline"
+              size={24} style={{marginBottom:20}}/>
+          </TouchableOpacity>
+          </View>
+          
           {/* 이미지 슬라이드 */}
           <ScrollView
             horizontal
