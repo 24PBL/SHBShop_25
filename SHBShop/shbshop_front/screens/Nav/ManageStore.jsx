@@ -27,6 +27,25 @@ const  ManageStore = ({navigation, route}) => {
     navigation.navigate('StoreInventoryView', {storedata : {data}});
     
   }
+
+  const goToReserve = async () =>{
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    
+    const response = await fetch(`${API_URL}/shop/${userId}/${shopId}/check-pr`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Token}`,
+      },
+    });
+    const data = await response.json();
+    console.log(data);
+    navigation.navigate('ReserveList', {storedata : {data}});
+    
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white'}}>
@@ -48,7 +67,7 @@ const  ManageStore = ({navigation, route}) => {
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>
 
-        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={()=>{console.log(shopId)}}>
+        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={goToReserve}>
           <Text>예약 주문 목록 조회</Text>
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>

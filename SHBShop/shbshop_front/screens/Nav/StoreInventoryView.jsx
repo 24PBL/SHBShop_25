@@ -125,7 +125,6 @@ const StoreInventoryView = ({ route, navigation }) => {
     setSearchLoading(false);
   };
 
-  // ✅ ISBN 기준으로 묶기 (중복 제거 및 수량 계산)
   const groupByISBN = (list) => {
     const map = new Map();
     list.forEach((item) => {
@@ -139,28 +138,27 @@ const StoreInventoryView = ({ route, navigation }) => {
   };
 
   const renderSearchResults = ({ item }) => (
-  <TouchableOpacity
-    style={styles.itemContainer}
-    onPress={() =>
-      navigation.navigate('ISBNBookListScreen', {
-        isbn: item.isbn,
-        fullList: searchResults,
-        API_URL,
-        userId,
-        shopId,
-      })
-    }
-  >
-    <Image source={{ uri: `${API_URL}${item.bookimg}` }} style={styles.image} />
-    <View style={styles.textContainer}>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.author}>{item.author}</Text>
-      <Text style={styles.date}>{item.createAt?.substring(0, 10)}</Text>
-      <Text style={styles.count}>수량: {item.count}권</Text>
-    </View>
-  </TouchableOpacity>
-);
-
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() =>
+        navigation.navigate('ISBNBookListScreen', {
+          isbn: item.isbn,
+          fullList: searchResults,
+          API_URL,
+          userId,
+          shopId,
+        })
+      }
+    >
+      <Image source={{ uri: `${API_URL}${item.bookimg}` }} style={styles.image} />
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.author}>{item.author}</Text>
+        <Text style={styles.date}>{item.createAt?.substring(0, 10)}</Text>
+        <Text style={styles.count}>수량: {item.count}권</Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaProvider>
@@ -175,7 +173,6 @@ const StoreInventoryView = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Main Inventory List */}
         <FlatList
           data={inventory}
           keyExtractor={(item) => item.bid.toString()}
@@ -183,10 +180,16 @@ const StoreInventoryView = ({ route, navigation }) => {
           onEndReached={fetchMoreBooks}
           onEndReachedThreshold={0.5}
           ListFooterComponent={loading ? <ActivityIndicator size="small" color="#000" /> : null}
+          ListEmptyComponent={
+            !loading ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>등록된 도서가 없습니다.</Text>
+              </View>
+            ) : null
+          }
           contentContainerStyle={styles.listContainer}
         />
 
-        {/* Search Modal */}
         <Modal visible={searchVisible} animationType="slide" transparent={true}>
           <TouchableWithoutFeedback
             onPress={() => {
@@ -212,12 +215,18 @@ const StoreInventoryView = ({ route, navigation }) => {
               </TouchableOpacity>
             </View>
 
-            {/* Search Results */}
             <FlatList
               data={groupByISBN(searchResults)}
               keyExtractor={(item) => item.bid.toString()}
               renderItem={renderSearchResults}
               ListFooterComponent={searchLoading ? <ActivityIndicator size="small" color="#000" /> : null}
+              ListEmptyComponent={
+                !searchLoading ? (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
+                  </View>
+                ) : null
+              }
             />
           </View>
         </Modal>
@@ -306,6 +315,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     fontSize: 16,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#888',
   },
 });
 
