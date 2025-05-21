@@ -19,6 +19,7 @@ import ISBNBookListScreen from './ISBNBookListScreen';
 import CBookSearchScreen from './CBookSearchScreen';
 import EditBookDetail from './EditBookDetail';
 import ReserveList from './ReserveList'
+import ReserveDetail from './ReserverDetail';
 const Stack = createNativeStackNavigator();
 
 const MyPageStack = () => {
@@ -42,6 +43,7 @@ const MyPageStack = () => {
       <Stack.Screen name="CBookSearchScreen" component={CBookSearchScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditBookDetail" component={EditBookDetail} options={{ headerShown: false }} />
       <Stack.Screen name="ReserveList" component={ReserveList} options={{ headerShown: false }} />
+      <Stack.Screen name="ReserveDetail" component={ReserveDetail} options={{ headerShown: false }} />
 
 
     </Stack.Navigator>
