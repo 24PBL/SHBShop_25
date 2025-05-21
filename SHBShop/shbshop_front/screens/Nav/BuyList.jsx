@@ -29,7 +29,7 @@ const BuyList = ({ navigation, route }) => {
     return date >= threeMonthsAgo;
   };
 
-  // 가공 함수들
+  
   const processSellerType1 = (list) => {
     return list.filter(item => item.sellerType === 1 && isWithinThreeMonths(item.createAt)).map(item => ({
       ...item,
@@ -138,14 +138,14 @@ const BuyList = ({ navigation, route }) => {
     }
   };
 
-  const goToBookDetail = async (sellType, bid) => {
+  const goToBookDetail = async (sellType, rid) => {
     try {
       const Data = await AsyncStorage.getItem('UserData');
       const userData = JSON.parse(Data);
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
 
-      const response = await fetch(`${API_URL}/book/pb/${userId}/${sellType}/${bid}`, {
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt/detail/${sellType}/${rid}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +154,8 @@ const BuyList = ({ navigation, route }) => {
       });
 
       const data = await response.json();
-      navigation.navigate('PBookDetailScreen', { storedata: data, bid });
+      console.log(data);
+      navigation.navigate('PBuyListDetail', { storedata: data, receiptData: { receiptData } });
     } catch (error) {
       console.error('책 상세 정보 가져오기 실패:', error);
       Alert.alert('오류', '책 상세 정보를 불러오는 데 실패했습니다.');
@@ -181,7 +182,7 @@ const BuyList = ({ navigation, route }) => {
 
   // 클릭 핸들러들
   const handleClickSellerType1 = (item) => {
-    goToBookDetail(item.sellerType, item.bid);
+    goToBookDetail(item.sellerType, item.rid);
   };
 
   const handleClickSellerType2 = (item) => {
