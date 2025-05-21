@@ -15,7 +15,7 @@ const MyPageScreen = ({ navigation }) => {
   const [bookstoreName, setBookstoreName] = useState('');
   const [userData, setUserData] = useState(null);
   const [shopId, setShopId] = useState(null);
-
+  const [sendData, setSendData] = useState(null);
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
@@ -134,7 +134,7 @@ const MyPageScreen = ({ navigation }) => {
           }
 
           const result = await response.json();
-
+          setSendData(result);
           if (result.user_info.nickname) setNickname(result.user_info.nickname);
           if (result.user_info.bookstoreName) setBookstoreName(`(${result.user_info.bookstoreName})`);
           if (result.user_info.profile) {
@@ -246,7 +246,7 @@ const MyPageScreen = ({ navigation }) => {
             </TouchableOpacity>
 
             {userData?.user_type === 2 && userData?.isShopExist === 2 && (
-              <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ManageStore', {shopId : shopId})}>
+              <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ManageStore', {shopId : shopId, data : sendData})}>
                 <Text style={styles.menuText}>매장 관리</Text>
                 <Ionicons name="chevron-forward" size={18} color="#000" />
               </TouchableOpacity>
