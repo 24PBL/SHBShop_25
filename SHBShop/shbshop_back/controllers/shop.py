@@ -759,7 +759,7 @@ def show_shop_sr(decoded_user_id, user_type, userId, shopId):
         return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
     
     sr_list_p = (
-        db.session.query(Preceipt2s, Sbooktrade, Shop)
+        db.session.query(Preceipt2s, Sbooktrade)
         .join(Sbooktrade, Preceipt2s.shopid == Sbooktrade.sid)
         .filter(Preceipt2s.shopid == shopId)
         .order_by(Sbooktrade.bid.desc())
@@ -768,7 +768,7 @@ def show_shop_sr(decoded_user_id, user_type, userId, shopId):
     )
     
     sr_list_c = (
-        db.session.query(Creceipt2s, Sbooktrade, Shop)
+        db.session.query(Creceipt2s, Sbooktrade)
         .join(Sbooktrade, Creceipt2s.shopid == Sbooktrade.sid)
         .filter(Creceipt2s.shopid == shopId)
         .order_by(Sbooktrade.bid.desc())
@@ -880,7 +880,7 @@ def show_shop_sr_detail(decoded_user_id, user_type, userId, shopId, ownerType, r
     if ownerType == UserType.PERSONAL.value:
         receiptInfo = (
             db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.shopid == Sbooktrade.sid)
+            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(Preceipt2s.shopid == shopId, Preceipt2s.rid == rid)
             .first()
@@ -888,13 +888,13 @@ def show_shop_sr_detail(decoded_user_id, user_type, userId, shopId, ownerType, r
 
         if not receiptInfo:
             return jsonify({"error": "해당 주문 정보가 존재하지 않습니다."}), 404
+        
+        receipt, book, shop = receiptInfo
 
-        ownerInfo = db.session.query(Personal).filter_by(pid=receiptInfo.pid).first()
+        ownerInfo = db.session.query(Personal).filter_by(pid=receipt.pid).first()
 
         if not ownerInfo:
             return jsonify({"error": "구매자 정보가 존재하지 않습니다."}), 404
-
-        receipt, book, shop = receiptInfo
 
         serialized = {
             "rid": receipt.rid,
