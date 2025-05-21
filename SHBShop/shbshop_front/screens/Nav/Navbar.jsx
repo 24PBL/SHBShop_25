@@ -5,8 +5,7 @@ import ChatScreen from './ChatScreen';
 import HomeStack from './HomeStack';
 import BookStack from './BookStack';
 import MyPageStack from './MyPageStack';
-
-
+import { CommonActions } from '@react-navigation/native';
 const Tab = createBottomTabNavigator();
 
 const Navbar = ({ navigation }) => {
@@ -68,18 +67,28 @@ const Navbar = ({ navigation }) => {
       />
 
       <Tab.Screen
-        name="마이페이지"
-        component={MyPageStack}
-        options={{ headerShown: false }}
-        listeners={({ navigation, route }) => ({
-          tabPress: e => {
-            const state = route?.state;
-            if (state && state.index > 0) {
-              navigation.navigate('마이페이지');
-            }
-          }
-        })}
-      />
+  name="마이페이지"
+  component={MyPageStack}
+  options={{ headerShown: false }}
+  listeners={({ navigation, route }) => ({
+    tabPress: e => {
+      const state = route?.state;
+
+      if (state && state.index > 0) {
+        // 기본 탭 이동 막기
+        e.preventDefault();
+
+        // MyPageStack 스택 초기화해서 루트 화면(MyPageScreen)만 남기기
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: '마이페이지' }],
+          })
+        );
+      }
+    },
+  })}
+/>
     </Tab.Navigator>
   );
 };

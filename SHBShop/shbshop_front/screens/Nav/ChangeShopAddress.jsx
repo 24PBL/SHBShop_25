@@ -99,7 +99,14 @@ const ChangeShopAddress = ({route,navigation}) => {
     );
 
     console.log(response);
-    navigation.navigate("MyPageScreen");
+    navigation.reset({
+  index: 0,
+  routes: [
+    {
+      name: 'MyPageScreen'
+    }
+  ],
+});
   } catch (error) {
     console.error('오류 발생:', error);
     Alert.alert("정보 수정 실패", "다시 시도해주세요.");

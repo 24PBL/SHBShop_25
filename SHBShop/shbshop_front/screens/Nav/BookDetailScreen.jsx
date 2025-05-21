@@ -51,8 +51,7 @@ const BookDetailScreen = ({ route, navigation }) => {
   index: 0,
   routes: [
     {
-      name: 'StoreInventoryView',
-      params: { storedata: { data } }
+      name: 'MyPage'
     }
   ],
 });

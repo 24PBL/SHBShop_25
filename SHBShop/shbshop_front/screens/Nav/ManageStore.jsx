@@ -48,24 +48,7 @@ const  ManageStore = ({navigation, route}) => {
     
   }
 
-  const goToEditStoreInfo = async () =>{
-    const Data = await AsyncStorage.getItem('UserData');
-    const userData = JSON.parse(Data);
-    const userId = userData.decoded_user_id;
-    const Token = await AsyncStorage.getItem('jwtToken');
-    
-    const response = await fetch(`${API_URL}/shop/${userId}/${shopId}/modify-shop-info`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Token}`,
-      },
-    });
-    const data = await response.json();
-    console.log(data);
-    navigation.navigate('ReserveList', {storedata : {data}});
-    
-  }
+  
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white'}}>

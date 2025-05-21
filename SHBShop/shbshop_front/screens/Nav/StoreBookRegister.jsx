@@ -97,8 +97,7 @@ const pickImage = async () => {
   index: 0,
   routes: [
     {
-      name: 'ManageStore',
-      params: { shopId: shopId },
+      name: 'MyPageScreen',
     },
   ],
 });
