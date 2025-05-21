@@ -67,8 +67,15 @@ const StoreInventoryView = ({ route, navigation }) => {
     const token = await AsyncStorage.getItem('jwtToken');
     if (loading || !hasMore) return;
 
-    setLoading(true);
     const finalBid = inventory[inventory.length - 1]?.bid;
+
+    // bid가 undefined일 경우 요청 생략
+    if (!finalBid) {
+      setHasMore(false);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch(`${API_URL}/shop/${userId}/${shopId}/check-stock/${finalBid}`, {
