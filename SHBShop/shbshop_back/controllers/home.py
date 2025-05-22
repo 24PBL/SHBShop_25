@@ -1554,6 +1554,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
             db.session.query(Preceipt2p, Pbooktrade, Personal)
             .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
+            .filter(Preceipt2p.pid == userId)
             .order_by(Preceipt2p.rid.desc())
             .limit(6)
             .all()
@@ -1563,6 +1564,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
             db.session.query(Preceipt2c, Cbooktrade, Commercial)
             .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
+            .filter(Preceipt2c.pid == userId)
             .order_by(Preceipt2c.rid.desc())
             .limit(6)
             .all()
@@ -1572,6 +1574,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
             db.session.query(Preceipt2s, Sbooktrade, Shop)
             .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
+            .filter(Preceipt2s.pid == userId)
             .order_by(Preceipt2s.rid.desc())
             .limit(6)
             .all()
@@ -1644,6 +1647,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
             db.session.query(Creceipt2p, Pbooktrade, Personal)
             .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
+            .filter(Creceipt2p.cid == userId)
             .order_by(Creceipt2p.rid.desc())
             .limit(6)
             .all()
@@ -1653,6 +1657,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
             db.session.query(Creceipt2c, Cbooktrade, Commercial)
             .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
+            .filter(Creceipt2c.cid == userId)
             .order_by(Creceipt2c.rid.desc())
             .limit(6)
             .all()
@@ -1662,6 +1667,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
             db.session.query(Creceipt2s, Sbooktrade, Shop)
             .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
+            .filter(Creceipt2s.cid == userId)
             .order_by(Creceipt2s.rid.desc())
             .limit(6)
             .all()
@@ -1763,7 +1769,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
             db.session.query(Preceipt2p, Pbooktrade, Personal)
             .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
-            .filter(Preceipt2p.rid < fnlPRid)
+            .filter(Preceipt2p.pid == userId, Preceipt2p.rid < fnlPRid)
             .order_by(Preceipt2p.rid.desc())
             .limit(6)
             .all()
@@ -1773,7 +1779,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
             db.session.query(Preceipt2c, Cbooktrade, Commercial)
             .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(Preceipt2c.rid < fnlCRid)
+            .filter(Preceipt2c.pid == userId, Preceipt2c.rid < fnlCRid)
             .order_by(Preceipt2c.rid.desc())
             .limit(6)
             .all()
@@ -1783,7 +1789,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
             db.session.query(Preceipt2s, Sbooktrade, Shop)
             .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Preceipt2s.rid < fnlSRid)
+            .filter(Preceipt2s.pid == userId, Preceipt2s.rid < fnlSRid)
             .order_by(Preceipt2s.rid.desc())
             .limit(6)
             .all()
@@ -1856,7 +1862,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
             db.session.query(Creceipt2p, Pbooktrade, Personal)
             .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
-            .filter(Creceipt2p.rid < fnlPRid)
+            .filter(Creceipt2p.cid == userId, Creceipt2p.rid < fnlPRid)
             .order_by(Creceipt2p.rid.desc())
             .limit(6)
             .all()
@@ -1866,7 +1872,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
             db.session.query(Creceipt2c, Cbooktrade, Commercial)
             .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(Creceipt2c.rid < fnlCRid)
+            .filter(Creceipt2c.cid == userId, Creceipt2c.rid < fnlCRid)
             .order_by(Creceipt2c.rid.desc())
             .limit(6)
             .all()
@@ -1876,7 +1882,7 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
             db.session.query(Creceipt2s, Sbooktrade, Shop)
             .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Creceipt2s.rid < fnlSRid)
+            .filter(Creceipt2s.cid == userId, Creceipt2s.rid < fnlSRid)
             .order_by(Creceipt2s.rid.desc())
             .limit(6)
             .all()
@@ -1986,13 +1992,16 @@ def search_receipt(decoded_user_id, user_type, userId):
             .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(
-                or_(
-                        Pbooktrade.title.ilike(keyword_pattern),
-                        Pbooktrade.author.ilike(keyword_pattern),
-                        Pbooktrade.publish.ilike(keyword_pattern),
-                        Personal.name.ilike(keyword_pattern),
-                        Personal.nickname.ilike(keyword_pattern)
-                    )
+                and_(
+                        Preceipt2p.pid == userId,
+                    or_(
+                            Pbooktrade.title.ilike(keyword_pattern),
+                            Pbooktrade.author.ilike(keyword_pattern),
+                            Pbooktrade.publish.ilike(keyword_pattern),
+                            Personal.name.ilike(keyword_pattern),
+                            Personal.nickname.ilike(keyword_pattern)
+                        )
+                )
             )
             .order_by(Preceipt2p.rid.desc())
             .all()
@@ -2003,13 +2012,16 @@ def search_receipt(decoded_user_id, user_type, userId):
             .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(
-                or_(
-                        Cbooktrade.title.ilike(keyword_pattern),
-                        Cbooktrade.author.ilike(keyword_pattern),
-                        Cbooktrade.publish.ilike(keyword_pattern),
-                        Commercial.name.ilike(keyword_pattern),
-                        Commercial.nickname.ilike(keyword_pattern)
-                    )
+                and_(
+                        Preceipt2c.pid == userId,
+                    or_(
+                            Cbooktrade.title.ilike(keyword_pattern),
+                            Cbooktrade.author.ilike(keyword_pattern),
+                            Cbooktrade.publish.ilike(keyword_pattern),
+                            Commercial.name.ilike(keyword_pattern),
+                            Commercial.nickname.ilike(keyword_pattern)
+                        )
+                )
             )
             .order_by(Preceipt2c.rid.desc())
             .all()
@@ -2020,12 +2032,15 @@ def search_receipt(decoded_user_id, user_type, userId):
             .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(
-                or_(
-                        Sbooktrade.title.ilike(keyword_pattern),
-                        Sbooktrade.author.ilike(keyword_pattern),
-                        Sbooktrade.publish.ilike(keyword_pattern),
-                        Shop.shopName.ilike(keyword_pattern)
-                    )
+                and_(
+                        Preceipt2s.pid == userId,
+                    or_(
+                            Sbooktrade.title.ilike(keyword_pattern),
+                            Sbooktrade.author.ilike(keyword_pattern),
+                            Sbooktrade.publish.ilike(keyword_pattern),
+                            Shop.shopName.ilike(keyword_pattern)
+                        )
+                )
             )
             .order_by(Preceipt2s.rid.desc())
             .all()
@@ -2099,13 +2114,16 @@ def search_receipt(decoded_user_id, user_type, userId):
             .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(
-                or_(
-                        Pbooktrade.title.ilike(keyword_pattern),
-                        Pbooktrade.author.ilike(keyword_pattern),
-                        Pbooktrade.publish.ilike(keyword_pattern),
-                        Personal.name.ilike(keyword_pattern),
-                        Personal.nickname.ilike(keyword_pattern)
-                    )
+                and_(
+                        Creceipt2p.cid == userId,
+                    or_(
+                            Pbooktrade.title.ilike(keyword_pattern),
+                            Pbooktrade.author.ilike(keyword_pattern),
+                            Pbooktrade.publish.ilike(keyword_pattern),
+                            Personal.name.ilike(keyword_pattern),
+                            Personal.nickname.ilike(keyword_pattern)
+                        )
+                )
             )
             .order_by(Creceipt2p.rid.desc())
             .all()
@@ -2116,13 +2134,16 @@ def search_receipt(decoded_user_id, user_type, userId):
             .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(
-                or_(
-                        Cbooktrade.title.ilike(keyword_pattern),
-                        Cbooktrade.author.ilike(keyword_pattern),
-                        Cbooktrade.publish.ilike(keyword_pattern),
-                        Commercial.name.ilike(keyword_pattern),
-                        Commercial.nickname.ilike(keyword_pattern)
-                    )
+                and_(
+                        Creceipt2c.cid == userId,
+                    or_(
+                            Cbooktrade.title.ilike(keyword_pattern),
+                            Cbooktrade.author.ilike(keyword_pattern),
+                            Cbooktrade.publish.ilike(keyword_pattern),
+                            Commercial.name.ilike(keyword_pattern),
+                            Commercial.nickname.ilike(keyword_pattern)
+                        )
+                )
             )
             .order_by(Creceipt2c.rid.desc())
             .all()
@@ -2133,12 +2154,15 @@ def search_receipt(decoded_user_id, user_type, userId):
             .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(
-                or_(
-                        Sbooktrade.title.ilike(keyword_pattern),
-                        Sbooktrade.author.ilike(keyword_pattern),
-                        Sbooktrade.publish.ilike(keyword_pattern),
-                        Shop.shopName.ilike(keyword_pattern)
-                    )
+                and_(
+                        Creceipt2s.cid == userId,
+                    or_(
+                            Sbooktrade.title.ilike(keyword_pattern),
+                            Sbooktrade.author.ilike(keyword_pattern),
+                            Sbooktrade.publish.ilike(keyword_pattern),
+                            Shop.shopName.ilike(keyword_pattern)
+                        )
+                )
             )
             .order_by(Creceipt2s.rid.desc())
             .all()
