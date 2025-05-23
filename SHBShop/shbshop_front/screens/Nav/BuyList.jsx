@@ -144,7 +144,7 @@ const BuyList = ({ navigation, route }) => {
       const userData = JSON.parse(Data);
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
-
+    if(sellType == 1){
       const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt/detail/${sellType}/${rid}`, {
         method: 'GET',
         headers: {
@@ -156,6 +156,20 @@ const BuyList = ({ navigation, route }) => {
       const data = await response.json();
       console.log(data);
       navigation.navigate('PBuyListDetail', { storedata: data, receiptData: { receiptData } });
+    } else if(sellType==2){
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt/detail/${sellType}/${rid}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${Token}`,
+        },
+      });
+
+      const data = await response.json();
+      console.log(data);
+      navigation.navigate('PBuyListDetail', { storedata: data, receiptData: { receiptData } });
+    }
+      
     } catch (error) {
       console.error('책 상세 정보 가져오기 실패:', error);
       Alert.alert('오류', '책 상세 정보를 불러오는 데 실패했습니다.');
