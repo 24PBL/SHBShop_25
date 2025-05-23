@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-const PBuyListDetail = ({ route,navigation }) => {
+const SBuyListDetail = ({ route,navigation }) => {
   const { storedata } = route.params;
   const API_URL = Constants.expoConfig.extra.API_URL;
 
@@ -99,4 +99,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PBuyListDetail;
+export default SBuyListDetail;

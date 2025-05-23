@@ -155,7 +155,7 @@ const BuyList = ({ navigation, route }) => {
 
       const data = await response.json();
       console.log(data);
-      navigation.navigate('PBuyListDetail', { storedata: data, receiptData: { receiptData } });
+      navigation.navigate('PBuyListDetail', { storedata: data});
     } else if(sellType==2){
       const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt/detail/${sellType}/${rid}`, {
         method: 'GET',
