@@ -164,7 +164,6 @@ const handleApprove = async () => {
             source={{ uri: `${API_URL}${bookimg}` }}
             style={styles.coverImage}
           />
-          <Text style={styles.imageLabel}>사진</Text>
         </View>
 
         {/* 프로필 닉네임 */}

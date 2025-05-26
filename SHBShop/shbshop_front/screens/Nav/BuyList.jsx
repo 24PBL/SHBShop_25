@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Image,
-  FlatList, ActivityIndicator
+  FlatList, ActivityIndicator, Alert
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,9 +17,9 @@ const BuyList = ({ navigation, route }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [lastIds, setLastIds] = useState({
-    fnlPRid: null,
-    fnlCRid: null,
-    fnlSRid: null
+    fnlPRid: undefined,
+    fnlCRid: undefined,
+    fnlSRid: undefined,
   });
 
   const isWithinThreeMonths = (dateStr) => {
@@ -29,7 +29,6 @@ const BuyList = ({ navigation, route }) => {
     return date >= threeMonthsAgo;
   };
 
-  
   const processSellerType1 = (list) => {
     return list.filter(item => item.sellerType === 1 && isWithinThreeMonths(item.createAt)).map(item => ({
       ...item,
@@ -60,12 +59,12 @@ const BuyList = ({ navigation, route }) => {
     const initPersonal2 = processSellerType2(receiptData.book_list || []);
     const initStore = processStoreList(receiptData.sbook_list || []);
 
-    const combined = [
-      ...initPersonal1,
-      ...initPersonal2,
-      ...initStore,
-    ];
+    const combined = [...initPersonal1, ...initPersonal2, ...initStore];
     setMergedList(combined);
+
+    if (combined.length === 0) {
+      setHasMore(false); // 초기 데이터도 없으면 더 이상 불러오지 않도록
+    }
 
     setLastIds({
       fnlPRid: getLastRid(initPersonal1),
@@ -75,7 +74,12 @@ const BuyList = ({ navigation, route }) => {
   }, [receiptData]);
 
   const fetchMore = async () => {
-    if (!hasMore || loadingMore) return;
+    // 이미 더 불러올 게 없거나, 현재 로딩 중이거나, 모든 ID가 null이면 중단
+    if (!hasMore || loadingMore ||
+      (lastIds.fnlPRid == null && lastIds.fnlCRid == null && lastIds.fnlSRid == null)) {
+      return;
+    }
+
     setLoadingMore(true);
 
     try {
@@ -96,9 +100,7 @@ const BuyList = ({ navigation, route }) => {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`서버 에러: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`서버 에러: ${response.status}`);
 
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -114,16 +116,10 @@ const BuyList = ({ navigation, route }) => {
 
       if (newPersonal1.length === 0 && newPersonal2.length === 0 && newStore.length === 0) {
         setHasMore(false);
-        setLoadingMore(false);
         return;
       }
 
-      const newCombined = [
-        ...newPersonal1,
-        ...newPersonal2,
-        ...newStore,
-      ];
-
+      const newCombined = [...newPersonal1, ...newPersonal2, ...newStore];
       setMergedList(prev => [...prev, ...newCombined]);
 
       setLastIds({
@@ -144,7 +140,7 @@ const BuyList = ({ navigation, route }) => {
       const userData = JSON.parse(Data);
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
-    if(sellType == 1){
+
       const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt/detail/${sellType}/${rid}`, {
         method: 'GET',
         headers: {
@@ -154,33 +150,24 @@ const BuyList = ({ navigation, route }) => {
       });
 
       const data = await response.json();
-      console.log(data);
-      navigation.navigate('PBuyListDetail', { storedata: data});
-    } else if(sellType==2){
-      const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt/detail/${sellType}/${rid}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${Token}`,
-        },
+      console.log(data)
+      navigation.navigate('PBuyListDetail', {
+        storedata: data,
+        receiptData: { receiptData },
       });
-
-      const data = await response.json();
-      console.log(data);
-      navigation.navigate('PBuyListDetail', { storedata: data, receiptData: { receiptData } });
-    }
-      
     } catch (error) {
       console.error('책 상세 정보 가져오기 실패:', error);
       Alert.alert('오류', '책 상세 정보를 불러오는 데 실패했습니다.');
     }
   };
 
-   const CommergoToBookDetail = async (sid, bid) =>{
+  const CommergoToBookDetail = async (sid, bid) => {
+    try {
       const Data = await AsyncStorage.getItem('UserData');
       const userData = JSON.parse(Data);
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
+
       const response = await fetch(`${API_URL}/book/sb/${userId}/${sid}/${bid}`, {
         method: 'GET',
         headers: {
@@ -188,54 +175,35 @@ const BuyList = ({ navigation, route }) => {
           'Authorization': `Bearer ${Token}`,
         },
       });
+
       const data = await response.json();
-      console.log(data)
-      navigation.navigate('CBookDetailScreen', {storedata : {data}});
-      
+      navigation.navigate('CBookDetailScreen', { storedata: { data } });
+    } catch (error) {
+      console.error('매장 책 상세 실패:', error);
     }
-
-  // 클릭 핸들러들
-  const handleClickSellerType1 = (item) => {
-    goToBookDetail(item.sellerType, item.rid);
   };
 
-  const handleClickSellerType2 = (item) => {
-    goToBookDetail(item.sellerType, item.bid);
-  };
-
-  const handleClickStore = (item) => {
-    CommergoToBookDetail(item.sid, item.bid);
+  const handleClickItem = (item) => {
+    if (item.origin === '매장') {
+      CommergoToBookDetail(item.sid, item.bid);
+    } else {
+      goToBookDetail(item.sellerType, item.rid);
+    }
   };
 
   const renderBookItem = ({ item }) => {
-    const onPressHandler = () => {
-      if (item.origin === '매장') {
-        handleClickStore(item);
-      } else if (item.sellerType === 1) {
-        handleClickSellerType1(item);
-      } else if (item.sellerType === 2) {
-        handleClickSellerType2(item);
-      } else {
-        console.log('알 수 없는 타입 클릭:', item);
-      }
-    };
-
     return (
-      <TouchableOpacity style={styles.bookItem} onPress={onPressHandler}>
+      <TouchableOpacity style={styles.bookItem} onPress={() => handleClickItem(item)}>
         <View>
           <Image
             source={{ uri: `${API_URL}${item.bookimg}` }}
             style={styles.bookImage}
             resizeMode="cover"
           />
-          <Text style={styles.statusBadge}>{item.reason}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.price}>{item.price}원</Text>
-          <Text style={styles.state}>
-            상태 : <Text style={styles.stateHighlight}>{item.reason}</Text>
-          </Text>
           <Text style={styles.originLabel}>거래방식 : {item.origin}</Text>
         </View>
       </TouchableOpacity>
@@ -254,12 +222,15 @@ const BuyList = ({ navigation, route }) => {
 
         <FlatList
           data={mergedList}
-          keyExtractor={(item, index) => `${item.origin}-${item.rid}-${index}`}
+          keyExtractor={(item, index) => `${item.origin}-${item.rid || item.bid}-${index}`}
           renderItem={renderBookItem}
           contentContainerStyle={styles.listContainer}
           onEndReached={fetchMore}
           onEndReachedThreshold={0.7}
           ListFooterComponent={loadingMore && <ActivityIndicator size="small" color="gray" />}
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center', padding: 20, color: '#888' }}>구매내역이 없습니다.</Text>
+          }
         />
       </SafeAreaView>
     </SafeAreaProvider>
