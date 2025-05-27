@@ -44,11 +44,22 @@ const PBuyListDetail = ({ route,navigation }) => {
              <Ionicons name="chevron-back-outline" size={28} style={{paddingBottom:20}}></Ionicons>
           </TouchableOpacity>
             <Text style={styles.header}>구매 도서 정보</Text>
+                      {receipt_info.state === 2 && (
             <TouchableOpacity onPress={BuyComplete}>
-              <View style={{backgroundColor:'#0091da', width:70, height:30,  justifyContent:'center', borderRadius:10, marginBottom:20, marginLeft:60}}>
-              <Text style={{color:'white', textAlign:'center', fontWeight:'bold'}}>구매 확정</Text>
+              <View style={{
+                backgroundColor: '#0091da',
+                width: 70,
+                height: 30,
+                justifyContent: 'center',
+                borderRadius: 10,
+                marginBottom: 20,
+                marginLeft: 60
+              }}>
+                <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>구매 확정</Text>
               </View>
             </TouchableOpacity>
+          )}
+
             
           </View>
           

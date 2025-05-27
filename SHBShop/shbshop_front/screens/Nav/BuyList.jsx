@@ -161,14 +161,14 @@ const BuyList = ({ navigation, route }) => {
     }
   };
 
-  const CommergoToBookDetail = async (sid, bid) => {
+  const CommergoToBookDetail = async (sellerType, rid) => {
     try {
       const Data = await AsyncStorage.getItem('UserData');
       const userData = JSON.parse(Data);
       const userId = userData.decoded_user_id;
       const Token = await AsyncStorage.getItem('jwtToken');
 
-      const response = await fetch(`${API_URL}/book/sb/${userId}/${sid}/${bid}`, {
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/show-receipt/detail/${sellerType}/${rid}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +177,8 @@ const BuyList = ({ navigation, route }) => {
       });
 
       const data = await response.json();
-      navigation.navigate('CBookDetailScreen', { storedata: { data } });
+      console.log(data)
+      navigation.navigate('SBuyListDetail', { storedata:  data  });
     } catch (error) {
       console.error('매장 책 상세 실패:', error);
     }
@@ -185,7 +186,7 @@ const BuyList = ({ navigation, route }) => {
 
   const handleClickItem = (item) => {
     if (item.origin === '매장') {
-      CommergoToBookDetail(item.sid, item.bid);
+      CommergoToBookDetail(3, item.rid);
     } else {
       goToBookDetail(item.sellerType, item.rid);
     }

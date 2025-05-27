@@ -3,12 +3,37 @@ import { View, Text, StyleSheet, Image, ScrollView,TouchableOpacity } from 'reac
 import Constants from 'expo-constants';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const SBuyListDetail = ({ route,navigation }) => {
   const { storedata } = route.params;
   const API_URL = Constants.expoConfig.extra.API_URL;
 
   const { receipt_info } = storedata;
+
+  const BuyComplete = async () => {
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await axios.put(
+        `${API_URL}/home/${userId}/my-page/show-receipt/detail/3/${receipt_info.rid}/complete`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${Token}`,
+          },
+        }
+      );
+      console.log("구매 확정 성공");
+    }
+    catch (error) {
+      console.error('구매 확정 실패:', error);
+      Alert.alert("구매 확정 실패", "다시 시도해주세요.");
+    }
+  }
 
   return (
     <SafeAreaProvider>
@@ -19,6 +44,22 @@ const SBuyListDetail = ({ route,navigation }) => {
              <Ionicons name="chevron-back-outline" size={28} style={{paddingBottom:20}}></Ionicons>
           </TouchableOpacity>
             <Text style={styles.header}>구매 도서 정보</Text>
+            {receipt_info.state === 2 && (
+  <TouchableOpacity onPress={BuyComplete}>
+    <View style={{
+      backgroundColor: '#0091da',
+      width: 70,
+      height: 30,
+      justifyContent: 'center',
+      borderRadius: 10,
+      marginBottom: 20,
+      marginLeft: 60
+    }}>
+      <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>구매 확정</Text>
+    </View>
+  </TouchableOpacity>
+)}
+
           </View>
           
 
@@ -45,8 +86,8 @@ const SBuyListDetail = ({ route,navigation }) => {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>판매자</Text>
-            <Text style={styles.value}>{receipt_info.sellerName}</Text>
+            <Text style={styles.sectionHeader}>판매매장</Text>
+            <Text style={styles.value}>{receipt_info.shopName}</Text>
           </View>
 
           <View style={styles.section}>
