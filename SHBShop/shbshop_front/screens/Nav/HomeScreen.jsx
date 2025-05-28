@@ -99,7 +99,7 @@ const HomeScreen = ({ navigation }) => {
           }}
         >
           <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 17, textAlign: 'center' }}>
-            글쓰기
+            물품 등록
           </Text>
         </TouchableOpacity>
 
@@ -129,6 +129,7 @@ const HomeScreen = ({ navigation }) => {
         )}
 
         <FlatList
+          style={{backgroundColor: 'white', flex: 1}}
           data={bookList}
           renderItem={renderBookItem}
           keyExtractor={(item, index) => `${item.bid}_${index}`}
