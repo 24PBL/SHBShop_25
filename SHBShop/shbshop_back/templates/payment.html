@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>결제 요청</title>
+  <script src="https://js.tosspayments.com/v1"></script>
+</head>
+<body>
+  <h1>결제를 준비 중입니다...</h1>
+
+  <script>
+    // 예시: JWT 토큰 (실제로는 WebView나 쿠키, 로컬스토리지 등에서 가져올 수 있음)
+    const jwtToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOjF9.V9zy0ok9A9zBLBCRXR8N8ZspyInlkEG_O5Lao09NuXU";  // "Bearer " 붙이는 것 중요
+
+    fetch("/book/1/pb/request-payment", {
+      method: "POST",
+      headers: {
+        "Authorization": jwtToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        books: [
+          { bid: 1, type: 1 },
+          { bid: 4, type: 2 },
+          { bid: 3, type: 1 }
+        ]
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const tossPayments = TossPayments("test_ck_XZYkKL4MrjeEAl5Pmy2kV0zJwlEW");
+      return tossPayments.requestPayment("카드", {
+        ...data
+      });
+    })
+    .catch(err => {
+      console.error("결제 요청 실패:", err);
+    });
+  </script>
+</body>
+</html>
