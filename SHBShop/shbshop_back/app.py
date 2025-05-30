@@ -9,6 +9,8 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
+app.config["PUBLIC_URL"] = "https://46ec-61-105-238-248.ngrok-free.app"
+
 CORS(app)
 
 for bp, prefix in blueprints:
