@@ -377,7 +377,12 @@ def request_payment(decoded_user_id, user_type, userId):
     successUrl = f"{public_url}/book/success"
     failUrl = f"{public_url}/book/fail"
 
-    orderName = books[0].title + " 외 " + str(len(books)) + "권"
+    if len(books) <= 0:
+        return jsonify({"error": "결제할 도서가 없음"}), 404
+    elif len(books) == 1:
+        orderName = books[0].title
+    else:
+        orderName = books[0].title + " 외 " + str(len(books) - 1) + "권"
 
     userPhonePart = userInfo.tel.split("-")
     userPhone = str(userPhonePart[0]) + str(userPhonePart[1]) + str(userPhonePart[2])
