@@ -60,6 +60,8 @@ def show_book_info(decoded_user_id, user_type, userId, sellerType, bookId):
         book = db.session.query(Pbooktrade).filter_by(bid=bookId).first()
         if not book:
             return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
+        if book.state != PurchaseState.ONSALE.value:
+            return jsonify({"error": "해당 책은 판매 중이 아닙니다."}), 400
         seller = db.session.query(Personal).filter_by(pid=book.pid).first()
         if user_type == UserType.PERSONAL.value:
             basketInfo = db.session.query(Pbasket2p).filter_by(pid=userId, bid=bookId).first()
@@ -69,6 +71,8 @@ def show_book_info(decoded_user_id, user_type, userId, sellerType, bookId):
         book = db.session.query(Cbooktrade).filter_by(bid=bookId).first()
         if not book:
             return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
+        if book.state != PurchaseState.ONSALE.value:
+            return jsonify({"error": "해당 책은 판매 중이 아닙니다."}), 400
         seller = db.session.query(Commercial).filter_by(cid=book.cid).first()
         if user_type == UserType.PERSONAL.value:
             basketInfo = db.session.query(Pbasket2c).filter_by(pid=userId, bid=bookId).first()
@@ -143,6 +147,8 @@ def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
     book = db.session.query(Sbooktrade).filter_by(bid=bookId, sid=shopId).first()
     if not book:
         return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
+    if book.state != PurchaseState.ONSALE.value:
+        return jsonify({"error": "해당 책은 판매 중이 아닙니다."}), 400
     shop = db.session.query(Shop).filter_by(sid=shopId).first()
     if not shop:
         return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
@@ -226,6 +232,9 @@ def add_bk_in_basket(decoded_user_id, user_type, userId, sellerType, bookId):
     if not bookInfo:
         return jsonify({"error": "존재하지 않는 도서"}), 404
     
+    if bookInfo.state != PurchaseState.ONSALE.value:
+        return jsonify({"error": "해당 책은 판매 중이 아닙니다."}), 400
+    
     if basketInfo:
         return jsonify({"error": "이미 장바구니에 추가되어 있음"}), 409
 
@@ -280,6 +289,9 @@ def add_sbk_in_basket(decoded_user_id, user_type, userId, shopId, bookId):
 
     if not bookInfo:
         return jsonify({"error": "존재하지 않는 도서"}), 404
+    
+    if bookInfo.state != PurchaseState.ONSALE.value:
+        return jsonify({"error": "해당 책은 판매 중이 아닙니다."}), 400
     
     if bookInfo.sid != shopId:
         return jsonify({"error": "매장 정보와 도서 정보가 일치하지 않습니다."}), 400

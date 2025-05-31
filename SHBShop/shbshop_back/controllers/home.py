@@ -28,6 +28,17 @@ class CoUserType(Enum):
     JUSTUSER = 1
     SHOPUSER = 2
 
+class PurchaseState(Enum):
+    ONSALE = 1 #판매중
+    PAYMENT_SUCCESS = 2 #결제완료
+    SELLER_REJECTED = 3 #판매거절
+    SELLER_CONFIRMED = 4 #판매승인
+    PURCHASE_CONFIRMED = 5 #구매확정
+    USER_CANCELLED = 6 #사용자취소
+    REFUNDED = 7 #환불완료
+    PAYMENT_FAILED = 8 #결제실패
+    PENDING = 9 #결제진행중
+
 @home_bp.route("/<int:userId>", methods=["GET"])
 @token_required
 def show_user_home(decoded_user_id, user_type, userId):
@@ -44,7 +55,7 @@ def show_user_home(decoded_user_id, user_type, userId):
     pbook_results = (
         db.session.query(Pbooktrade, Personal.nickname)
         .join(Personal, Pbooktrade.pid == Personal.pid)
-        .filter(Pbooktrade.region == userInfo.region)
+        .filter(Pbooktrade.region == userInfo.region, Pbooktrade.state == PurchaseState.ONSALE.value)
         .order_by(Pbooktrade.createAt.desc())
         .limit(5)
         .all()
@@ -53,7 +64,7 @@ def show_user_home(decoded_user_id, user_type, userId):
     cbook_results = (
         db.session.query(Cbooktrade, Commercial.nickname)
         .join(Commercial, Cbooktrade.cid == Commercial.cid)
-        .filter(Cbooktrade.region == userInfo.region)
+        .filter(Cbooktrade.region == userInfo.region, Cbooktrade.state == PurchaseState.ONSALE.value)
         .order_by(Cbooktrade.createAt.desc())
         .limit(5)
         .all()
@@ -121,7 +132,8 @@ def show_user_home_more(decoded_user_id, user_type, userId, pfinidx, cfinidx):
         .join(Personal, Pbooktrade.pid == Personal.pid)
         .filter(
             Pbooktrade.region == userInfo.region,
-            Pbooktrade.bid < pfinidx
+            Pbooktrade.bid < pfinidx,
+            Pbooktrade.state == PurchaseState.ONSALE.value
         )
         .order_by(Pbooktrade.createAt.desc())
         .limit(5)
@@ -133,7 +145,8 @@ def show_user_home_more(decoded_user_id, user_type, userId, pfinidx, cfinidx):
         .join(Commercial, Cbooktrade.cid == Commercial.cid)
         .filter(
             Cbooktrade.region == userInfo.region,
-            Cbooktrade.bid < cfinidx
+            Cbooktrade.bid < cfinidx,
+            Cbooktrade.state == PurchaseState.ONSALE.value
         )
         .order_by(Cbooktrade.createAt.desc())
         .limit(5)
@@ -208,10 +221,13 @@ def search_book(decoded_user_id, user_type, userId):
             db.session.query(Pbooktrade, Personal.nickname)
                 .join(Personal, Pbooktrade.pid == Personal.pid)
                 .filter(
-                    or_(
-                        Pbooktrade.title.ilike(keyword_pattern),
-                        Pbooktrade.author.ilike(keyword_pattern),
-                        Pbooktrade.publish.ilike(keyword_pattern)
+                    and_(
+                        Pbooktrade.state == PurchaseState.ONSALE.value,
+                        or_(
+                            Pbooktrade.title.ilike(keyword_pattern),
+                            Pbooktrade.author.ilike(keyword_pattern),
+                            Pbooktrade.publish.ilike(keyword_pattern)
+                        )
                     )
                 )
                 .order_by(desc(Pbooktrade.createAt))
@@ -223,10 +239,13 @@ def search_book(decoded_user_id, user_type, userId):
             db.session.query(Cbooktrade, Commercial.nickname)
                 .join(Commercial, Cbooktrade.cid == Commercial.cid)
                 .filter(
-                    or_(
-                        Cbooktrade.title.ilike(keyword_pattern),
-                        Cbooktrade.author.ilike(keyword_pattern),
-                        Cbooktrade.publish.ilike(keyword_pattern)
+                    and_(
+                        Cbooktrade.state == PurchaseState.ONSALE.value,
+                        or_(
+                            Cbooktrade.title.ilike(keyword_pattern),
+                            Cbooktrade.author.ilike(keyword_pattern),
+                            Cbooktrade.publish.ilike(keyword_pattern)
+                        )
                     )
                 )
                 .order_by(desc(Cbooktrade.createAt))
@@ -238,10 +257,13 @@ def search_book(decoded_user_id, user_type, userId):
             db.session.query(Sbooktrade, Shop.shopName)
                 .join(Shop, Sbooktrade.sid == Shop.sid)
                 .filter(
-                    or_(
-                        Sbooktrade.title.ilike(keyword_pattern),
-                        Sbooktrade.author.ilike(keyword_pattern),
-                        Sbooktrade.publish.ilike(keyword_pattern)
+                    and_(
+                        Sbooktrade.state == PurchaseState.ONSALE.value,
+                        or_(
+                            Sbooktrade.title.ilike(keyword_pattern),
+                            Sbooktrade.author.ilike(keyword_pattern),
+                            Sbooktrade.publish.ilike(keyword_pattern)
+                        )
                     )
                 )
                 .order_by(desc(Sbooktrade.createAt))
@@ -255,6 +277,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .filter(
                     and_(
                         Pbooktrade.region.ilike(region_pattern),
+                        Pbooktrade.state == PurchaseState.ONSALE.value,
                         or_(
                             Pbooktrade.title.ilike(keyword_pattern),
                             Pbooktrade.author.ilike(keyword_pattern),
@@ -273,6 +296,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .filter(
                     and_(
                         Cbooktrade.region.ilike(region_pattern),
+                        Cbooktrade.state == PurchaseState.ONSALE.value,
                         or_(
                             Cbooktrade.title.ilike(keyword_pattern),
                             Cbooktrade.author.ilike(keyword_pattern),
@@ -291,6 +315,7 @@ def search_book(decoded_user_id, user_type, userId):
                 .filter(
                     and_(
                         Sbooktrade.region.ilike(region_pattern),
+                        Sbooktrade.state == PurchaseState.ONSALE.value,
                         or_(
                             Sbooktrade.title.ilike(keyword_pattern),
                             Sbooktrade.author.ilike(keyword_pattern),
@@ -389,6 +414,7 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
             .join(Personal, Pbooktrade.pid == Personal.pid)
             .filter(
                 Pbooktrade.bid < pfinidx,
+                Pbooktrade.state == PurchaseState.ONSALE.value,
                 or_(
                     Pbooktrade.title.ilike(keyword_pattern),
                     Pbooktrade.author.ilike(keyword_pattern),
@@ -405,6 +431,7 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
             .join(Commercial, Cbooktrade.cid == Commercial.cid)
             .filter(
                 Cbooktrade.bid < cfinidx,
+                Cbooktrade.state == PurchaseState.ONSALE.value,
                 or_(
                         Cbooktrade.title.ilike(keyword_pattern),
                         Cbooktrade.author.ilike(keyword_pattern),
@@ -423,6 +450,7 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
                     and_(
                         Pbooktrade.bid < pfinidx,
                         Pbooktrade.region.ilike(region_pattern),
+                        Pbooktrade.state == PurchaseState.ONSALE.value,
                         or_(
                             Pbooktrade.title.ilike(keyword_pattern),
                             Pbooktrade.author.ilike(keyword_pattern),
@@ -442,6 +470,7 @@ def search_more_book(decoded_user_id, user_type, userId, pfinidx, cfinidx):
                     and_(
                         Cbooktrade.bid < cfinidx,
                         Cbooktrade.region.ilike(region_pattern),
+                        Cbooktrade.state == PurchaseState.ONSALE.value,
                         or_(
                             Cbooktrade.title.ilike(keyword_pattern),
                             Cbooktrade.author.ilike(keyword_pattern),
@@ -522,6 +551,7 @@ def search_more_sbook(decoded_user_id, user_type, userId, sfinidx):
             .join(Shop, Sbooktrade.sid == Shop.sid)
             .filter(
                 Sbooktrade.bid < sfinidx,
+                Sbooktrade.state == PurchaseState.ONSALE.value,
                 or_(
                     Sbooktrade.title.ilike(keyword_pattern),
                     Sbooktrade.author.ilike(keyword_pattern),
@@ -540,6 +570,7 @@ def search_more_sbook(decoded_user_id, user_type, userId, sfinidx):
                     and_(
                         Sbooktrade.bid < sfinidx,
                         Sbooktrade.region.ilike(region_pattern),
+                        Sbooktrade.state == PurchaseState.ONSALE.value,
                         or_(
                             Sbooktrade.title.ilike(keyword_pattern),
                             Sbooktrade.author.ilike(keyword_pattern),
