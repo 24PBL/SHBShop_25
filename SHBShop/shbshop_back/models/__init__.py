@@ -31,10 +31,8 @@ from .cbasket2p import Cbasket2p
 from .cbasket2c import Cbasket2c
 from .cbasket2s import Cbasket2s
 from .preceipt2p import Preceipt2p
-from .preceipt2c import Preceipt2c
 from .preceipt2s import Preceipt2s
 from .creceipt2p import Creceipt2p
-from .creceipt2c import Creceipt2c
 from .creceipt2s import Creceipt2s
 
 __all__ = [
@@ -71,9 +69,7 @@ __all__ = [
     "Cbasket2c",
     "Cbasket2s",
     "Preceipt2p",
-    "Preceipt2c",
     "Preceipt2s",
     "Creceipt2p",
-    "Creceipt2c",
     "Creceipt2s"
 ]

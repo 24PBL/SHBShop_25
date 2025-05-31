@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import random
 from utils.jwt_helper import token_required
 
-from models import Personal, Commercial, Pbooktrade, Sbooktrade, Cbooktrade, Shop, Favorite4p, Favorite4c, Commercialcert, Vaild4pmd, Vaild4cmd, Modiaddress, Pbasket2p, Pbasket2c, Pbasket2s, Cbasket2p, Cbasket2c, Cbasket2s, Preceipt2p, Preceipt2c, Preceipt2s, Creceipt2p, Creceipt2c, Creceipt2s 
+from models import Personal, Commercial, Pbooktrade, Sbooktrade, Cbooktrade, Shop, Favorite4p, Favorite4c, Commercialcert, Vaild4pmd, Vaild4cmd, Modiaddress, Pbasket2p, Pbasket2c, Pbasket2s, Cbasket2p, Cbasket2c, Cbasket2s, Preceipt2p, Preceipt2s, Creceipt2p, Creceipt2s 
 from extensions import db
 
 home_bp = Blueprint("home", __name__)

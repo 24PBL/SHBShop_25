@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 import json
 
-from models import Personal, Commercial, Pbooktrade, Sbooktrade, Cbooktrade, Shop, Pbasket2p, Pbasket2c, Pbasket2s, Cbasket2p, Cbasket2c, Cbasket2s
+from models import Personal, Commercial, Pbooktrade, Sbooktrade, Cbooktrade, Shop, Pbasket2p, Pbasket2c, Pbasket2s, Cbasket2p, Cbasket2c, Cbasket2s, Preceipt2p, Preceipt2s, Creceipt2p, Creceipt2s
 from extensions import db
 
 book_bp = Blueprint("book", __name__)
@@ -26,6 +26,17 @@ class UserType(Enum):
 class basketExist(Enum):
     EXIST = 1
     NO = 2
+
+class PurchaseState(Enum):
+    ONSALE = 1 #판매중
+    PAYMENT_SUCCESS = 2 #결제완료
+    SELLER_REJECTED = 3 #판매거절
+    SELLER_CONFIRMED = 4 #판매승인
+    PURCHASE_CONFIRMED = 5 #구매확정
+    USER_CANCELLED = 6 #사용자취소
+    REFUNDED = 7 #환불완료
+    PAYMENT_FAILED = 8 #결제실패
+    PENDING = 9 #결제진행중
 
 TOSS_HEADERS = {
     "Authorization": f"Basic {base64.b64encode(f'{TOSS_SECRET_KEY}:'.encode()).decode()}",
@@ -332,7 +343,7 @@ def delete_sbk_in_basket(decoded_user_id, user_type, userId, shopId, bookId):
 
 @book_bp.route("/<int:userId>/pb/request-payment", methods=["POST"])
 @token_required
-def request_payment(decoded_user_id, user_type, userId):
+def request_payment4p(decoded_user_id, user_type, userId):
     # 장바구니를 통해 여래 책의 구매 요청이 들어올 수 있다고 가정. 단 개인 거래 도서와 매장 거래 도서의 결제는 구분함.
     data = request.json
     book_entries = data["books"]  # [{bid: 101, type: 1}, ...]
@@ -358,24 +369,21 @@ def request_payment(decoded_user_id, user_type, userId):
     # 두 종류를 합쳐서 처리
     books = pbooks + cbooks
 
-    # 검증 예시
     if len(books) != len(book_entries):
         return jsonify({"error": "존재하지 않는 도서가 있습니다."}), 400
 
-    # 예: 상태 확인
-    #unavailable_books = [b.title for b in books if b.state != 1]
-    #if unavailable_books:
-        #return jsonify({"error": "판매 불가 도서 존재", "list": unavailable_books}), 400
+    unavailable_books = [b.title for b in books if b.state != 1]
+    if unavailable_books:
+        return jsonify({"error": "판매 불가 도서 존재", "list": unavailable_books}), 400
 
     # 금액 합산
     total_price = sum(b.price for b in books)
     
     order_id = str(uuid.uuid4())
     
-
     public_url = current_app.config["PUBLIC_URL"]
-    successUrl = f"{public_url}/book/success"
-    failUrl = f"{public_url}/book/fail"
+    successUrl = f"{public_url}/book/pb/success"
+    failUrl = f"{public_url}/book/pb/fail"
 
     if len(books) <= 0:
         return jsonify({"error": "결제할 도서가 없음"}), 404
@@ -403,10 +411,168 @@ def request_payment(decoded_user_id, user_type, userId):
             "userId": decoded_user_id
         }
     }
-    return jsonify(payload)
 
-@book_bp.route("/success")
-def payment_success():
+    if (user_type == UserType.PERSONAL.value):
+        newRe = Preceipt2p(
+                    pid=decoded_user_id,
+                    orderid=order_id,
+                    amount=total_price,
+                    state=PurchaseState.PENDING.value,
+                    reason="결제진행중"
+                )
+        
+        db.session.add(newRe)
+        
+        for book in pbooks:
+            book.state = PurchaseState.PENDING.value
+            book.consumerid = decoded_user_id
+            book.consumer_type = UserType.PERSONAL.value
+
+        for book in cbooks:
+            book.state = PurchaseState.PENDING.value
+            book.consumerid = decoded_user_id
+            book.consumer_type = UserType.PERSONAL.value
+    elif (user_type == UserType.COMMERCIAL.value):
+        newRe = Creceipt2p(
+                    cid=decoded_user_id,
+                    orderid=order_id,
+                    amount=total_price,
+                    state=PurchaseState.PENDING.value,
+                    reason="결제진행중"
+                )
+        
+        db.session.add(newRe)
+
+        for book in pbooks:
+            book.state = PurchaseState.PENDING.value
+            book.consumerid = decoded_user_id
+            book.consumer_type = UserType.COMMERCIAL.value
+
+        for book in cbooks:
+            book.state = PurchaseState.PENDING.value
+            book.consumerid = decoded_user_id
+            book.consumer_type = UserType.COMMERCIAL.value
+    else:
+       return jsonify({"error": "잘못된 접근"}), 403
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "서버 오류", "details": str(e)}), 500
+    
+    return jsonify(payload), 201
+
+@book_bp.route("/<int:userId>/sb/request-payment", methods=["POST"])
+@token_required
+def request_payment4s(decoded_user_id, user_type, userId):
+    # 장바구니를 통해 여래 책의 구매 요청이 들어올 수 있다고 가정. 단 개인 거래 도서와 매장 거래 도서의 결제는 구분함.
+    data = request.json
+    book_entries = data["books"]  # [{bid: 101, type: 3}, ...]
+
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if (user_type == UserType.PERSONAL.value):
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+    elif (user_type == UserType.COMMERCIAL.value):
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+    else:
+       return jsonify({"error": "잘못된 접근"}), 403
+
+    # 개인도서와 상업도서 ID를 나눠 담기
+    sbook_ids = [b["bid"] for b in book_entries if b["type"] == 3]
+
+    # 각 테이블에서 일괄 조회
+    sbooks = db.session.query(Sbooktrade).filter(Sbooktrade.bid.in_(sbook_ids)).all()
+
+    if len(sbooks) != len(book_entries):
+        return jsonify({"error": "존재하지 않는 도서가 있습니다."}), 400
+
+    unavailable_books = [b.title for b in sbooks if b.state != 1]
+    if unavailable_books:
+        return jsonify({"error": "판매 불가 도서 존재", "list": unavailable_books}), 400
+
+    # 금액 합산
+    total_price = sum(b.price for b in sbooks)
+    
+    order_id = str(uuid.uuid4())
+    
+    public_url = current_app.config["PUBLIC_URL"]
+    successUrl = f"{public_url}/book/sb/success"
+    failUrl = f"{public_url}/book/sb/fail"
+
+    if len(sbooks) <= 0:
+        return jsonify({"error": "결제할 도서가 없음"}), 404
+    elif len(sbooks) == 1:
+        orderName = sbooks[0].title
+    else:
+        orderName = sbooks[0].title + " 외 " + str(len(sbooks) - 1) + "권"
+
+    userPhonePart = userInfo.tel.split("-")
+    userPhone = str(userPhonePart[0]) + str(userPhonePart[1]) + str(userPhonePart[2])
+
+    payload = {
+        # 필수 항목
+        "amount": total_price,
+        "orderId": order_id,
+        "orderName": orderName,
+        "customerName": userInfo.name,
+        "successUrl": successUrl,
+        "failUrl": failUrl,
+    
+        # 선택적 권장 항목
+        "customerEmail": userInfo.email,
+        "customerMobilePhone": userPhone,
+        "metadata": {
+            "userId": decoded_user_id
+        }
+    }
+
+    if (user_type == UserType.PERSONAL.value):
+        newRe = Preceipt2s(
+                    pid=decoded_user_id,
+                    orderid=order_id,
+                    amount=total_price,
+                    state=PurchaseState.PENDING.value,
+                    reason="결제진행중"
+                )
+        
+        db.session.add(newRe)
+        
+        for book in sbooks:
+            book.state = PurchaseState.PENDING.value
+            book.consumerid = decoded_user_id
+            book.consumer_type = UserType.PERSONAL.value
+
+    elif (user_type == UserType.COMMERCIAL.value):
+        newRe = Creceipt2s(
+                    cid=decoded_user_id,
+                    orderid=order_id,
+                    amount=total_price,
+                    state=PurchaseState.PENDING.value,
+                    reason="결제진행중"
+                )
+        
+        db.session.add(newRe)
+
+        for book in sbooks:
+            book.state = PurchaseState.PENDING.value
+            book.consumerid = decoded_user_id
+            book.consumer_type = UserType.COMMERCIAL.value
+    else:
+       return jsonify({"error": "잘못된 접근"}), 403
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "서버 오류", "details": str(e)}), 500
+    
+    return jsonify(payload), 201
+
+@book_bp.route("/pb/success")
+def payment_success4p():
     payment_key = request.args.get("paymentKey")
     order_id = request.args.get("orderId")
     amount = request.args.get("amount")
@@ -425,18 +591,245 @@ def payment_success():
 
     res = requests.post("https://api.tosspayments.com/v1/payments/confirm",
                         headers=headers, json=payload)
+    
+    preceipt = db.session.query(Preceipt2p).filter_by(orderid=order_id).first()
+    creceipt = db.session.query(Creceipt2p).filter_by(orderid=order_id).first()
+    pbooks = db.session.query(Pbooktrade).filter(Pbooktrade.orderid == order_id).all()
+    cbooks = db.session.query(Cbooktrade).filter(Cbooktrade.orderid == order_id).all()
+
+    books = pbooks + cbooks
 
     if res.status_code == 200:
         confirm_data = res.json()
+
+        payment_method = confirm_data["method"]
+        paid_at = confirm_data["approvedAt"]
+        installment = confirm_data.get("card", {}).get("installmentPlanMonths", 0)
+
+        if preceipt:
+            if preceipt.state == PurchaseState.PENDING.value:
+                preceipt.state = PurchaseState.PAYMENT_SUCCESS.value
+                preceipt.paidAt = paid_at
+                preceipt.payment_method = payment_method
+                preceipt.payment_key = payment_key
+                preceipt.install_month = installment
+                preceipt.reason = "결제완료"
+            else:
+                return jsonify({"error": "이미 처리된 결제"}), 400
+        elif creceipt:
+            if creceipt.state == PurchaseState.PENDING.value:
+                creceipt.state = PurchaseState.PAYMENT_SUCCESS.value
+                creceipt.paidAt = paid_at
+                creceipt.payment_method = payment_method
+                creceipt.payment_key = payment_key
+                creceipt.install_month = installment
+                creceipt.reason = "결제완료"
+            else:
+                return jsonify({"error": "이미 처리된 결제"}), 400
+        else:
+            return jsonify({"error": "존재하지 않는 주문"}), 404
+        
+        for book in books:
+            book.state = PurchaseState.PAYMENT_SUCCESS.value
+        
+        db.session.commit()
+
         return render_template("success.html", data=confirm_data)
     else:
+        if preceipt:
+            if preceipt.state != PurchaseState.PENDING.value:
+                return jsonify({"error": "이미 처리된 결제"}), 400
+            else:
+                preceipt.state = PurchaseState.PAYMENT_FAILED.value
+                preceipt.reason = "결제 실패"
+
+                for book in books:
+                    book.state = PurchaseState.ONSALE.value
+                    book.consumerid = None
+                    book.consumer_type = None
+        elif creceipt:
+            if creceipt.state != PurchaseState.PENDING.value:
+                return jsonify({"error": "이미 처리된 결제"}), 400
+            else:
+                creceipt.state = PurchaseState.PAYMENT_FAILED.value
+                creceipt.reason = "결제 실패"
+
+                for book in books:
+                    book.state = PurchaseState.ONSALE.value
+                    book.consumerid = None
+                    book.consumer_type = None
+
+        db.session.commit()
         return f"결제 승인 실패: {res.text}", 400
 
-@book_bp.route("/fail")
-def payment_fail():
+@book_bp.route("/pb/fail")
+def payment_fail4p():
+    order_id = request.args.get("orderId")  # Toss에서 함께 전달되는 경우
+
+    if not order_id:
+        return render_template("fail.html", message="결제 실패 (orderId 없음)")
+    
+    preceipt = db.session.query(Preceipt2p).filter_by(orderid=order_id).first()
+    creceipt = db.session.query(Creceipt2p).filter_by(orderid=order_id).first()
+    pbooks = db.session.query(Pbooktrade).filter(Pbooktrade.orderid == order_id).all()
+    cbooks = db.session.query(Cbooktrade).filter(Cbooktrade.orderid == order_id).all()
+
+    books = pbooks + cbooks
+
+    if preceipt:
+        if preceipt.state != PurchaseState.PENDING.value:
+            return jsonify({"error": "이미 처리된 결제"}), 400
+        else:
+            preceipt.state = PurchaseState.PAYMENT_FAILED.value
+            preceipt.reason = "결제 실패"
+
+        for book in books:
+            book.state = PurchaseState.ONSALE.value
+            book.consumerid = None
+            book.consumer_type = None
+    elif creceipt:
+        if creceipt.state != PurchaseState.PENDING.value:
+            return jsonify({"error": "이미 처리된 결제"}), 400
+        else:
+            creceipt.state = PurchaseState.PAYMENT_FAILED.value
+            creceipt.reason = "결제 실패"
+
+            for book in books:
+                book.state = PurchaseState.ONSALE.value
+                book.consumerid = None
+                book.consumer_type = None
+
+    db.session.commit()
+    
+    return render_template("fail.html", message="결제 실패")
+
+@book_bp.route("/sb/success")
+def payment_success4s():
+    payment_key = request.args.get("paymentKey")
+    order_id = request.args.get("orderId")
+    amount = request.args.get("amount")
+
+    if not all([payment_key, order_id, amount]):
+        return "필수 결제 정보 누락", 400
+
+    # Toss 결제 승인 API 호출
+    headers = TOSS_HEADERS
+
+    payload = {
+        "paymentKey": payment_key,
+        "orderId": order_id,
+        "amount": int(amount)
+    }
+
+    res = requests.post("https://api.tosspayments.com/v1/payments/confirm",
+                        headers=headers, json=payload)
+    
+    preceipt = db.session.query(Preceipt2s).filter_by(orderid=order_id).first()
+    creceipt = db.session.query(Creceipt2s).filter_by(orderid=order_id).first()
+    books = db.session.query(Sbooktrade).filter(Sbooktrade.orderid == order_id).all()
+
+    if res.status_code == 200:
+        confirm_data = res.json()
+
+        payment_method = confirm_data["method"]
+        paid_at = confirm_data["approvedAt"]
+        installment = confirm_data.get("card", {}).get("installmentPlanMonths", 0)
+
+        if preceipt:
+            if preceipt.state == PurchaseState.PENDING.value:
+                preceipt.state = PurchaseState.PAYMENT_SUCCESS.value
+                preceipt.paidAt = paid_at
+                preceipt.payment_method = payment_method
+                preceipt.payment_key = payment_key
+                preceipt.install_month = installment
+                preceipt.reason = "결제완료"
+            else:
+                return jsonify({"error": "이미 처리된 결제"}), 400
+        elif creceipt:
+            if creceipt.state == PurchaseState.PENDING.value:
+                creceipt.state = PurchaseState.PAYMENT_SUCCESS.value
+                creceipt.paidAt = paid_at
+                creceipt.payment_method = payment_method
+                creceipt.payment_key = payment_key
+                creceipt.install_month = installment
+                creceipt.reason = "결제완료"
+            else:
+                return jsonify({"error": "이미 처리된 결제"}), 400
+        else:
+            return jsonify({"error": "존재하지 않는 주문"}), 404
+        
+        for book in books:
+            book.state = PurchaseState.PAYMENT_SUCCESS.value
+        
+        db.session.commit()
+
+        return render_template("success.html", data=confirm_data)
+    else:
+        if preceipt:
+            if preceipt.state != PurchaseState.PENDING.value:
+                return jsonify({"error": "이미 처리된 결제"}), 400
+            else:
+                preceipt.state = PurchaseState.PAYMENT_FAILED.value
+                preceipt.reason = "결제 실패"
+
+                for book in books:
+                    book.state = PurchaseState.ONSALE.value
+                    book.consumerid = None
+                    book.consumer_type = None
+        elif creceipt:
+            if creceipt.state != PurchaseState.PENDING.value:
+                return jsonify({"error": "이미 처리된 결제"}), 400
+            else:
+                creceipt.state = PurchaseState.PAYMENT_FAILED.value
+                creceipt.reason = "결제 실패"
+
+                for book in books:
+                    book.state = PurchaseState.ONSALE.value
+                    book.consumerid = None
+                    book.consumer_type = None
+
+        db.session.commit()
+        return f"결제 승인 실패: {res.text}", 400
+
+@book_bp.route("/sb/fail")
+def payment_fail4s():
+    order_id = request.args.get("orderId")  # Toss에서 함께 전달되는 경우
+
+    if not order_id:
+        return render_template("fail.html", message="결제 실패 (orderId 없음)")
+    
+    preceipt = db.session.query(Preceipt2s).filter_by(orderid=order_id).first()
+    creceipt = db.session.query(Creceipt2s).filter_by(orderid=order_id).first()
+    books = db.session.query(Sbooktrade).filter(Sbooktrade.orderid == order_id).all()
+
+    if preceipt:
+        if preceipt.state != PurchaseState.PENDING.value:
+            return jsonify({"error": "이미 처리된 결제"}), 400
+        else:
+            preceipt.state = PurchaseState.PAYMENT_FAILED.value
+            preceipt.reason = "결제 실패"
+
+        for book in books:
+            book.state = PurchaseState.ONSALE.value
+            book.consumerid = None
+            book.consumer_type = None
+    elif creceipt:
+        if creceipt.state != PurchaseState.PENDING.value:
+            return jsonify({"error": "이미 처리된 결제"}), 400
+        else:
+            creceipt.state = PurchaseState.PAYMENT_FAILED.value
+            creceipt.reason = "결제 실패"
+
+            for book in books:
+                book.state = PurchaseState.ONSALE.value
+                book.consumerid = None
+                book.consumer_type = None
+
+    db.session.commit()
+    
     return render_template("fail.html", message="결제 실패")
 
 # 결제 연동 웹 테스트 api
 @book_bp.route("/payment")
 def payment_page():
-    return render_template("payment.html") 
+    return render_template("payment.html")

@@ -9,7 +9,7 @@ from enum import Enum
 
 # 에디터에서 에러 표시 나와도 무시하면 됩니다.
 # 절대 경로 파악이 안 되는 것. 실행은 정상적으로 됩니다.
-from models import Personal, Commercial, Commercialcert, Adminacc, Shop, Pbooktrade, Cbooktrade, Sbooktrade, Vaild4pur, Vaild4cur, Modiaddress, Preceipt2p, Preceipt2c, Preceipt2s, Creceipt2p, Creceipt2c, Creceipt2s
+from models import Personal, Commercial, Commercialcert, Adminacc, Shop, Pbooktrade, Cbooktrade, Sbooktrade, Vaild4pur, Vaild4cur, Modiaddress, Preceipt2p, Preceipt2s, Creceipt2p, Creceipt2s
 from extensions import db
 
 test_bp = Blueprint("test", __name__)

@@ -29,8 +29,10 @@ class Pbooktrade(Base):
     img2: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     img3: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     state: Mapped[int] = mapped_column(Integer, server_default=text("1"))
-    orderid: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
+    orderid: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
+    consumerid: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    consumer_type: Mapped[int] = mapped_column(Integer, nullable=True)
 
     personal: Mapped['Personal'] = relationship('Personal', back_populates='pbooktrade')
     cbasket2p: Mapped[List['Cbasket2p']] = relationship('Cbasket2p', foreign_keys='[Cbasket2p.bid]', back_populates='pbooktrade')
