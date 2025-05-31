@@ -24,9 +24,9 @@ class Favorite(Enum):
 class PurchaseState(Enum):
     ONSALE = 1 #판매중
     PAYMENT_SUCCESS = 2 #결제완료
-    SELLER_REJECTED = 3 #판매거절
-    SELLER_CONFIRMED = 4 #판매승인
-    PURCHASE_CONFIRMED = 5 #구매확정
+    #SELLER_REJECTED = 3 #판매거절
+    #SELLER_CONFIRMED = 4 #판매승인
+    #PURCHASE_CONFIRMED = 5 #구매확정
     USER_CANCELLED = 6 #사용자취소
     REFUNDED = 7 #환불완료
     PAYMENT_FAILED = 8 #결제실패

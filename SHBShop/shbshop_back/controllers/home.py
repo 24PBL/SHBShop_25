@@ -31,9 +31,9 @@ class CoUserType(Enum):
 class PurchaseState(Enum):
     ONSALE = 1 #판매중
     PAYMENT_SUCCESS = 2 #결제완료
-    SELLER_REJECTED = 3 #판매거절
-    SELLER_CONFIRMED = 4 #판매승인
-    PURCHASE_CONFIRMED = 5 #구매확정
+    #SELLER_REJECTED = 3 #판매거절
+    #SELLER_CONFIRMED = 4 #판매승인
+    #PURCHASE_CONFIRMED = 5 #구매확정
     USER_CANCELLED = 6 #사용자취소
     REFUNDED = 7 #환불완료
     PAYMENT_FAILED = 8 #결제실패
@@ -1576,45 +1576,79 @@ def show_user_receipt(decoded_user_id, user_type, userId):
     if str(decoded_user_id) != str(userId):
         return jsonify({"error": "권한이 없습니다."}), 403
     
-    combined_list = []
-    sbook_list = []
+    pbook_groups = {}
+    sbook_groups = {}
+    rp_list = []
+    rs_list = []
     
     if user_type == UserType.PERSONAL.value:
         userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
-        prp_results = (
-            db.session.query(Preceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
-            .join(Personal, Pbooktrade.pid == Personal.pid)
+        rp_results = (
+            db.session.query(Preceipt2p)
             .filter(Preceipt2p.pid == userId)
             .order_by(Preceipt2p.rid.desc())
-            .limit(6)
             .all()
         )
 
-        prc_results = (
-            db.session.query(Preceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
-            .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(Preceipt2c.pid == userId)
-            .order_by(Preceipt2c.rid.desc())
-            .limit(6)
-            .all()
-        )
-
-        prs_results = (
-            db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
+        rs_results = (
+            db.session.query(Preceipt2s)
             .filter(Preceipt2s.pid == userId)
             .order_by(Preceipt2s.rid.desc())
-            .limit(6)
             .all()
         )
 
-        for receipt, book, seller in prp_results:
-            combined_list.append({
-                "rid": receipt.rid,
+        prp_orderids = [r.orderid for r in rp_results]
+        prs_orderids = [r.orderid for r in rs_results]
+
+        prp_pbs = (
+            db.session.query(Pbooktrade, Personal)
+            .join(Personal, Pbooktrade.pid == Personal.pid)
+            .filter(
+                Pbooktrade.orderid.in_(prp_orderids),
+                Pbooktrade.consumerid == decoded_user_id,
+                Pbooktrade.consumer_type == UserType.PERSONAL.value
+            )
+            .all()
+        )
+        prp_cbs = (
+            db.session.query(Cbooktrade, Commercial)
+            .join(Commercial, Cbooktrade.cid == Commercial.cid)
+            .filter(
+                Cbooktrade.orderid.in_(prp_orderids),
+                Cbooktrade.consumerid == decoded_user_id,
+                Cbooktrade.consumer_type == UserType.PERSONAL.value
+            )
+            .all()
+        )
+        prs_sbs = (
+            db.session.query(Sbooktrade, Shop)
+            .join(Shop, Sbooktrade.sid == Shop.sid)
+            .filter(
+                Sbooktrade.orderid.in_(prs_orderids),
+                Sbooktrade.consumerid == decoded_user_id,
+                Sbooktrade.consumer_type == UserType.PERSONAL.value
+            )
+            .all()
+        )
+
+        rp_list = [ {
+            "rid": receipt.rid,
+            "orderid": receipt.orderid,
+            "amount": receipt.amount,
+            "installment_month": receipt.installment_month,
+            "state": receipt.state,
+            "reason": receipt.reason,
+            "payment_method": receipt.payment_method,
+            "paidAt": receipt.paidAt.isoformat() if receipt.paidAt else None
+        } for receipt in rp_results ]
+
+        for book, seller in prp_pbs:
+            oid = book.orderid
+            if oid not in pbook_groups:
+                pbook_groups[oid] = []
+            pbook_groups[oid].append({
                 "bid": book.bid,
+                "orderid": book.orderid,
                 "title": book.title,
                 "author": book.author,
                 "publish": book.publish,
@@ -1624,17 +1658,16 @@ def show_user_receipt(decoded_user_id, user_type, userId):
                 "bookimg": book.img1,
                 "sellerId": seller.pid,
                 "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
                 "sellerType": UserType.PERSONAL.value
             })
 
-        for receipt, book, seller in prc_results:
-            combined_list.append({
-                "rid": receipt.rid,
+        for book, seller in prp_cbs:
+            oid = book.orderid
+            if oid not in pbook_groups:
+                pbook_groups[oid] = []
+            pbook_groups[oid].append({
                 "bid": book.bid,
+                "orderid": book.orderid,
                 "title": book.title,
                 "author": book.author,
                 "publish": book.publish,
@@ -1644,70 +1677,106 @@ def show_user_receipt(decoded_user_id, user_type, userId):
                 "bookimg": book.img1,
                 "sellerId": seller.cid,
                 "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
                 "sellerType": UserType.COMMERCIAL.value
             })
-
-        book_list = sorted(combined_list, key=lambda x: x["createAt"], reverse=True)
-
-        for book in book_list:
-            book["createAt"] = book["createAt"].isoformat()
-
-        sbook_list = [ {
+        
+        rs_list = [ {
             "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sid": shop.sid,
-            "shopName": shop.shopName,
+            "orderid": receipt.orderid,
+            "amount": receipt.amount,
+            "installment_month": receipt.installment_month,
             "state": receipt.state,
             "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat()
-        } for receipt, book, shop in prs_results ]
+            "payment_method": receipt.payment_method,
+            "paidAt": receipt.paidAt.isoformat() if receipt.paidAt else None
+        } for receipt in rs_results ]
+
+        for book, shop in prs_sbs:
+            oid = book.orderid
+            if oid not in sbook_groups:
+                sbook_groups[oid] = []
+            sbook_groups[oid].append({
+                "bid": book.bid,
+                "orderid": book.orderid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "sid": shop.sid,
+                "shopName": shop.shopName
+            })
+
     elif user_type == UserType.COMMERCIAL.value:
         userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
-        crp_results = (
-            db.session.query(Creceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
-            .join(Personal, Pbooktrade.pid == Personal.pid)
+        rp_results = (
+            db.session.query(Creceipt2p)
             .filter(Creceipt2p.cid == userId)
             .order_by(Creceipt2p.rid.desc())
-            .limit(6)
             .all()
         )
 
-        crc_results = (
-            db.session.query(Creceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
-            .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(Creceipt2c.cid == userId)
-            .order_by(Creceipt2c.rid.desc())
-            .limit(6)
-            .all()
-        )
-
-        crs_results = (
-            db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Creceipt2s.cid == userId)
+        rs_results = (
+            db.session.query(Creceipt2s)
+            .filter(Creceipt2s.sid == userId)
             .order_by(Creceipt2s.rid.desc())
-            .limit(6)
             .all()
         )
 
-        for receipt, book, seller in crp_results:
-            combined_list.append({
-                "rid": receipt.rid,
+        crp_orderids = [r.orderid for r in rp_results]
+        crs_orderids = [r.orderid for r in rs_results]
+
+        crp_pbs = (
+            db.session.query(Pbooktrade, Personal)
+            .join(Personal, Pbooktrade.pid == Personal.pid)
+            .filter(
+                Pbooktrade.orderid.in_(crp_orderids),
+                Pbooktrade.consumerid == decoded_user_id,
+                Pbooktrade.consumer_type == UserType.COMMERCIAL.value
+            )
+            .all()
+        )
+        crp_cbs = (
+            db.session.query(Cbooktrade, Commercial)
+            .join(Commercial, Cbooktrade.cid == Commercial.cid)
+            .filter(
+                Cbooktrade.orderid.in_(crp_orderids),
+                Cbooktrade.consumerid == decoded_user_id,
+                Cbooktrade.consumer_type == UserType.COMMERCIAL.value
+            )
+            .all()
+        )
+        crs_sbs = (
+            db.session.query(Sbooktrade, Shop)
+            .join(Shop, Sbooktrade.sid == Shop.sid)
+            .filter(
+                Sbooktrade.orderid.in_(crs_orderids),
+                Sbooktrade.consumerid == decoded_user_id,
+                Sbooktrade.consumer_type == UserType.PERSONAL.value
+            )
+            .all()
+        )
+
+        rp_list = [ {
+            "rid": receipt.rid,
+            "orderid": receipt.orderid,
+            "amount": receipt.amount,
+            "installment_month": receipt.installment_month,
+            "state": receipt.state,
+            "reason": receipt.reason,
+            "payment_method": receipt.payment_method,
+            "paidAt": receipt.paidAt.isoformat() if receipt.paidAt else None
+        } for receipt in rp_results ]
+
+        for book, seller in crp_pbs:
+            oid = book.orderid
+            if oid not in pbook_groups:
+                pbook_groups[oid] = []
+            pbook_groups[oid].append({
                 "bid": book.bid,
+                "orderid": book.orderid,
                 "title": book.title,
                 "author": book.author,
                 "publish": book.publish,
@@ -1717,17 +1786,16 @@ def show_user_receipt(decoded_user_id, user_type, userId):
                 "bookimg": book.img1,
                 "sellerId": seller.pid,
                 "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
                 "sellerType": UserType.PERSONAL.value
             })
 
-        for receipt, book, seller in crc_results:
-            combined_list.append({
-                "rid": receipt.rid,
+        for book, seller in crp_cbs:
+            oid = book.orderid
+            if oid not in pbook_groups:
+                pbook_groups[oid] = []
+            pbook_groups[oid].append({
                 "bid": book.bid,
+                "orderid": book.orderid,
                 "title": book.title,
                 "author": book.author,
                 "publish": book.publish,
@@ -1737,34 +1805,37 @@ def show_user_receipt(decoded_user_id, user_type, userId):
                 "bookimg": book.img1,
                 "sellerId": seller.cid,
                 "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
                 "sellerType": UserType.COMMERCIAL.value
             })
-
-        book_list = sorted(combined_list, key=lambda x: x["createAt"], reverse=True)
-
-        for book in book_list:
-            book["createAt"] = book["createAt"].isoformat()
-
-        sbook_list = [ {
+        
+        rs_list = [ {
             "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sid": shop.sid,
-            "shopName": shop.shopName,
+            "orderid": receipt.orderid,
+            "amount": receipt.amount,
+            "installment_month": receipt.installment_month,
             "state": receipt.state,
             "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat()
-        } for receipt, book, shop in crs_results ]
+            "payment_method": receipt.payment_method,
+            "paidAt": receipt.paidAt.isoformat() if receipt.paidAt else None
+        } for receipt in rs_results ]
+
+        for book, shop in crs_sbs:
+            oid = book.orderid
+            if oid not in sbook_groups:
+                sbook_groups[oid] = []
+            sbook_groups[oid].append({
+                "bid": book.bid,
+                "orderid": book.orderid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "sid": shop.sid,
+                "shopName": shop.shopName
+            })
     else:
         return jsonify({"error": "잘못된 유저 유형"}), 404
     
@@ -1781,207 +1852,237 @@ def show_user_receipt(decoded_user_id, user_type, userId):
         "decoded_user_id": decoded_user_id,
         "user_type": user_type,
         "user_info": user_info,
-        "book_list": book_list,
-        "sbook_list": sbook_list
+        "receipt_personal": rp_list,
+        "receipt_shop": rs_list,
+        "books_personal": pbook_groups,
+        "books_shop": sbook_groups
     }), 200
 
-@home_bp.route("/<int:userId>/my-page/show-receipt/<int:fnlPRid>/<int:fnlCRid>/<int:fnlSRid>", methods=["GET"])
+@home_bp.route("/<int:userId>/my-page/show-receipt/detail/<orderid>", methods=["GET"])
 @token_required
-def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid, fnlSRid):
+def show_user_receipt_detail(decoded_user_id, user_type, userId, orderId):
     if str(decoded_user_id) != str(userId):
         return jsonify({"error": "권한이 없습니다."}), 403
     
-    combined_list = []
-    sbook_list = []
+    book_list = []
+    rp_info = {}
     
     if user_type == UserType.PERSONAL.value:
         userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
-        prp_results = (
-            db.session.query(Preceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
-            .join(Personal, Pbooktrade.pid == Personal.pid)
-            .filter(Preceipt2p.pid == userId, Preceipt2p.rid < fnlPRid)
-            .order_by(Preceipt2p.rid.desc())
-            .limit(6)
-            .all()
-        )
+        rpInfo = db.session.query(Preceipt2p).filter_by(pid=decoded_user_id, orderid = orderId).first()
+        rsInfo = db.session.query(Preceipt2s).filter_by(pid=decoded_user_id, orderid = orderId).first()
+        
+        if rpInfo:
+            prp_pbs = (
+                db.session.query(Pbooktrade, Personal)
+                .join(Personal, Pbooktrade.pid == Personal.pid)
+                .filter(
+                    Pbooktrade.orderid == orderId,
+                    Pbooktrade.consumerid == decoded_user_id,
+                    Pbooktrade.consumer_type == UserType.PERSONAL.value
+                )
+                .all()
+            )
+            prp_cbs = (
+                db.session.query(Cbooktrade, Commercial)
+                .join(Commercial, Cbooktrade.cid == Commercial.cid)
+                .filter(
+                    Cbooktrade.orderid == orderId,
+                    Cbooktrade.consumerid == decoded_user_id,
+                    Cbooktrade.consumer_type == UserType.PERSONAL.value
+                )
+                .all()
+            )
 
-        prc_results = (
-            db.session.query(Preceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
-            .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(Preceipt2c.pid == userId, Preceipt2c.rid < fnlCRid)
-            .order_by(Preceipt2c.rid.desc())
-            .limit(6)
-            .all()
-        )
+            rp_info = {
+                "rid": rpInfo.rid,
+                "orderid": rpInfo.orderid,
+                "amount": rpInfo.amount,
+                "installment_month": rpInfo.installment_month,
+                "state": rpInfo.state,
+                "reason": rpInfo.reason,
+                "payment_method": rpInfo.payment_method,
+                "paidAt": rpInfo.paidAt.isoformat() if rpInfo.paidAt else None
+            }
 
-        prs_results = (
-            db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Preceipt2s.pid == userId, Preceipt2s.rid < fnlSRid)
-            .order_by(Preceipt2s.rid.desc())
-            .limit(6)
-            .all()
-        )
+            for book, seller in prp_pbs:
+                book_list.append({
+                    "bid": book.bid,
+                    "orderid": book.orderid,
+                    "title": book.title,
+                    "author": book.author,
+                    "publish": book.publish,
+                    "isbn": book.isbn,
+                    "price": book.price,
+                    "region": book.region,
+                    "bookimg": book.img1,
+                    "sellerId": seller.pid,
+                    "sellerName": seller.name,
+                    "sellerType": UserType.PERSONAL.value
+                })
 
-        for receipt, book, seller in prp_results:
-            combined_list.append({
-                "rid": receipt.rid,
-                "bid": book.bid,
-                "title": book.title,
-                "author": book.author,
-                "publish": book.publish,
-                "isbn": book.isbn,
-                "price": book.price,
-                "region": book.region,
-                "bookimg": book.img1,
-                "sellerId": seller.pid,
-                "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
-                "sellerType": UserType.PERSONAL.value
-            })
+            for book, seller in prp_cbs:
+                book_list.append({
+                    "bid": book.bid,
+                    "orderid": book.orderid,
+                    "title": book.title,
+                    "author": book.author,
+                    "publish": book.publish,
+                    "isbn": book.isbn,
+                    "price": book.price,
+                    "region": book.region,
+                    "bookimg": book.img1,
+                    "sellerId": seller.cid,
+                    "sellerName": seller.name,
+                    "sellerType": UserType.COMMERCIAL.value
+                })
+        elif rsInfo:
+            prs_sbs = (
+                db.session.query(Sbooktrade, Shop)
+                .join(Shop, Sbooktrade.sid == Shop.sid)
+                .filter(
+                    Sbooktrade.orderid == orderId,
+                    Sbooktrade.consumerid == decoded_user_id,
+                    Sbooktrade.consumer_type == UserType.PERSONAL.value
+                )
+                .all()
+            )
 
-        for receipt, book, seller in prc_results:
-            combined_list.append({
-                "rid": receipt.rid,
-                "bid": book.bid,
-                "title": book.title,
-                "author": book.author,
-                "publish": book.publish,
-                "isbn": book.isbn,
-                "price": book.price,
-                "region": book.region,
-                "bookimg": book.img1,
-                "sellerId": seller.cid,
-                "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
-                "sellerType": UserType.COMMERCIAL.value
-            })
+            rp_info = {
+                "rid": rsInfo.rid,
+                "orderid": rsInfo.orderid,
+                "amount": rsInfo.amount,
+                "installment_month": rsInfo.installment_month,
+                "state": rsInfo.state,
+                "reason": rsInfo.reason,
+                "payment_method": rsInfo.payment_method,
+                "paidAt": rsInfo.paidAt.isoformat() if rsInfo.paidAt else None
+            }
 
-        book_list = sorted(combined_list, key=lambda x: x["createAt"], reverse=True)
-
-        for book in book_list:
-            book["createAt"] = book["createAt"].isoformat()
-
-        sbook_list = [ {
-            "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sid": shop.sid,
-            "shopName": shop.shopName,
-            "state": receipt.state,
-            "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat()
-        } for receipt, book, shop in prs_results ]
+            for book, shop in prs_sbs:
+                book_list.append({
+                    "bid": book.bid,
+                    "orderid": book.orderid,
+                    "title": book.title,
+                    "author": book.author,
+                    "publish": book.publish,
+                    "isbn": book.isbn,
+                    "price": book.price,
+                    "region": book.region,
+                    "bookimg": book.img1,
+                    "sid": shop.sid,
+                    "shopName": shop.shopName
+                })
+        else:
+            return jsonify({"error": "존재하지 않는 구매내역"}), 404
     elif user_type == UserType.COMMERCIAL.value:
         userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
-        crp_results = (
-            db.session.query(Creceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
-            .join(Personal, Pbooktrade.pid == Personal.pid)
-            .filter(Creceipt2p.cid == userId, Creceipt2p.rid < fnlPRid)
-            .order_by(Creceipt2p.rid.desc())
-            .limit(6)
-            .all()
-        )
+        rpInfo = db.session.query(Creceipt2p).filter_by(cid=decoded_user_id, orderid = orderId).first()
+        rsInfo = db.session.query(Creceipt2s).filter_by(cid=decoded_user_id, orderid = orderId).first()
 
-        crc_results = (
-            db.session.query(Creceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
-            .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(Creceipt2c.cid == userId, Creceipt2c.rid < fnlCRid)
-            .order_by(Creceipt2c.rid.desc())
-            .limit(6)
-            .all()
-        )
+        if rpInfo:
+            crp_pbs = (
+                db.session.query(Pbooktrade, Personal)
+                .join(Personal, Pbooktrade.pid == Personal.pid)
+                .filter(
+                    Pbooktrade.orderid == orderId,
+                    Pbooktrade.consumerid == decoded_user_id,
+                    Pbooktrade.consumer_type == UserType.PERSONAL.value
+                )
+                .all()
+            )
+            crp_cbs = (
+                db.session.query(Cbooktrade, Commercial)
+                .join(Commercial, Cbooktrade.cid == Commercial.cid)
+                .filter(
+                    Cbooktrade.orderid == orderId,
+                    Cbooktrade.consumerid == decoded_user_id,
+                    Cbooktrade.consumer_type == UserType.PERSONAL.value
+                )
+                .all()
+            )
 
-        crs_results = (
-            db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Creceipt2s.cid == userId, Creceipt2s.rid < fnlSRid)
-            .order_by(Creceipt2s.rid.desc())
-            .limit(6)
-            .all()
-        )
+            rp_info = {
+                "rid": rpInfo.rid,
+                "orderid": rpInfo.orderid,
+                "amount": rpInfo.amount,
+                "installment_month": rpInfo.installment_month,
+                "state": rpInfo.state,
+                "reason": rpInfo.reason,
+                "payment_method": rpInfo.payment_method,
+                "paidAt": rpInfo.paidAt.isoformat() if rpInfo.paidAt else None
+            }
 
-        for receipt, book, seller in crp_results:
-            combined_list.append({
-                "rid": receipt.rid,
-                "bid": book.bid,
-                "title": book.title,
-                "author": book.author,
-                "publish": book.publish,
-                "isbn": book.isbn,
-                "price": book.price,
-                "region": book.region,
-                "bookimg": book.img1,
-                "sellerId": seller.pid,
-                "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
-                "sellerType": UserType.PERSONAL.value
-            })
+            for book, seller in crp_pbs:
+                book_list.append({
+                    "bid": book.bid,
+                    "orderid": book.orderid,
+                    "title": book.title,
+                    "author": book.author,
+                    "publish": book.publish,
+                    "isbn": book.isbn,
+                    "price": book.price,
+                    "region": book.region,
+                    "bookimg": book.img1,
+                    "sellerId": seller.pid,
+                    "sellerName": seller.name,
+                    "sellerType": UserType.PERSONAL.value
+                })
 
-        for receipt, book, seller in crc_results:
-            combined_list.append({
-                "rid": receipt.rid,
-                "bid": book.bid,
-                "title": book.title,
-                "author": book.author,
-                "publish": book.publish,
-                "isbn": book.isbn,
-                "price": book.price,
-                "region": book.region,
-                "bookimg": book.img1,
-                "sellerId": seller.cid,
-                "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
-                "sellerType": UserType.COMMERCIAL.value
-            })
+            for book, seller in crp_cbs:
+                book_list.append({
+                    "bid": book.bid,
+                    "orderid": book.orderid,
+                    "title": book.title,
+                    "author": book.author,
+                    "publish": book.publish,
+                    "isbn": book.isbn,
+                    "price": book.price,
+                    "region": book.region,
+                    "bookimg": book.img1,
+                    "sellerId": seller.cid,
+                    "sellerName": seller.name,
+                    "sellerType": UserType.COMMERCIAL.value
+                })
+        elif rsInfo:
+            crs_sbs = (
+                db.session.query(Sbooktrade, Shop)
+                .join(Shop, Sbooktrade.sid == Shop.sid)
+                .filter(
+                    Sbooktrade.orderid == orderId,
+                    Sbooktrade.consumerid == decoded_user_id,
+                    Sbooktrade.consumer_type == UserType.PERSONAL.value
+                )
+                .all()
+            )
 
-        book_list = sorted(combined_list, key=lambda x: x["createAt"], reverse=True)
+            rp_info = {
+                "rid": rsInfo.rid,
+                "orderid": rsInfo.orderid,
+                "amount": rsInfo.amount,
+                "installment_month": rsInfo.installment_month,
+                "state": rsInfo.state,
+                "reason": rsInfo.reason,
+                "payment_method": rsInfo.payment_method,
+                "paidAt": rsInfo.paidAt.isoformat() if rsInfo.paidAt else None
+            }
 
-        for book in book_list:
-            book["createAt"] = book["createAt"].isoformat()
-
-        sbook_list = [ {
-            "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sid": shop.sid,
-            "shopName": shop.shopName,
-            "state": receipt.state,
-            "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat()
-        } for receipt, book, shop in crs_results ]
-    else:
-        return jsonify({"error": "잘못된 유저 유형"}), 404
+            for book, shop in crs_sbs:
+                book_list.append({
+                    "bid": book.bid,
+                    "orderid": book.orderid,
+                    "title": book.title,
+                    "author": book.author,
+                    "publish": book.publish,
+                    "isbn": book.isbn,
+                    "price": book.price,
+                    "region": book.region,
+                    "bookimg": book.img1,
+                    "sid": shop.sid,
+                    "shopName": shop.shopName
+                })
+        else:
+            return jsonify({"error": "존재하지 않는 구매내역"}), 404
     
     user_info = {
         "name": userInfo.name,
@@ -1996,478 +2097,6 @@ def show_user_receipt_more(decoded_user_id, user_type, userId, fnlPRid, fnlCRid,
         "decoded_user_id": decoded_user_id,
         "user_type": user_type,
         "user_info": user_info,
-        "book_list": book_list,
-        "sbook_list": sbook_list
+        "receipt_info": rp_info,
+        "book_list": book_list
     }), 200
-
-@home_bp.route("/<int:userId>/my-page/show-receipt/search", methods=["GET"])
-@token_required
-def search_receipt(decoded_user_id, user_type, userId):
-    if str(decoded_user_id) != str(userId):
-        return jsonify({"error": "권한이 없습니다."}), 403
-    
-    # const encoded = encodeURIComponent(keyword); 프론트에서 쿼리값 인코딩 해주세요.
-    keyword = request.args.get("keyword")
-    if not keyword:
-        return jsonify({"error": "검색어가 제공되지 않았습니다."}), 400
-
-    keyword_pattern = f"%{keyword}%"
-
-    combined_list = []
-    sbook_list = []
-    
-    if user_type == UserType.PERSONAL.value:
-        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
-        prp_results = (
-            db.session.query(Preceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
-            .join(Personal, Pbooktrade.pid == Personal.pid)
-            .filter(
-                and_(
-                        Preceipt2p.pid == userId,
-                    or_(
-                            Pbooktrade.title.ilike(keyword_pattern),
-                            Pbooktrade.author.ilike(keyword_pattern),
-                            Pbooktrade.publish.ilike(keyword_pattern),
-                            Personal.name.ilike(keyword_pattern),
-                            Personal.nickname.ilike(keyword_pattern)
-                        )
-                )
-            )
-            .order_by(Preceipt2p.rid.desc())
-            .all()
-        )
-
-        prc_results = (
-            db.session.query(Preceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
-            .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(
-                and_(
-                        Preceipt2c.pid == userId,
-                    or_(
-                            Cbooktrade.title.ilike(keyword_pattern),
-                            Cbooktrade.author.ilike(keyword_pattern),
-                            Cbooktrade.publish.ilike(keyword_pattern),
-                            Commercial.name.ilike(keyword_pattern),
-                            Commercial.nickname.ilike(keyword_pattern)
-                        )
-                )
-            )
-            .order_by(Preceipt2c.rid.desc())
-            .all()
-        )
-
-        prs_results = (
-            db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(
-                and_(
-                        Preceipt2s.pid == userId,
-                    or_(
-                            Sbooktrade.title.ilike(keyword_pattern),
-                            Sbooktrade.author.ilike(keyword_pattern),
-                            Sbooktrade.publish.ilike(keyword_pattern),
-                            Shop.shopName.ilike(keyword_pattern)
-                        )
-                )
-            )
-            .order_by(Preceipt2s.rid.desc())
-            .all()
-        )
-
-        for receipt, book, seller in prp_results:
-            combined_list.append({
-                "rid": receipt.rid,
-                "bid": book.bid,
-                "title": book.title,
-                "author": book.author,
-                "publish": book.publish,
-                "isbn": book.isbn,
-                "price": book.price,
-                "region": book.region,
-                "bookimg": book.img1,
-                "sellerId": seller.pid,
-                "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
-                "sellerType": UserType.PERSONAL.value
-            })
-
-        for receipt, book, seller in prc_results:
-            combined_list.append({
-                "rid": receipt.rid,
-                "bid": book.bid,
-                "title": book.title,
-                "author": book.author,
-                "publish": book.publish,
-                "isbn": book.isbn,
-                "price": book.price,
-                "region": book.region,
-                "bookimg": book.img1,
-                "sellerId": seller.cid,
-                "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
-                "sellerType": UserType.COMMERCIAL.value
-            })
-
-        book_list = sorted(combined_list, key=lambda x: x["createAt"], reverse=True)
-
-        for book in book_list:
-            book["createAt"] = book["createAt"].isoformat()
-
-        sbook_list = [ {
-            "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sid": shop.sid,
-            "shopName": shop.shopName,
-            "state": receipt.state,
-            "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat()
-        } for receipt, book, shop in prs_results ]
-    elif user_type == UserType.COMMERCIAL.value:
-        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
-        crp_results = (
-            db.session.query(Creceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
-            .join(Personal, Pbooktrade.pid == Personal.pid)
-            .filter(
-                and_(
-                        Creceipt2p.cid == userId,
-                    or_(
-                            Pbooktrade.title.ilike(keyword_pattern),
-                            Pbooktrade.author.ilike(keyword_pattern),
-                            Pbooktrade.publish.ilike(keyword_pattern),
-                            Personal.name.ilike(keyword_pattern),
-                            Personal.nickname.ilike(keyword_pattern)
-                        )
-                )
-            )
-            .order_by(Creceipt2p.rid.desc())
-            .all()
-        )
-
-        crc_results = (
-            db.session.query(Creceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
-            .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(
-                and_(
-                        Creceipt2c.cid == userId,
-                    or_(
-                            Cbooktrade.title.ilike(keyword_pattern),
-                            Cbooktrade.author.ilike(keyword_pattern),
-                            Cbooktrade.publish.ilike(keyword_pattern),
-                            Commercial.name.ilike(keyword_pattern),
-                            Commercial.nickname.ilike(keyword_pattern)
-                        )
-                )
-            )
-            .order_by(Creceipt2c.rid.desc())
-            .all()
-        )
-
-        crs_results = (
-            db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(
-                and_(
-                        Creceipt2s.cid == userId,
-                    or_(
-                            Sbooktrade.title.ilike(keyword_pattern),
-                            Sbooktrade.author.ilike(keyword_pattern),
-                            Sbooktrade.publish.ilike(keyword_pattern),
-                            Shop.shopName.ilike(keyword_pattern)
-                        )
-                )
-            )
-            .order_by(Creceipt2s.rid.desc())
-            .all()
-        )
-
-        for receipt, book, seller in crp_results:
-            combined_list.append({
-                "rid": receipt.rid,
-                "bid": book.bid,
-                "title": book.title,
-                "author": book.author,
-                "publish": book.publish,
-                "isbn": book.isbn,
-                "price": book.price,
-                "region": book.region,
-                "bookimg": book.img1,
-                "sellerId": seller.pid,
-                "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
-                "sellerType": UserType.PERSONAL.value
-            })
-
-        for receipt, book, seller in crc_results:
-            combined_list.append({
-                "rid": receipt.rid,
-                "bid": book.bid,
-                "title": book.title,
-                "author": book.author,
-                "publish": book.publish,
-                "isbn": book.isbn,
-                "price": book.price,
-                "region": book.region,
-                "bookimg": book.img1,
-                "sellerId": seller.cid,
-                "sellerName": seller.name,
-                "nickname": seller.nickname,
-                "state": receipt.state,
-                "reason": receipt.reason,
-                "createAt": receipt.createAt,
-                "sellerType": UserType.COMMERCIAL.value
-            })
-
-        book_list = sorted(combined_list, key=lambda x: x["createAt"], reverse=True)
-
-        for book in book_list:
-            book["createAt"] = book["createAt"].isoformat()
-
-        sbook_list = [ {
-            "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sid": shop.sid,
-            "shopName": shop.shopName,
-            "state": receipt.state,
-            "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat()
-        } for receipt, book, shop in crs_results ]
-    else:
-        return jsonify({"error": "잘못된 유저 유형"}), 404
-    
-    user_info = {
-        "name": userInfo.name,
-        "birth": userInfo.birth,
-        "tel": userInfo.tel,
-        "email": userInfo.email,
-        "nickname": userInfo.nickname,
-        "address": userInfo.address
-    }
-    
-    return jsonify({
-        "decoded_user_id": decoded_user_id,
-        "user_type": user_type,
-        "user_info": user_info,
-        "book_list": book_list,
-        "sbook_list": sbook_list
-    }), 200
-
-@home_bp.route("/<int:userId>/my-page/show-receipt/detail/<int:sellerType>/<int:rid>", methods=["GET"])
-@token_required
-def show_user_receipt_detail(decoded_user_id, user_type, userId, sellerType, rid):
-    if str(decoded_user_id) != str(userId):
-        return jsonify({"error": "권한이 없습니다."}), 403
-    
-    if user_type == UserType.PERSONAL.value:
-        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
-    elif user_type == UserType.COMMERCIAL.value:
-        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
-    
-    if (user_type == UserType.PERSONAL.value) and (sellerType == UserType.PERSONAL.value):
-        receiptInfo = (
-            db.session.query(Preceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Preceipt2p.bid == Pbooktrade.bid)
-            .join(Personal, Pbooktrade.pid == Personal.pid)
-            .filter(Preceipt2p.pid == userId, Preceipt2p.rid == rid)
-            .first()
-        )
-    elif (user_type == UserType.PERSONAL.value) and (sellerType == UserType.COMMERCIAL.value):
-        receiptInfo = (
-            db.session.query(Preceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Preceipt2c.bid == Cbooktrade.bid)
-            .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(Preceipt2c.pid == userId, Preceipt2c.rid == rid)
-            .first()
-        )
-    elif (user_type == UserType.PERSONAL.value) and (sellerType == 3):
-        receiptInfo = (
-            db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Preceipt2s.pid == userId, Preceipt2s.rid == rid)
-            .first()
-        )
-    elif (user_type == UserType.COMMERCIAL.value) and (sellerType == UserType.PERSONAL.value):
-        receiptInfo = (
-            db.session.query(Creceipt2p, Pbooktrade, Personal)
-            .join(Pbooktrade, Creceipt2p.bid == Pbooktrade.bid)
-            .join(Personal, Pbooktrade.pid == Personal.pid)
-            .filter(Creceipt2p.cid == userId, Creceipt2p.rid == rid)
-            .first()
-        )
-    elif (user_type == UserType.COMMERCIAL.value) and (sellerType == UserType.COMMERCIAL.value):
-        receiptInfo = (
-            db.session.query(Creceipt2c, Cbooktrade, Commercial)
-            .join(Cbooktrade, Creceipt2c.bid == Cbooktrade.bid)
-            .join(Commercial, Cbooktrade.cid == Commercial.cid)
-            .filter(Creceipt2c.cid == userId, Creceipt2c.rid == rid)
-            .first()
-        )
-    elif (user_type == UserType.COMMERCIAL.value) and (sellerType == 3):
-        receiptInfo = (
-            db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Creceipt2s.cid == userId, Creceipt2s.rid == rid)
-            .first()
-        )
-    else:
-       return jsonify({"error": "잘못된 접근"}), 403
-
-    if not receiptInfo:
-        return jsonify({"error": "해당 영수증 정보를 찾을 수 없습니다."}), 404
-    
-    if sellerType == 1:
-        receipt, book, seller = receiptInfo
-
-        serialized = {
-            "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sellerId": seller.pid,
-            "sellerName": seller.name,
-            "nickname": seller.nickname,
-            "state": receipt.state,
-            "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat(),
-            "sellerType": UserType.PERSONAL.value
-        }
-    elif sellerType == 2:
-        receipt, book, seller = receiptInfo
-
-        serialized = {
-            "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sellerId": seller.cid,
-            "sellerName": seller.name,
-            "nickname": seller.nickname,
-            "state": receipt.state,
-            "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat(),
-            "sellerType": UserType.COMMERCIAL.value
-        }
-    elif sellerType == 3:
-        receipt, book, shop = receiptInfo
-
-        serialized = {
-            "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "sid": shop.sid,
-            "shopName": shop.shopName,
-            "state": receipt.state,
-            "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat()
-        }
-    else:
-        return jsonify({"error": "잘못된 판매 유형"}), 404
-    
-    user_info = {
-        "name": userInfo.name,
-        "birth": userInfo.birth,
-        "tel": userInfo.tel,
-        "email": userInfo.email,
-        "nickname": userInfo.nickname,
-        "address": userInfo.address
-    }
-    
-    return jsonify({
-        "decoded_user_id": decoded_user_id,
-        "user_type": user_type,
-        "user_info": user_info,
-        "receipt_info": serialized
-    }), 200
-
-@home_bp.route("/<int:userId>/my-page/show-receipt/detail/<int:sellerType>/<int:rid>/complete", methods=["PUT"])
-@token_required
-def complete_sell(decoded_user_id, user_type, userId, sellerType, rid):
-    if str(decoded_user_id) != str(userId):
-        return jsonify({"error": "권한이 없습니다."}), 403
-    
-    if user_type == UserType.PERSONAL.value:
-        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
-    elif user_type == UserType.COMMERCIAL.value:
-        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
-    
-    if (user_type == UserType.PERSONAL.value) and (sellerType == UserType.PERSONAL.value):
-        receiptInfo = db.session.query(Preceipt2p).filter_by(pid = userId, rid = rid).first()
-        bookInfo = db.session.query(Pbooktrade).filter_by(bid=receiptInfo.bid).first()
-    elif (user_type == UserType.PERSONAL.value) and (sellerType == UserType.COMMERCIAL.value):
-        receiptInfo = db.session.query(Preceipt2c).filter_by(pid = userId, rid = rid).first()
-        bookInfo = db.session.query(Cbooktrade).filter_by(bid=receiptInfo.bid).first()
-    elif (user_type == UserType.PERSONAL.value) and (sellerType == 3):
-        receiptInfo = db.session.query(Preceipt2s).filter_by(pid = userId, rid = rid).first()
-        bookInfo = db.session.query(Sbooktrade).filter_by(bid=receiptInfo.bid).first()
-    elif (user_type == UserType.COMMERCIAL.value) and (sellerType == UserType.PERSONAL.value):
-        receiptInfo = db.session.query(Creceipt2p).filter_by(cid = userId, rid = rid).first()
-        bookInfo = db.session.query(Pbooktrade).filter_by(bid=receiptInfo.bid).first()
-    elif (user_type == UserType.COMMERCIAL.value) and (sellerType == UserType.COMMERCIAL.value):
-        receiptInfo = db.session.query(Creceipt2c).filter_by(cid = userId, rid = rid).first()
-        bookInfo = db.session.query(Cbooktrade).filter_by(bid=receiptInfo.bid).first()
-    elif (user_type == UserType.COMMERCIAL.value) and (sellerType == 3):
-        receiptInfo = db.session.query(Creceipt2s).filter_by(cid = userId, rid = rid).first()
-        bookInfo = db.session.query(Sbooktrade).filter_by(bid=receiptInfo.bid).first()
-    else:
-       return jsonify({"error": "잘못된 접근"}), 403
-    
-    if not receiptInfo:
-        return jsonify({"error": "해당 영수증 정보를 찾을 수 없습니다."}), 404
-    
-    if not bookInfo:
-        return jsonify({"error": "해당 책 정보를 찾을 수 없습니다."}), 404
-    
-    if receiptInfo.state == 2:
-        receiptInfo.state = 4
-        receiptInfo.reason = "구매 확정 완료"
-        db.session.commit()
-    else:
-        return jsonify({"error": "구매 확정 할 수 없는 내역"}), 403
-    
-    return jsonify({"message": "구매 확정 성공", "decoded_user_id": decoded_user_id, "user_type": user_type}), 200
