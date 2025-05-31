@@ -25,7 +25,8 @@
       "favicon": "./assets/favicon.png"
     },
     "extra" :{
-      "API_URL": "http://192.168.0.7:5000"
+      "API_URL": "http://192.168.0.7:5000",
+      "BUY_URL" : "https://6cb8-182-31-40-60.ngrok-free.app"
     }
   }
 }

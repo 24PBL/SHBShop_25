@@ -7,7 +7,7 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-
+const BUY_URL = Constants.expoConfig.extra.BUY_URL;
 const API_URL = Constants.expoConfig.extra.API_URL;
 const { width } = Dimensions.get('window');
 
@@ -83,6 +83,28 @@ const PBookDetailScreen = ({route, navigation}) => {
         setThumbsUp(false);
       }
     }, [data?.basket_exist]);
+  
+    const Buy = async () => {
+     try {
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    const response = await axios.post(
+      `${BUY_URL}/book/${userId}/pb/request-payment`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${Token}`,
+        },
+      }
+    );
+    console.log("장바구니 추가성공")
+  } catch (error) {
+    console.error('오류 발생:', error);
+    Alert.alert("장바구니 추가 실패", "다시 시도해주세요.");
+  }
+  }
 
   return (
     <SafeAreaProvider>
