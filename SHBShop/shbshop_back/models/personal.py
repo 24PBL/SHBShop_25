@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from .pbasket2c import Pbasket2c
     from .pbasket2s import Pbasket2s
     from .preceipt2p import Preceipt2p
-    from .preceipt2c import Preceipt2c
     from .preceipt2s import Preceipt2s
 
 class Personal(Base):
@@ -33,7 +32,6 @@ class Personal(Base):
     favorite4p: Mapped[List['Favorite4p']] = relationship('Favorite4p', back_populates='personal')
     pbasket2c: Mapped[List['Pbasket2c']] = relationship('Pbasket2c', back_populates='personal')
     pbasket2p: Mapped[List['Pbasket2p']] = relationship('Pbasket2p', back_populates='personal')
-    preceipt2c: Mapped[List['Preceipt2c']] = relationship('Preceipt2c', back_populates='personal')
     preceipt2p: Mapped[List['Preceipt2p']] = relationship('Preceipt2p', back_populates='personal')
     pbasket2s: Mapped[List['Pbasket2s']] = relationship('Pbasket2s', back_populates='personal')
     preceipt2s: Mapped[List['Preceipt2s']] = relationship('Preceipt2s', back_populates='personal')

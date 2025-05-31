@@ -8,8 +8,6 @@ if TYPE_CHECKING:
     from .shop import Shop
     from .cbasket2s import Cbasket2s
     from .pbasket2s import Pbasket2s
-    from .preceipt2s import Preceipt2s
-    from .creceipt2s import Creceipt2s
 
 class Sbooktrade(Base):
     __tablename__ = 'sbooktrade'
@@ -30,14 +28,14 @@ class Sbooktrade(Base):
     img1: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     img2: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     img3: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    state: Mapped[int] = mapped_column(Integer, server_default=text("1"))
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
+    orderid: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
+    consumerid: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    consumer_type: Mapped[int] = mapped_column(Integer, nullable=True)
 
     shop: Mapped['Shop'] = relationship('Shop', back_populates='sbooktrade')
     cbasket2s: Mapped[List['Cbasket2s']] = relationship('Cbasket2s', foreign_keys='[Cbasket2s.bid]', back_populates='sbooktrade')
     cbasket2s_: Mapped[List['Cbasket2s']] = relationship('Cbasket2s', foreign_keys='[Cbasket2s.shopid]', back_populates='sbooktrade_')
-    creceipt2s: Mapped[List['Creceipt2s']] = relationship('Creceipt2s', foreign_keys='[Creceipt2s.bid]', back_populates='sbooktrade')
-    creceipt2s_: Mapped[List['Creceipt2s']] = relationship('Creceipt2s', foreign_keys='[Creceipt2s.shopid]', back_populates='sbooktrade_')
     pbasket2s: Mapped[List['Pbasket2s']] = relationship('Pbasket2s', foreign_keys='[Pbasket2s.bid]', back_populates='sbooktrade')
     pbasket2s_: Mapped[List['Pbasket2s']] = relationship('Pbasket2s', foreign_keys='[Pbasket2s.shopid]', back_populates='sbooktrade_')
-    preceipt2s: Mapped[List['Preceipt2s']] = relationship('Preceipt2s', foreign_keys='[Preceipt2s.bid]', back_populates='sbooktrade')
-    preceipt2s_: Mapped[List['Preceipt2s']] = relationship('Preceipt2s', foreign_keys='[Preceipt2s.shopid]', back_populates='sbooktrade_')

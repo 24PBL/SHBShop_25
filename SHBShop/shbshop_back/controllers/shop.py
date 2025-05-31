@@ -21,6 +21,17 @@ class Favorite(Enum):
     YES = 1
     NO = 2
 
+class PurchaseState(Enum):
+    ONSALE = 1 #판매중
+    PAYMENT_SUCCESS = 2 #결제완료
+    SELLER_REJECTED = 3 #판매거절
+    SELLER_CONFIRMED = 4 #판매승인
+    PURCHASE_CONFIRMED = 5 #구매확정
+    USER_CANCELLED = 6 #사용자취소
+    REFUNDED = 7 #환불완료
+    PAYMENT_FAILED = 8 #결제실패
+    PENDING = 9 #결제진행중
+
 SBOOK_UPLOAD_FOLDER = "static/product/shop"
 S_IMAGE_UPLOAD_FOLDER = "static/shop"
 
@@ -93,6 +104,7 @@ def search_sbook_in_shop(decoded_user_id, user_type, userId, shopId):
             .filter(
                 and_(
                         Sbooktrade.sid == shopId,
+                        Sbooktrade.state == PurchaseState.ONSALE.value,
                         or_(
                             Sbooktrade.title.ilike(keyword_pattern),
                             Sbooktrade.author.ilike(keyword_pattern),

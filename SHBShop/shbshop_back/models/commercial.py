@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from .cbasket2c import Cbasket2c
     from .cbasket2s import Cbasket2s
     from .creceipt2p import Creceipt2p
-    from .creceipt2c import Creceipt2c
     from .creceipt2s import Creceipt2s
 
 class Commercial(Base):
@@ -44,7 +43,6 @@ class Commercial(Base):
     shop: Mapped[List['Shop']] = relationship('Shop', back_populates='commercial')
     cbasket2c: Mapped[List['Cbasket2c']] = relationship('Cbasket2c', back_populates='commercial')
     cbasket2p: Mapped[List['Cbasket2p']] = relationship('Cbasket2p', back_populates='commercial')
-    creceipt2c: Mapped[List['Creceipt2c']] = relationship('Creceipt2c', back_populates='commercial')
     creceipt2p: Mapped[List['Creceipt2p']] = relationship('Creceipt2p', back_populates='commercial')
     favorite4c: Mapped[List['Favorite4c']] = relationship('Favorite4c', back_populates='commercial')
     cbasket2s: Mapped[List['Cbasket2s']] = relationship('Cbasket2s', back_populates='commercial')
