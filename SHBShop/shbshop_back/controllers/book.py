@@ -439,11 +439,13 @@ def request_payment4p(decoded_user_id, user_type, userId):
             book.state = PurchaseState.PENDING.value
             book.consumerid = decoded_user_id
             book.consumer_type = UserType.PERSONAL.value
+            book.orderid = order_id
 
         for book in cbooks:
             book.state = PurchaseState.PENDING.value
             book.consumerid = decoded_user_id
             book.consumer_type = UserType.PERSONAL.value
+            book.orderid = order_id
     elif (user_type == UserType.COMMERCIAL.value):
         newRe = Creceipt2p(
                     cid=decoded_user_id,
@@ -459,11 +461,13 @@ def request_payment4p(decoded_user_id, user_type, userId):
             book.state = PurchaseState.PENDING.value
             book.consumerid = decoded_user_id
             book.consumer_type = UserType.COMMERCIAL.value
+            book.orderid = order_id
 
         for book in cbooks:
             book.state = PurchaseState.PENDING.value
             book.consumerid = decoded_user_id
             book.consumer_type = UserType.COMMERCIAL.value
+            book.orderid = order_id
     else:
        return jsonify({"error": "잘못된 접근"}), 403
     
@@ -556,6 +560,7 @@ def request_payment4s(decoded_user_id, user_type, userId):
             book.state = PurchaseState.PENDING.value
             book.consumerid = decoded_user_id
             book.consumer_type = UserType.PERSONAL.value
+            book.orderid = order_id
 
     elif (user_type == UserType.COMMERCIAL.value):
         newRe = Creceipt2s(
@@ -572,6 +577,7 @@ def request_payment4s(decoded_user_id, user_type, userId):
             book.state = PurchaseState.PENDING.value
             book.consumerid = decoded_user_id
             book.consumer_type = UserType.COMMERCIAL.value
+            book.orderid = order_id
     else:
        return jsonify({"error": "잘못된 접근"}), 403
     
@@ -659,6 +665,7 @@ def payment_success4p():
                     book.state = PurchaseState.ONSALE.value
                     book.consumerid = None
                     book.consumer_type = None
+                    book.orderid = None
         elif creceipt:
             if creceipt.state != PurchaseState.PENDING.value:
                 return jsonify({"error": "이미 처리된 결제"}), 400
@@ -670,6 +677,7 @@ def payment_success4p():
                     book.state = PurchaseState.ONSALE.value
                     book.consumerid = None
                     book.consumer_type = None
+                    book.orderid = None
 
         db.session.commit()
         return f"결제 승인 실패: {res.text}", 400
@@ -695,10 +703,11 @@ def payment_fail4p():
             preceipt.state = PurchaseState.PAYMENT_FAILED.value
             preceipt.reason = "결제 실패"
 
-        for book in books:
-            book.state = PurchaseState.ONSALE.value
-            book.consumerid = None
-            book.consumer_type = None
+            for book in books:
+                book.state = PurchaseState.ONSALE.value
+                book.consumerid = None
+                book.consumer_type = None
+                book.orderid = None
     elif creceipt:
         if creceipt.state != PurchaseState.PENDING.value:
             return jsonify({"error": "이미 처리된 결제"}), 400
@@ -710,6 +719,7 @@ def payment_fail4p():
                 book.state = PurchaseState.ONSALE.value
                 book.consumerid = None
                 book.consumer_type = None
+                book.orderid = None
 
     db.session.commit()
     
@@ -788,6 +798,7 @@ def payment_success4s():
                     book.state = PurchaseState.ONSALE.value
                     book.consumerid = None
                     book.consumer_type = None
+                    book.orderid = None
         elif creceipt:
             if creceipt.state != PurchaseState.PENDING.value:
                 return jsonify({"error": "이미 처리된 결제"}), 400
@@ -799,6 +810,7 @@ def payment_success4s():
                     book.state = PurchaseState.ONSALE.value
                     book.consumerid = None
                     book.consumer_type = None
+                    book.orderid = None
 
         db.session.commit()
         return f"결제 승인 실패: {res.text}", 400
@@ -821,10 +833,11 @@ def payment_fail4s():
             preceipt.state = PurchaseState.PAYMENT_FAILED.value
             preceipt.reason = "결제 실패"
 
-        for book in books:
-            book.state = PurchaseState.ONSALE.value
-            book.consumerid = None
-            book.consumer_type = None
+            for book in books:
+                book.state = PurchaseState.ONSALE.value
+                book.consumerid = None
+                book.consumer_type = None
+                book.orderid = None
     elif creceipt:
         if creceipt.state != PurchaseState.PENDING.value:
             return jsonify({"error": "이미 처리된 결제"}), 400
@@ -836,6 +849,7 @@ def payment_fail4s():
                 book.state = PurchaseState.ONSALE.value
                 book.consumerid = None
                 book.consumer_type = None
+                book.orderid = None
 
     db.session.commit()
     

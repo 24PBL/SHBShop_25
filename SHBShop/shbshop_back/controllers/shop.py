@@ -155,7 +155,13 @@ def show_shop_stock(decoded_user_id, user_type, userId, shopId):
         if not shopInfo:
             return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
         
-        stock_list = db.session.query(Sbooktrade).filter_by(sid=shopId).order_by(Sbooktrade.bid.desc()).limit(10).all()
+        stock_list = (
+            db.session.query(Sbooktrade)
+            .filter(Sbooktrade.sid==shopId, Sbooktrade.state==PurchaseState.ONSALE.value)
+            .order_by(Sbooktrade.bid.desc())
+            .limit(10)
+            .all()
+        )
 
         sbook_list = [{
             "bid": book.bid,
@@ -213,8 +219,14 @@ def show_shop_stock_more(decoded_user_id, user_type, userId, shopId, finalBid):
 
         if not shopInfo:
             return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
-        
-        stock_list = db.session.query(Sbooktrade).filter(Sbooktrade.sid == shopId, Sbooktrade.bid < finalBid).order_by(Sbooktrade.bid.desc()).limit(10).all()
+
+        stock_list = (
+            db.session.query(Sbooktrade)
+            .filter(Sbooktrade.sid==shopId, Sbooktrade.state==PurchaseState.ONSALE.value, Sbooktrade.bid < finalBid)
+            .order_by(Sbooktrade.bid.desc())
+            .limit(10)
+            .all()
+        )
 
         sbook_list = [{
             "bid": book.bid,
@@ -285,6 +297,7 @@ def search_shop_stock(decoded_user_id, user_type, userId, shopId):
         .filter(
             and_(
                 Sbooktrade.sid == shopId,
+                Sbooktrade.state==PurchaseState.ONSALE.value,
                 or_(
                     Sbooktrade.title.ilike(keyword_pattern),
                     Sbooktrade.author.ilike(keyword_pattern),
@@ -364,7 +377,12 @@ def stock_list_by_isbn(decoded_user_id, user_type, userId, shopId):
     if not shopInfo:
         return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
     
-    stock_list = db.session.query(Sbooktrade).filter(Sbooktrade.sid == shopId, Sbooktrade.isbn == isbn).order_by(Sbooktrade.bid.desc()).all()
+    stock_list = (
+        db.session.query(Sbooktrade).
+        filter(Sbooktrade.sid == shopId, Sbooktrade.isbn == isbn, Sbooktrade.state==PurchaseState.ONSALE.value,)
+        .order_by(Sbooktrade.bid.desc())
+        .all()
+    )
 
     sbook_list = [{
         "bid": book.bid,
@@ -425,6 +443,9 @@ def show_my_product_detail(decoded_user_id, user_type, userId, shopId, bookId):
     
     if not book:
         return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
+    
+    if book.state != PurchaseState.ONSALE.value:
+        return jsonify({"message": "판매 중인 재고가 아닙니다.", "book_info": 2}), 404
     
     book_info = {
         "bid": book.bid,
@@ -541,7 +562,13 @@ def add_my_s_product(decoded_user_id, user_type, userId, shopId):
     db.session.commit()
 
     # 책 추가 후 다시 재고 리스트를 띄우기 위한 데이터
-    stock_list = db.session.query(Sbooktrade).filter_by(sid=shopId).order_by(Sbooktrade.bid.desc()).limit(10).all()
+    stock_list = (
+        db.session.query(Sbooktrade)
+        .filter(Sbooktrade.sid==shopId, Sbooktrade.state==PurchaseState.ONSALE.value)
+        .order_by(Sbooktrade.bid.desc())
+        .limit(10)
+        .all()
+    )
 
     sbook_list = [{
             "bid": book.bid,
@@ -597,12 +624,21 @@ def delete_stock(decoded_user_id, user_type, userId, shopId, bookId):
     if not bookInfo:
         return jsonify({"error": "존재하지 않는 재고"}), 404
     
+    if bookInfo.state != PurchaseState.ONSALE.value:
+        return jsonify({"message": 2, "message2": "판매 중인 재고가 아닙니다."}), 404
+    
     db.session.query(Sbooktrade).filter_by(sid=shopId, bid=bookId).delete()
     #db.session.delete(bookInfo)
     db.session.commit()
     
     # 책 추가 후 다시 재고 리스트를 띄우기 위한 데이터
-    stock_list = db.session.query(Sbooktrade).filter_by(sid=shopId).order_by(Sbooktrade.bid.desc()).limit(10).all()
+    stock_list = (
+        db.session.query(Sbooktrade)
+        .filter(Sbooktrade.sid==shopId, Sbooktrade.state==PurchaseState.ONSALE.value)
+        .order_by(Sbooktrade.bid.desc())
+        .limit(10)
+        .all()
+    )
 
     sbook_list = [{
             "bid": book.bid,
@@ -656,6 +692,9 @@ def modify_stock(decoded_user_id, user_type, userId, shopId, bookId):
     bookInfo = db.session.query(Sbooktrade).filter_by(bid=bookId, sid=shopId).first()
     if not bookInfo:
         return jsonify({"error": "해당 책을 찾을 수 없습니다."}), 404
+    
+    if bookInfo.state != PurchaseState.ONSALE.value:
+        return jsonify({"message": 2, "message2": "판매 중인 재고가 아닙니다."}), 404
     
     img_url1 = bookInfo.img1
     img_url2 = bookInfo.img2
@@ -719,7 +758,13 @@ def modify_stock(decoded_user_id, user_type, userId, shopId, bookId):
     db.session.commit()
 
     # 책 추가 후 다시 재고 리스트를 띄우기 위한 데이터
-    stock_list = db.session.query(Sbooktrade).filter_by(sid=shopId).order_by(Sbooktrade.bid.desc()).limit(10).all()
+    stock_list = (
+        db.session.query(Sbooktrade)
+        .filter(Sbooktrade.sid==shopId, Sbooktrade.state==PurchaseState.ONSALE.value)
+        .order_by(Sbooktrade.bid.desc())
+        .limit(10)
+        .all()
+    )
 
     sbook_list = [{
             "bid": book.bid,
@@ -770,82 +815,92 @@ def show_shop_sr(decoded_user_id, user_type, userId, shopId):
     if not shopInfo:
         return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
     
-    sr_list_p = (
-        db.session.query(Preceipt2s, Sbooktrade)
-        .join(Sbooktrade, Preceipt2s.shopid == Sbooktrade.sid)
-        .filter(Preceipt2s.shopid == shopId)
-        .order_by(Sbooktrade.bid.desc())
-        .limit(5)
+    sr_results = (
+        db.session.query(Sbooktrade)
+        .filter(Sbooktrade.sid == shopId, Sbooktrade.state == PurchaseState.PAYMENT_SUCCESS.value)
         .all()
     )
-    
-    sr_list_c = (
-        db.session.query(Creceipt2s, Sbooktrade)
-        .join(Sbooktrade, Creceipt2s.shopid == Sbooktrade.sid)
-        .filter(Creceipt2s.shopid == shopId)
-        .order_by(Sbooktrade.bid.desc())
-        .limit(5)
+
+    sr_order_id = [b.orderid for b in sr_results]
+
+    prs_results = (
+        db.session.query(Preceipt2s, Personal)
+        .join(Personal, Preceipt2s.pid == Personal.pid)
+        .filter(
+            Preceipt2s.orderid.in_(sr_order_id)
+        )
+        .all()
+    )
+
+    crs_results = (
+        db.session.query(Creceipt2s, Commercial)
+        .join(Commercial, Creceipt2s.cid == Commercial.cid)
+        .filter(
+            Creceipt2s.orderid.in_(sr_order_id)
+        )
         .all()
     )
 
     combined_list = []
 
-    for pr, sb in sr_list_p:
-        pr_owner = db.session.query(Personal).filter(Personal.pid == pr.pid).first()
+    for re, ow in prs_results:
         combined_list.append({
-            "rid": pr.rid,
-            "bid": sb.bid,
-            "title": sb.title,
-            "author": sb.author,
-            "publish": sb.publish,
-            "isbn": sb.isbn,
-            "price": sb.price,
-            "region": sb.region,
-            "bookimg": sb.img1,
-            "sid": shopInfo.sid,
-            "shopName": shopInfo.shopName,
-            "state": pr.state,
-            "reason": pr.reason,
-            "createAt": pr.createAt,
-            "ownerName": pr_owner.name,
-            "ownertel": pr_owner.tel,
-            "ownerEmail": pr_owner.email,
-            "ownerNickname": pr_owner.nickname,
-            "ownerRegion": pr_owner.region,
-            "ownerAddress": pr_owner.address,
+            "rid": re.rid,
+            "orderid": re.orderid,
+            "amount": re.amount,
+            "installment_month": re.installment_month,
+            "state": re.state,
+            "reason": re.reason,
+            "payment_method": re.payment_method,
+            "paidAt": re.paidAt,
+
+            "ownerName": ow.name,
+            "ownertel": ow.tel,
+            "ownerEmail": ow.email,
+            "ownerNickname": ow.nickname,
+            "ownerRegion": ow.region,
+            "ownerAddress": ow.address,
             "ownerType": UserType.PERSONAL.value
         })
 
-    for cr, sb in sr_list_c:
-        cr_owner = db.session.query(Commercial).filter(Commercial.cid == cr.cid).first()
+    for re, ow in crs_results:
         combined_list.append({
-            "rid": cr.rid,
-            "bid": sb.bid,
-            "title": sb.title,
-            "author": sb.author,
-            "publish": sb.publish,
-            "isbn": sb.isbn,
-            "price": sb.price,
-            "region": sb.region,
-            "bookimg": sb.img1,
-            "sid": shopInfo.sid,
-            "shopName": shopInfo.shopName,
-            "state": cr.state,
-            "reason": cr.reason,
-            "createAt": cr.createAt,
-            "ownerName": cr_owner.name,
-            "ownertel": cr_owner.tel,
-            "ownerEmail": cr_owner.email,
-            "ownerNickname": cr_owner.nickname,
-            "ownerRegion": cr_owner.region,
-            "ownerAddress": cr_owner.address,
+            "rid": re.rid,
+            "orderid": re.orderid,
+            "amount": re.amount,
+            "installment_month": re.installment_month,
+            "state": re.state,
+            "reason": re.reason,
+            "payment_method": re.payment_method,
+            "paidAt": re.paidAt,
+
+            "ownerName": ow.name,
+            "ownertel": ow.tel,
+            "ownerEmail": ow.email,
+            "ownerNickname": ow.nickname,
+            "ownerRegion": ow.region,
+            "ownerAddress": ow.address,
             "ownerType": UserType.COMMERCIAL.value
         })
+
+    sb_list = [ {
+        "bid": sb.bid,
+        "title": sb.title,
+        "author": sb.author,
+        "publish": sb.publish,
+        "isbn": sb.isbn,
+        "price": sb.price,
+        "region": sb.region,
+        "bookimg": sb.img1,
+        "consumerid": sb.consumerid,
+        "consumer_type": sb.consumer_type,
+        "orderid": sb.orderid
+    } for sb in sr_results ]
     
-    sorted_sr = sorted(combined_list, key=lambda x: x["createAt"], reverse=True)
+    sorted_sr = sorted(combined_list, key=lambda x: x["paidAt"], reverse=True)
 
     for sr in sorted_sr:
-        sr["createAt"] = sr["createAt"].isoformat()
+        sr["paidAt"] = sr["paidAt"].isoformat()
     
     shop_info = {
         "shopId": shopInfo.sid,
@@ -868,12 +923,13 @@ def show_shop_sr(decoded_user_id, user_type, userId, shopId):
         "user_type": user_type,
         "user_info": user_info,
         "shop_info": shop_info,
-        "receipt_list": sorted_sr
+        "receipt_list": sorted_sr,
+        "book_list": sb_list
     }), 200
 
-@shop_bp.route("/<int:userId>/<int:shopId>/check-pr/<int:ownerType>/<int:rid>", methods=["GET"])
+@shop_bp.route("/<int:userId>/<int:shopId>/check-pr/<int:ownerType>/<int:rid>/<int:bid>", methods=["GET"])
 @token_required
-def show_shop_sr_detail(decoded_user_id, user_type, userId, shopId, ownerType, rid):
+def show_shop_sr_detail(decoded_user_id, user_type, userId, shopId, ownerType, rid, bid):
     if str(decoded_user_id) != str(userId):
         return jsonify({"error": "권한이 없습니다."}), 403
 
@@ -890,92 +946,95 @@ def show_shop_sr_detail(decoded_user_id, user_type, userId, shopId, ownerType, r
         return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
     
     if ownerType == UserType.PERSONAL.value:
-        receiptInfo = (
-            db.session.query(Preceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Preceipt2s.bid == Sbooktrade.bid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Preceipt2s.shopid == shopId, Preceipt2s.rid == rid)
+        receiptInfo =  (
+            db.session.query(Preceipt2s, Personal)
+            .join(Personal, Preceipt2s.pid == Personal.pid)
+            .filter(Preceipt2s.rid == rid)
             .first()
         )
 
         if not receiptInfo:
             return jsonify({"error": "해당 주문 정보가 존재하지 않습니다."}), 404
-        
-        receipt, book, shop = receiptInfo
 
-        ownerInfo = db.session.query(Personal).filter_by(pid=receipt.pid).first()
+        receipt, owner = receiptInfo
 
-        if not ownerInfo:
-            return jsonify({"error": "구매자 정보가 존재하지 않습니다."}), 404
-
-        serialized = {
+        receipt_info = {
             "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "detail": book.detail,
-            "region": book.region,
-            "bookimg": book.img1,
+            "orderid": receipt.orderid,
+            "amount": receipt.amount,
+            "installment_month": receipt.installment_month,
             "state": receipt.state,
             "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat(),
-            "ownerType": UserType.PERSONAL.value,
-            "ownerId": ownerInfo.pid,
-            "ownerName": ownerInfo.name,
-            "ownertel": ownerInfo.tel,
-            "ownerEmail": ownerInfo.email,
-            "ownerNickname": ownerInfo.nickname,
-            "ownerRegion": ownerInfo.region,
-            "ownerAddress": ownerInfo.address
+            "payment_method": receipt.payment_method,
+            "paidAt": receipt.paidAt.isoformat(),
+
+            "ownerName": owner.name,
+            "ownertel": owner.tel,
+            "ownerEmail": owner.email,
+            "ownerNickname": owner.nickname,
+            "ownerRegion": owner.region,
+            "ownerAddress": owner.address,
+            "ownerType": UserType.PERSONAL.value
         }
     elif ownerType == UserType.COMMERCIAL.value:
-        receiptInfo = (
-            db.session.query(Creceipt2s, Sbooktrade, Shop)
-            .join(Sbooktrade, Creceipt2s.shopid == Sbooktrade.sid)
-            .join(Shop, Sbooktrade.sid == Shop.sid)
-            .filter(Creceipt2s.shopid == shopId, Creceipt2s.rid == rid)
+        receiptInfo =  (
+            db.session.query(Creceipt2s, Commercial)
+            .join(Commercial, Creceipt2s.cid == Commercial.cid)
+            .filter(Creceipt2s.rid == rid)
             .first()
         )
 
         if not receiptInfo:
             return jsonify({"error": "해당 주문 정보가 존재하지 않습니다."}), 404
 
-        ownerInfo = db.session.query(Commercial).filter_by(cid=receiptInfo.cid).first()
+        receipt, owner = receiptInfo
 
-        if not ownerInfo:
-            return jsonify({"error": "구매자 정보가 존재하지 않습니다."}), 404
-
-        receipt, book, shop = receiptInfo
-
-        serialized = {
+        receipt_info = {
             "rid": receipt.rid,
-            "bid": book.bid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "detail": book.detail,
-            "region": book.region,
-            "bookimg": book.img1,
+            "orderid": receipt.orderid,
+            "amount": receipt.amount,
+            "installment_month": receipt.installment_month,
             "state": receipt.state,
             "reason": receipt.reason,
-            "createAt": receipt.createAt.isoformat(),
-            "ownerType": UserType.COMMERCIAL.value,
-            "ownerId": ownerInfo.cid,
-            "ownerName": ownerInfo.name,
-            "ownertel": ownerInfo.tel,
-            "ownerEmail": ownerInfo.email,
-            "ownerNickname": ownerInfo.nickname,
-            "ownerRegion": ownerInfo.region,
-            "ownerAddress": ownerInfo.address
+            "payment_method": receipt.payment_method,
+            "paidAt": receipt.paidAt.isoformat(),
+
+            "ownerName": owner.name,
+            "ownertel": owner.tel,
+            "ownerEmail": owner.email,
+            "ownerNickname": owner.nickname,
+            "ownerRegion": owner.region,
+            "ownerAddress": owner.address,
+            "ownerType": UserType.COMMERCIAL.value
         }
     else:
         return jsonify({"error": "잘못된 유저 유형"}), 404
     
+    bookInfo = db.session.query(Sbooktrade).filter(Sbooktrade.bid == bid).first()
+
+    if not bookInfo:
+        return jsonify({"error": "책 정보가 존재하지 않습니다."}), 404
+
+    if bookInfo.orderid != receipt.orderid:
+        return jsonify({"error": "구매자 정보 오류"}), 400
+    
+    if bookInfo.state != PurchaseState.PAYMENT_SUCCESS.value:
+        return jsonify({"error": "구매 완료되지 않음."}), 400
+
+    book_info = {
+        "bid": bookInfo.bid,
+        "title": bookInfo.title,
+        "author": bookInfo.author,
+        "publish": bookInfo.publish,
+        "isbn": bookInfo.isbn,
+        "price": bookInfo.price,
+        "region": bookInfo.region,
+        "bookimg": bookInfo.img1,
+        "consumerid": bookInfo.consumerid,
+        "consumer_type": bookInfo.consumer_type,
+        "orderid": bookInfo.orderid
+    }
+    
     shop_info = {
         "shopId": shopInfo.sid,
         "shopName": shopInfo.shopName,
@@ -997,96 +1056,8 @@ def show_shop_sr_detail(decoded_user_id, user_type, userId, shopId, ownerType, r
         "user_type": user_type,
         "user_info": user_info,
         "shop_info": shop_info,
-        "receipt_info": serialized
-    }), 200
-
-@shop_bp.route("/<int:userId>/<int:shopId>/check-pr/<int:ownerType>/<int:rid>/review", methods=["PUT"])
-@token_required
-def sr_review(decoded_user_id, user_type, userId, shopId, ownerType, rid):
-    if str(decoded_user_id) != str(userId):
-        return jsonify({"error": "권한이 없습니다."}), 403
-
-    if user_type != UserType.COMMERCIAL.value:
-        return jsonify({"error": "상업회원만 접근 가능합니다."}), 403
-    
-    data = request.get_json()
-    decision = data.get("decision")
-    try:
-        decision = int(decision)
-    except ValueError:
-        return jsonify({"error": "가격 형식이 올바르지 않습니다."}), 400
-    reason = data.get("reason")
-    
-    userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
-    shopInfo = db.session.query(Shop).filter_by(cid=decoded_user_id, sid=shopId).first()
-
-    if not userInfo:
-        return jsonify({"error": "존재하지 않는 회원"}), 404
-
-    if not shopInfo:
-        return jsonify({"error": "매장 정보가 존재하지 않습니다."}), 404
-    
-    if ownerType == UserType.PERSONAL.value:
-        receiptInfo = db.session.query(Preceipt2s).filter(Preceipt2s.shopid == shopId, Preceipt2s.rid == rid).first()        
-    elif ownerType == UserType.COMMERCIAL.value:
-        receiptInfo = db.session.query(Creceipt2s).filter(Creceipt2s.shopid == shopId, Creceipt2s.rid == rid).first()
-    else:
-       return jsonify({"error": "잘못된 구매자 유형"}), 404 
-
-    if not receiptInfo:
-        return jsonify({"error": "해당 주문 정보가 존재하지 않습니다."}), 404
-    
-    if receiptInfo.state != 1:
-        return jsonify({"error": "이미 처리된 요청입니다."}), 403
-    
-    if decision == 2:
-        receiptInfo.state = 2
-    elif decision == 3:
-        receiptInfo.state = 3
-    else:
-        return jsonify({"error": "유효하지 않은 결정입니다."}), 400
-    
-    receiptInfo.reason = reason
-    db.session.commit()
-    
-     # 책 추가 후 다시 재고 리스트를 띄우기 위한 데이터
-    stock_list = db.session.query(Sbooktrade).filter_by(sid=shopId).order_by(Sbooktrade.bid.desc()).limit(10).all()
-
-    sbook_list = [{
-            "bid": book.bid,
-            "sid": book.sid,
-            "title": book.title,
-            "author": book.author,
-            "publish": book.publish,
-            "isbn": book.isbn,
-            "price": book.price,
-            "region": book.region,
-            "bookimg": book.img1,
-            "createAt": book.createAt.isoformat()
-        } for book in stock_list]
-
-    shop_info = {
-        "shopId": shopInfo.sid,
-        "shopName": shopInfo.shopName,
-        "address": shopInfo.address,
-        "region": shopInfo.region
-    }
-    
-    user_info = {
-        "name": userInfo.name,
-        "birth": userInfo.birth,
-        "tel": userInfo.tel,
-        "email": userInfo.email,
-        "nickname": userInfo.nickname,
-        "address": userInfo.address
-    }
-
-    return jsonify({
-        "decoded_user_id": decoded_user_id,
-        "user_type": user_type,
-        "user_info": user_info,
-        "shop_info": shop_info,
-        "stock": sbook_list
+        "receipt_info": receipt_info,
+        "book_info": book_info
     }), 200
 
 @shop_bp.route("/<int:userId>/<int:shopId>/modify-shop-info", methods=["POST"])
