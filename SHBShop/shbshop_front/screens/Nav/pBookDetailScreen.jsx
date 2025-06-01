@@ -92,19 +92,29 @@ const PBookDetailScreen = ({route, navigation}) => {
     const Token = await AsyncStorage.getItem('jwtToken');
     const response = await axios.post(
       `${BUY_URL}/book/${userId}/pb/request-payment`,
-      {},
+      BuyData,
       {
         headers: {
           Authorization: `Bearer ${Token}`,
         },
       }
     );
-    console.log("장바구니 추가성공")
+    console.log("구매 요청 성공", response.data);
+    navigation.navigate('TossPaymentScreen', {
+      paymentData: response.data
+    });
+
   } catch (error) {
     console.error('오류 발생:', error);
-    Alert.alert("장바구니 추가 실패", "다시 시도해주세요.");
+    Alert.alert("구매요청 실패", "다시 시도해주세요.");
   }
   }
+
+  const BuyData = {
+    "books":[
+      {"bid" : bid, type : data.seller.userType}
+    ]
+}
 
   return (
     <SafeAreaProvider>
@@ -183,7 +193,7 @@ const PBookDetailScreen = ({route, navigation}) => {
 
             <Text style={styles.priceText}>{data.book.price.toLocaleString()}원</Text>
           </View>
-          <TouchableOpacity style={styles.chatbutton} onPress={() => {console.log(data)}}>
+          <TouchableOpacity style={styles.chatbutton} onPress={Buy}>
             <Text style={styles.chatText}>채팅</Text>
           </TouchableOpacity>
         </View>
