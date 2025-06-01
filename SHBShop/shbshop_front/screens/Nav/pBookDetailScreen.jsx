@@ -194,7 +194,7 @@ const PBookDetailScreen = ({route, navigation}) => {
             <Text style={styles.priceText}>{data.book.price.toLocaleString()}원</Text>
           </View>
           <TouchableOpacity style={styles.chatbutton} onPress={Buy}>
-            <Text style={styles.chatText}>채팅</Text>
+            <Text style={styles.chatText}>결제</Text>
           </TouchableOpacity>
         </View>
       </View>

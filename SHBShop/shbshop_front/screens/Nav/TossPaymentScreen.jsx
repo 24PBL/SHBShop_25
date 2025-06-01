@@ -5,7 +5,7 @@ import { WebView } from 'react-native-webview';
 const TossPaymentScreen = ({ route }) => {
   const { paymentData } = route.params;
 
-  const clientKey = "test_ck_ORzdMaqN3wxJoKBA2kGDV5AkYXQG"; // 실제 키로 교체하세요
+  const clientKey = "test_ck_ORzdMaqN3wxJoKBA2kGDV5AkYXQG"; 
 
   const html = `
     <html>
@@ -44,7 +44,7 @@ const TossPaymentScreen = ({ route }) => {
   }
 
   if (url.startsWith('intent://')) {
-    // Android intent scheme 처리
+   
     const fallbackUrlMatch = url.match(/S.browser_fallback_url=([^;]+)/);
     const fallbackUrl = fallbackUrlMatch ? decodeURIComponent(fallbackUrlMatch[1]) : null;
 
@@ -55,6 +55,7 @@ const TossPaymentScreen = ({ route }) => {
             Alert.alert('알림', '앱이 설치되어 있지 않거나 링크를 열 수 없습니다.');
           });
         } else {
+          console.log(url)
           Alert.alert('알림', '지원하지 않는 intent 스킴입니다.');
         }
       });
