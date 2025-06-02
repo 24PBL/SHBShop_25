@@ -9,6 +9,7 @@ import axios from 'axios';
 
 
 const API_URL = Constants.expoConfig.extra.API_URL;
+const BUY_URL = Constants.expoConfig.extra.BUY_URL;
 const { width } = Dimensions.get('window');
 
 const CBookDetailScreen = ({route, navigation}) => {
@@ -86,6 +87,38 @@ useEffect(() => {
       }
     }, [data?.basket_exist]);
 
+    const Buy = async () => {
+     try {
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+    const response = await axios.post(
+      `${BUY_URL}/book/${userId}/sb/request-payment`,
+      BuyData,
+      {
+        headers: {
+          Authorization: `Bearer ${Token}`,
+        },
+      }
+    );
+    console.log("구매 요청 성공", response.data);
+    navigation.navigate('TossPaymentScreen', {
+      paymentData: response.data
+    });
+
+  } catch (error) {
+    console.error('오류 발생:', error);
+    Alert.alert("구매요청 실패", "다시 시도해주세요.");
+  }
+  }
+
+  const BuyData = {
+    "books":[
+      {"bid" : data.book.bid, type : 3}
+    ]
+}
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{backgroundColor:'white', flex:1}}>
@@ -162,8 +195,8 @@ useEffect(() => {
 
             <Text style={styles.priceText}>{data.book.price.toLocaleString()}원</Text>
           </View>
-          <TouchableOpacity style={styles.chatbutton} onPress={() => {console.log(data)}}>
-            <Text style={styles.chatText}>채팅</Text>
+          <TouchableOpacity style={styles.chatbutton} onPress={Buy}>
+            <Text style={styles.chatText}>물품 구매</Text>
           </TouchableOpacity>
         </View>
       </View>
