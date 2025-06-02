@@ -22,6 +22,7 @@ import ReserveList from './ReserveList'
 import ReserveDetail from './ReserverDetail';
 import PBuyListDetailcreen from './PBuyListDetail';
 import SBuyListDetail from './SBuyListDetail';
+import NewBuyList from './NewBuyList';
 const Stack = createNativeStackNavigator();
 
 const MyPageStack = () => {
@@ -34,6 +35,7 @@ const MyPageStack = () => {
       <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ChangePWScreen" component={ChangePWScreen} options={{ headerShown: false }} />
       <Stack.Screen name="BuyList" component={BuyList} options={{ headerShown: false }} />
+
       <Stack.Screen name="ManageStore" component={ManageStore} options={{ headerShown: false }} />
       <Stack.Screen name="ExcelUploadScreen" component={ExcelUploadScreen} options={{ headerShown: false }} />
       <Stack.Screen name="StoreBookRegister" component={StoreBookRegister} options={{ headerShown: false }} />
@@ -48,7 +50,7 @@ const MyPageStack = () => {
       <Stack.Screen name="ReserveDetail" component={ReserveDetail} options={{ headerShown: false }} />
       <Stack.Screen name="PBuyListDetail" component={PBuyListDetailcreen} options={{ headerShown: false }} />
       <Stack.Screen name="SBuyListDetail" component={SBuyListDetail} options={{ headerShown: false }} />
-
+      <Stack.Screen name="NewBuyList" component={NewBuyList} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );
