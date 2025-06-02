@@ -1,11 +1,11 @@
 import React from 'react';
-import { Linking, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { Alert, Linking } from 'react-native';
 
 const TossPaymentScreen = ({ route }) => {
   const { paymentData } = route.params;
 
-  const clientKey = "test_ck_ORzdMaqN3wxJoKBA2kGDV5AkYXQG"; 
+  const clientKey = "test_ck_ORzdMaqN3wxJoKBA2kGDV5AkYXQG";  // 실제 키로 교체하세요.
 
   const html = `
     <html>
@@ -36,46 +36,41 @@ const TossPaymentScreen = ({ route }) => {
   `;
 
   const onShouldStartLoadWithRequest = (request) => {
-  console.log('Request URL:', request.url);
-  const url = request.url;
+    const url = request.url;
+    console.log('Request URL:', url);
 
-  if (url.startsWith('http') || url.startsWith('https')) {
-    return true;
-  }
+    // intent:// (앱 열기) URL 처리
+    if (url.startsWith('intent://')) {
+      const fallbackUrlMatch = url.match(/S.browser_fallback_url=([^;]+)/);
+      const fallbackUrl = fallbackUrlMatch ? decodeURIComponent(fallbackUrlMatch[1]) : null;
 
-  if (url.startsWith('intent://')) {
-   
-    const fallbackUrlMatch = url.match(/S.browser_fallback_url=([^;]+)/);
-    const fallbackUrl = fallbackUrlMatch ? decodeURIComponent(fallbackUrlMatch[1]) : null;
-
-    Linking.openURL(url)
-      .catch(() => {
+      // Toss 앱이 있으면 실행, 없으면 fallback URL로 연결
+      Linking.openURL(url).catch(() => {
         if (fallbackUrl) {
           Linking.openURL(fallbackUrl).catch(() => {
             Alert.alert('알림', '앱이 설치되어 있지 않거나 링크를 열 수 없습니다.');
           });
         } else {
-          console.log(url)
           Alert.alert('알림', '지원하지 않는 intent 스킴입니다.');
         }
       });
 
+      return false;
+    }
+
+    // 기본 URL 처리
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(url);
+        } else {
+          Alert.alert('알림', `지원하지 않는 URL 스킴입니다: ${url}`);
+        }
+      })
+      .catch(console.error);
+
     return false;
-  }
-
-  Linking.canOpenURL(url)
-    .then((supported) => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Alert.alert('알림', `지원하지 않는 URL 스킴입니다: ${url}`);
-      }
-    })
-    .catch(console.error);
-
-  return false;
-};
-
+  };
 
   return (
     <WebView

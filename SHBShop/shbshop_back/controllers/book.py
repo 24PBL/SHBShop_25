@@ -731,24 +731,32 @@ def payment_success4s():
     order_id = request.args.get("orderId")
     amount = request.args.get("amount")
 
+    print(f"[DEBUG] 요청 파라미터 - paymentKey: {payment_key}, orderId: {order_id}, amount: {amount}")
+
     if not all([payment_key, order_id, amount]):
+        print("[ERROR] 필수 결제 정보 누락")
         return "필수 결제 정보 누락", 400
 
-    # Toss 결제 승인 API 호출
     headers = TOSS_HEADERS
-
     payload = {
         "paymentKey": payment_key,
         "orderId": order_id,
         "amount": int(amount)
     }
 
+    print(f"[DEBUG] Toss 결제 승인 API 호출 - payload: {payload}")
+
     res = requests.post("https://api.tosspayments.com/v1/payments/confirm",
                         headers=headers, json=payload)
-    
+
+    print(f"[DEBUG] Toss API 응답 코드: {res.status_code}")
+    print(f"[DEBUG] Toss API 응답 내용: {res.text}")
+
     preceipt = db.session.query(Preceipt2s).filter_by(orderid=order_id).first()
     creceipt = db.session.query(Creceipt2s).filter_by(orderid=order_id).first()
     books = db.session.query(Sbooktrade).filter(Sbooktrade.orderid == order_id).all()
+
+    print(f"[DEBUG] preceipt: {preceipt}, creceipt: {creceipt}, books count: {len(books)}")
 
     if res.status_code == 200:
         confirm_data = res.json()
@@ -758,6 +766,7 @@ def payment_success4s():
         installment = confirm_data.get("card", {}).get("installmentPlanMonths", 0)
 
         if preceipt:
+            print(f"[DEBUG] preceipt 상태: {preceipt.state}")
             if preceipt.state == PurchaseState.PENDING.value:
                 preceipt.state = PurchaseState.PAYMENT_SUCCESS.value
                 preceipt.paidAt = paid_at
@@ -766,8 +775,10 @@ def payment_success4s():
                 preceipt.install_month = installment
                 preceipt.reason = "결제완료"
             else:
+                print("[ERROR] 이미 처리된 결제 - preceipt")
                 return jsonify({"error": "이미 처리된 결제"}), 400
         elif creceipt:
+            print(f"[DEBUG] creceipt 상태: {creceipt.state}")
             if creceipt.state == PurchaseState.PENDING.value:
                 creceipt.state = PurchaseState.PAYMENT_SUCCESS.value
                 creceipt.paidAt = paid_at
@@ -776,8 +787,10 @@ def payment_success4s():
                 creceipt.install_month = installment
                 creceipt.reason = "결제완료"
             else:
+                print("[ERROR] 이미 처리된 결제 - creceipt")
                 return jsonify({"error": "이미 처리된 결제"}), 400
         else:
+            print("[ERROR] 존재하지 않는 주문")
             return jsonify({"error": "존재하지 않는 주문"}), 404
         
         for book in books:
@@ -787,8 +800,10 @@ def payment_success4s():
 
         return render_template("success.html", data=confirm_data)
     else:
+        print("[ERROR] 결제 승인 실패 처리")
         if preceipt:
             if preceipt.state != PurchaseState.PENDING.value:
+                print("[ERROR] 이미 처리된 결제 - preceipt (실패 처리)")
                 return jsonify({"error": "이미 처리된 결제"}), 400
             else:
                 preceipt.state = PurchaseState.PAYMENT_FAILED.value
@@ -801,6 +816,7 @@ def payment_success4s():
                     book.orderid = None
         elif creceipt:
             if creceipt.state != PurchaseState.PENDING.value:
+                print("[ERROR] 이미 처리된 결제 - creceipt (실패 처리)")
                 return jsonify({"error": "이미 처리된 결제"}), 400
             else:
                 creceipt.state = PurchaseState.PAYMENT_FAILED.value
@@ -814,6 +830,7 @@ def payment_success4s():
 
         db.session.commit()
         return f"결제 승인 실패: {res.text}", 400
+
 
 @book_bp.route("/sb/fail")
 def payment_fail4s():

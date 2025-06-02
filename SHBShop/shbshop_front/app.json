@@ -26,7 +26,7 @@
     },
     "extra" :{
       "API_URL": "http://192.168.0.7:5000",
-      "BUY_URL" : "https://c7aa-182-31-40-60.ngrok-free.app"
+      "BUY_URL" : "https://8aed-182-31-40-60.ngrok-free.app"
     }
   }
 }
