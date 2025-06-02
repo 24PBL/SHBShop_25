@@ -3,8 +3,8 @@
     "name": "pro_app",
     "slug": "pro_app",
     "version": "1.0.0",
-    "scheme" : "myapp",
-    "deepLinking":true,
+    "scheme": "myapp",
+    "deepLinking": true,
     "orientation": "portrait",
     "icon": "./assets/app_icon.jpg",
     "userInterfaceStyle": "light",
@@ -21,14 +21,18 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.jeonsae01.pro_app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra" :{
+    "extra": {
       "API_URL": "http://192.168.0.7:5000",
-      "BUY_URL" : "https://8aed-182-31-40-60.ngrok-free.app"
+      "BUY_URL": "https://8aed-182-31-40-60.ngrok-free.app",
+      "eas": {
+        "projectId": "c493c92d-8e82-4442-bab1-ea6a1489f7b1"
+      }
     }
   }
 }
