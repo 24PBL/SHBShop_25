@@ -1210,10 +1210,13 @@ def upload_books_from_excel(decoded_user_id, user_type, userId, shopId):
             if not file:
                 results.append({"isbn": isbn, "status": f"{safe_name} 이미지 없음"})
                 break
-            save_path = os.path.join(SBOOK_UPLOAD_FOLDER, safe_name)
+
+            unique_name = f"{uuid4().hex}_{safe_name}"
+            save_path = os.path.join(SBOOK_UPLOAD_FOLDER, unique_name)
+
             try:
                 file.save(save_path)
-                saved_imgs.append(f"/{SBOOK_UPLOAD_FOLDER}/{safe_name}")
+                saved_imgs.append(f"/{SBOOK_UPLOAD_FOLDER}/{unique_name}")
             except Exception as e:
                 results.append({"isbn": isbn, "status": f"{safe_name} 저장 실패: {str(e)}"})
                 break
