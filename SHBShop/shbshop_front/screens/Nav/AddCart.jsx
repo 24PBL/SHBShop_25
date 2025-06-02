@@ -241,7 +241,7 @@ const AddCart = ({ navigation, route }) => {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
   <Text style={styles.sectionTitle}>개인 책</Text>
   <TouchableOpacity style={styles.buyButton} onPress={() => handleBuy(false)}>
-    <Text style={styles.buyButtonText}>개인책 구매</Text>
+    <Text style={styles.buyButtonText}>선택 구매</Text>
   </TouchableOpacity>
 </View>
 
@@ -254,7 +254,7 @@ const AddCart = ({ navigation, route }) => {
 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 30 }}>
   <Text style={styles.sectionTitle}>매장 책</Text>
   <TouchableOpacity style={styles.buyButton} onPress={() => handleBuy(true)}>
-    <Text style={styles.buyButtonText}>매장책 구매</Text>
+    <Text style={styles.buyButtonText}>선택 구매</Text>
   </TouchableOpacity>
 </View>
 
