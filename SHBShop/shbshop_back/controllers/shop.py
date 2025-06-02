@@ -1176,6 +1176,8 @@ def upload_books_from_excel(decoded_user_id, user_type, userId, shopId):
     excel_file = request.files.get("excel")
     image_files = request.files.getlist("images")
 
+    print(f"업로드된 이미지 파일명 리스트: {[f.filename for f in image_files]}")  # ★ 서버에 올라온 이미지 파일명 출력
+
     if not excel_file or not image_files:
         return jsonify({"error": "엑셀 또는 이미지 파일 누락"}), 400
 

@@ -64,7 +64,7 @@ const  ManageStore = ({navigation, route}) => {
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>
 
-        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={()=> navigation.navigate("ExcelUploadScreen")}>
+        <TouchableOpacity style={{flexDirection:'row', paddingLeft:20, width:'90%', justifyContent:'space-between', alignItems:'center', marginBottom:20}} onPress={()=> navigation.navigate("ExcelUploadScreen", {shopId: shopId})}>
           <Text>매장 재고 일괄 등록</Text>
           <Ionicons name="chevron-forward-outline" size={23}/>
         </TouchableOpacity>
