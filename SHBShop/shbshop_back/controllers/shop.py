@@ -5,12 +5,17 @@ from sqlalchemy.orm import joinedload
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 import os
+import pandas as pd
+import requests
+from dotenv import load_dotenv
 from utils.jwt_helper import token_required
 
 from models import Personal, Commercial, Pbooktrade, Sbooktrade, Cbooktrade, Shop, Favorite4p, Favorite4c, Preceipt2s, Creceipt2s
 from extensions import db
 
 shop_bp = Blueprint("shop", __name__)
+
+load_dotenv()
 
 class UserType(Enum):
     PERSONAL = 1
@@ -34,6 +39,9 @@ class PurchaseState(Enum):
 
 SBOOK_UPLOAD_FOLDER = "static/product/shop"
 S_IMAGE_UPLOAD_FOLDER = "static/shop"
+
+NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID")
+NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
 
 @shop_bp.route("/<int:userId>/<int:shopId>", methods=["GET"])
 @token_required
@@ -1150,3 +1158,107 @@ def modify_shop_info(decoded_user_id, user_type, userId, shopId):
     }
 
     return jsonify({"message": "매장 수정 완료", "shop_info": shop_info, "user_info": user_info}), 200
+
+@shop_bp.route("/<int:userId>/<int:shopId>/check-stock/add-excel", methods=["POST"])
+@token_required
+def upload_books_from_excel(decoded_user_id, user_type, userId, shopId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+
+    if user_type != UserType.COMMERCIAL.value:
+        return jsonify({"error": "사업자만 등록 가능합니다."}), 403
+    
+    shopInfo = db.session.query(Shop).filter(Shop.sid == shopId, Shop.cid == decoded_user_id).first()
+
+    if not shopInfo:
+        return jsonify({"error": "매장 등록을 완료한 사업자만 등록 가능합니다."}), 403
+
+    excel_file = request.files.get("excel")
+    image_files = request.files.getlist("images")
+
+    if not excel_file or not image_files:
+        return jsonify({"error": "엑셀 또는 이미지 파일 누락"}), 400
+
+    try:
+        df = pd.read_excel(excel_file)
+    except Exception as e:
+        return jsonify({"error": f"엑셀 파싱 실패: {str(e)}"}), 500
+
+    image_map = {secure_filename(f.filename): f for f in image_files}
+
+    results = []
+    success_count = 0
+
+    for _, row in df.iterrows():
+        isbn = str(row.get("isbn")).strip()
+        img_names = [
+            row.get("img1_path"),
+            row.get("img2_path"),
+            row.get("img3_path")
+        ]
+        price = row.get("price")
+        detail = str(row.get("detail") or "").strip()
+        saved_imgs = []
+
+        # 이미지 저장
+        for img_name in img_names:
+            if not img_name or str(img_name).strip() == 'nan':
+                results.append({"isbn": isbn, "status": f"이미지 경로 누락"})
+                break
+            safe_name = secure_filename(str(img_name).strip())
+            file = image_map.get(safe_name)
+            if not file:
+                results.append({"isbn": isbn, "status": f"{safe_name} 이미지 없음"})
+                break
+            save_path = os.path.join(SBOOK_UPLOAD_FOLDER, safe_name)
+            try:
+                file.save(save_path)
+                saved_imgs.append(f"/{SBOOK_UPLOAD_FOLDER}/{safe_name}")
+            except Exception as e:
+                results.append({"isbn": isbn, "status": f"{safe_name} 저장 실패: {str(e)}"})
+                break
+        else:
+            # ISBN으로 네이버 도서 API 조회
+            res = requests.get(
+                "https://openapi.naver.com/v1/search/book.json",
+                params={"query": isbn, "d_isbn": isbn},
+                headers={
+                    "X-Naver-Client-Id": NAVER_CLIENT_ID,
+                    "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
+                }
+            )
+
+            if res.status_code != 200 or not res.json().get("items"):
+                results.append({"isbn": isbn, "status": "네이버 도서 검색 실패"})
+                continue
+
+            book_data = res.json()["items"][0]
+
+            try:
+                price = int(price)
+            except (ValueError, TypeError):
+                results.append({"isbn": isbn, "status": "가격 형식 오류"})
+                continue
+
+            new_book = Sbooktrade(
+                sid=shopId,
+                title=book_data["title"],
+                author=book_data["author"],
+                publish=book_data["publisher"],
+                isbn=isbn,
+                price=price,  # 기본 가격 설정 또는 row에서 받아와도 됨
+                region=shopInfo.region,  # 기본 지역 설정
+                detail=detail,
+                img1=saved_imgs[0],
+                img2=saved_imgs[1],
+                img3=saved_imgs[2],
+            )
+            db.session.add(new_book)
+            success_count += 1
+
+    db.session.commit()
+
+    return jsonify({
+        "success_count": success_count,
+        "failures": [r for r in results if r["status"] != "등록 성공"]
+    }), 201
