@@ -3,6 +3,8 @@
     "name": "pro_app",
     "slug": "pro_app",
     "version": "1.0.0",
+    "scheme" : "myapp",
+    "deepLinking":true,
     "orientation": "portrait",
     "icon": "./assets/app_icon.jpg",
     "userInterfaceStyle": "light",

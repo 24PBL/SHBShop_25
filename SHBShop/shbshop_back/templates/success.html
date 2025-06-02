@@ -1,9 +1,29 @@
 <!DOCTYPE html>
-<html>
-<head><title>결제 성공</title></head>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>결제 성공</title>
+</head>
 <body>
-  <h1>결제 성공</h1>
-  <p>결제 금액: {{ data.totalAmount }}원</p>
-  <p>주문 ID: {{ data.orderId }}</p>
+  <h1>결제가 성공적으로 완료되었습니다!</h1>
+  <p>잠시 후 앱으로 돌아갑니다...</p>
+  <button onclick="goBackToApp()">앱으로 돌아가기</button>
+
+  <script>
+    function goBackToApp() {
+      // 앱 딥링크 호출
+      window.location.href = "myapp://payment-success";
+    }
+
+    window.onload = function () {
+      // 1초 후 자동으로 앱 딥링크 호출 시도
+      setTimeout(goBackToApp, 1000);
+
+      // 3초 후 앱으로 돌아가지 않으면 안내 메시지 띄우기
+      setTimeout(function () {
+        alert('앱이 설치되어 있지 않거나 자동 이동이 되지 않았습니다.\n"앱으로 돌아가기" 버튼을 눌러 주세요.');
+      }, 3000);
+    };
+  </script>
 </body>
 </html>
