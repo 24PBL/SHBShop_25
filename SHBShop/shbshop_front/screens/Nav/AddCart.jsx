@@ -145,6 +145,7 @@ const AddCart = ({ navigation, route }) => {
     >
       <Checkbox
         value={isChecked}
+        color={isChecked ? '#0091da' : undefined}
         onValueChange={() => toggleSelection(item.bid, isStore)}
         style={{ marginRight: 10 }}
       />
@@ -264,11 +265,6 @@ const AddCart = ({ navigation, route }) => {
 )}
 
         </ScrollView>
-
-        {/* 하단 구매 버튼 */}
-        <View style={styles.footer}>
-          
-        </View>
       </SafeAreaView>
     </SafeAreaProvider>
   );
