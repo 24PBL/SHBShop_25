@@ -591,8 +591,6 @@ def request_payment4s(decoded_user_id, user_type, userId):
 
 @book_bp.route("/pb/success")
 def payment_success4p():
-
-
     payment_key = request.args.get("paymentKey")
     order_id = request.args.get("orderId")
     amount = request.args.get("amount")

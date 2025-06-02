@@ -18,6 +18,8 @@ LICENCE_UPLOAD_FOLDER = "static/licence"
 S_IMAGE_UPLOAD_FOLDER = "static/shop"
 P_PROFILE_UPLOAD_FOLDER = "static/user/personal"
 C_PROFILE_UPLOAD_FOLDER = "static/user/commercial"
+PBOOK_UPLOAD_FOLDER = "static/product/personal"
+CBOOK_UPLOAD_FOLDER = "static/product/commercial"
 
 class UserType(Enum):
     PERSONAL = 1
@@ -2100,3 +2102,1103 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, orderId):
         "receipt_info": rp_info,
         "book_list": book_list
     }), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-product", methods=["GET"])
+@token_required
+def show_my_product(decoded_user_id, user_type, userId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    sold_book_list = []
+    on_sale_book_list = []
+    
+    if user_type == UserType.PERSONAL.value:
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+
+        sold_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                and_(
+                    Pbooktrade.pid==decoded_user_id,
+                    or_(
+                        Pbooktrade.state == PurchaseState.PAYMENT_SUCCESS.value,
+                        Pbooktrade.state == PurchaseState.USER_CANCELLED.value,
+                        Pbooktrade.state == PurchaseState.REFUNDED.value
+                    )
+                )
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .limit(10)
+            .all()
+        )
+
+        sale_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                Pbooktrade.pid==decoded_user_id,
+                Pbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .limit(10)
+            .all()
+        )
+    elif user_type == UserType.COMMERCIAL.value:
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+
+        sold_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                and_(
+                    Cbooktrade.cid==decoded_user_id,
+                    or_(
+                        Cbooktrade.state == PurchaseState.PAYMENT_SUCCESS.value,
+                        Cbooktrade.state == PurchaseState.USER_CANCELLED.value,
+                        Cbooktrade.state == PurchaseState.REFUNDED.value
+                    )
+                )
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .limit(10)
+            .all()
+        )
+
+        sale_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                Cbooktrade.cid==decoded_user_id,
+                Cbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .limit(10)
+            .all()
+        )
+    else:
+        return jsonify({"error": "접근 권한 없음"}), 403
+    
+    if not userInfo:
+        return jsonify({"error": "존재하지 않는 회원"}), 404
+    
+    user_info = {
+        "name": userInfo.name,
+        "birth": userInfo.birth,
+        "tel": userInfo.tel,
+        "email": userInfo.email,
+        "nickname": userInfo.nickname,
+        "address": userInfo.address
+    }
+    
+    if (not sold_book_results) and (not sale_book_results) :
+        return jsonify({
+            "decoded_user_id": decoded_user_id,
+            "user_type": user_type,
+            "user_info": user_info,
+            "sold_book_list": [],
+            "on_sale_book_list": []
+        }), 200
+    
+    if sold_book_results:
+        for book in sold_book_results:
+            if book.consumer_type == UserType.PERSONAL.value:
+                receiptInfo = (
+                    db.session.query(Preceipt2p, Personal)
+                    .join(Personal, Preceipt2p.pid == Personal.pid)
+                    .filter(Preceipt2p.orderid == book.orderid)
+                    .first()
+                )
+            elif book.consumer_type == UserType.COMMERCIAL.value:
+                receiptInfo = (
+                    db.session.query(Creceipt2p, Commercial)
+                    .join(Commercial, Creceipt2p.cid == Commercial.cid)
+                    .filter(Creceipt2p.orderid == book.orderid)
+                    .first()
+                )
+            else:
+                return jsonify({"error": "존재하지 않는 주문내역"}), 404
+
+            if not receiptInfo:
+                return jsonify({"error": "존재하지 않는 주문내역"}), 404
+            
+            receipt, owner = receiptInfo
+
+            sold_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+
+                "state": book.state,
+                "orderid": book.orderid,
+                "consumerid": book.consumerid,
+                "consumer_type": book.consumer_type,
+
+                "rid": receipt.rid,
+                "amount": receipt.amount,
+                "installment_month": receipt.installment_month,
+                "reason": receipt.reason,
+                "payment_method": receipt.payment_method,
+                "paidAt": receipt.paidAt.isoformat(),
+
+                "ownerName": owner.name,
+                "ownertel": owner.tel,
+                "ownerEmail": owner.email,
+                "ownerNickname": owner.nickname,
+                "ownerRegion": owner.region,
+                "ownerAddress": owner.address,
+                "ownerType": book.consumer_type
+            })
+    else:
+        sold_book_list = []
+
+
+    if sale_book_results:
+        for book in sale_book_results:
+            on_sale_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+                "state": book.state,
+            })
+    else:
+        on_sale_book_list = []
+    
+    return jsonify({
+        "decoded_user_id": decoded_user_id,
+        "user_type": user_type,
+        "user_info": user_info,
+        "sold_book_list": sold_book_list,
+        "on_sale_book_list": on_sale_book_list
+    }), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-product/more-sold-book", methods=["GET"])
+@token_required
+def show_my_sold_product(decoded_user_id, user_type, userId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    sold_book_list = []
+    
+    if user_type == UserType.PERSONAL.value:
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+
+        sold_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                and_(
+                    Pbooktrade.pid==decoded_user_id,
+                    or_(
+                        Pbooktrade.state == PurchaseState.PAYMENT_SUCCESS.value,
+                        Pbooktrade.state == PurchaseState.USER_CANCELLED.value,
+                        Pbooktrade.state == PurchaseState.REFUNDED.value
+                    )
+                )
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .all()
+        )
+    elif user_type == UserType.COMMERCIAL.value:
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+
+        sold_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                and_(
+                    Cbooktrade.cid==decoded_user_id,
+                    or_(
+                        Cbooktrade.state == PurchaseState.PAYMENT_SUCCESS.value,
+                        Cbooktrade.state == PurchaseState.USER_CANCELLED.value,
+                        Cbooktrade.state == PurchaseState.REFUNDED.value
+                    )
+                )
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .all()
+        )
+    else:
+        return jsonify({"error": "접근 권한 없음"}), 403
+    
+    if not userInfo:
+        return jsonify({"error": "존재하지 않는 회원"}), 404
+    
+    user_info = {
+        "name": userInfo.name,
+        "birth": userInfo.birth,
+        "tel": userInfo.tel,
+        "email": userInfo.email,
+        "nickname": userInfo.nickname,
+        "address": userInfo.address
+    }
+    
+    if not sold_book_results :
+        pass
+    else:
+        for book in sold_book_results:
+            if book.consumer_type == UserType.PERSONAL.value:
+                receiptInfo = (
+                    db.session.query(Preceipt2p, Personal)
+                    .join(Personal, Preceipt2p.pid == Personal.pid)
+                    .filter(Preceipt2p.orderid == book.orderid)
+                    .first()
+                )
+            elif book.consumer_type == UserType.COMMERCIAL.value:
+                receiptInfo = (
+                    db.session.query(Creceipt2p, Commercial)
+                    .join(Commercial, Creceipt2p.cid == Commercial.cid)
+                    .filter(Creceipt2p.orderid == book.orderid)
+                    .first()
+                )
+            else:
+                return jsonify({"error": "존재하지 않는 주문내역"}), 404
+
+            if not receiptInfo:
+                return jsonify({"error": "존재하지 않는 주문내역"}), 404
+            
+            receipt, owner = receiptInfo
+
+            sold_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+
+                "state": book.state,
+                "orderid": book.orderid,
+                "consumerid": book.consumerid,
+                "consumer_type": book.consumer_type,
+
+                "rid": receipt.rid,
+                "amount": receipt.amount,
+                "installment_month": receipt.installment_month,
+                "reason": receipt.reason,
+                "payment_method": receipt.payment_method,
+                "paidAt": receipt.paidAt.isoformat(),
+
+                "ownerName": owner.name,
+                "ownertel": owner.tel,
+                "ownerEmail": owner.email,
+                "ownerNickname": owner.nickname,
+                "ownerRegion": owner.region,
+                "ownerAddress": owner.address,
+                "ownerType": book.consumer_type
+            })
+    
+    return jsonify({
+        "decoded_user_id": decoded_user_id,
+        "user_type": user_type,
+        "user_info": user_info,
+        "sold_book_list": sold_book_list,
+    }), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-product/more-sale-book", methods=["GET"])
+@token_required
+def show_my_sale_product(decoded_user_id, user_type, userId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    on_sale_book_list = []
+    
+    if user_type == UserType.PERSONAL.value:
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+
+        sale_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                Pbooktrade.pid==decoded_user_id,
+                Pbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .all()
+        )
+    elif user_type == UserType.COMMERCIAL.value:
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+
+        sale_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                Cbooktrade.cid==decoded_user_id,
+                Cbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .all()
+        )
+    else:
+        return jsonify({"error": "접근 권한 없음"}), 403
+    
+    if not userInfo:
+        return jsonify({"error": "존재하지 않는 회원"}), 404
+    
+    user_info = {
+        "name": userInfo.name,
+        "birth": userInfo.birth,
+        "tel": userInfo.tel,
+        "email": userInfo.email,
+        "nickname": userInfo.nickname,
+        "address": userInfo.address
+    }
+    
+    if not sale_book_results:
+        pass
+    else:
+        for book in sale_book_results:
+            on_sale_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+                "state": book.state,
+            })
+    
+    return jsonify({
+        "decoded_user_id": decoded_user_id,
+        "user_type": user_type,
+        "user_info": user_info,
+        "on_sale_book_list": on_sale_book_list
+    }), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-product/search", methods=["GET"])
+@token_required
+def search_my_stock(decoded_user_id, user_type, userId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    # const encoded = encodeURIComponent(keyword); 프론트에서 쿼리값 인코딩 해주세요.
+    keyword = request.args.get("keyword")
+    if not keyword:
+        return jsonify({"error": "검색어가 제공되지 않았습니다."}), 400
+
+    keyword_pattern = f"%{keyword}%"
+
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    sold_book_list = []
+    on_sale_book_list = []
+    
+    if user_type == UserType.PERSONAL.value:
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+
+        sold_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                and_(
+                    Pbooktrade.pid==decoded_user_id,
+                    or_(
+                        Pbooktrade.state == PurchaseState.PAYMENT_SUCCESS.value,
+                        Pbooktrade.state == PurchaseState.USER_CANCELLED.value,
+                        Pbooktrade.state == PurchaseState.REFUNDED.value
+                    ),
+                    or_(
+                        Pbooktrade.title.ilike(keyword_pattern),
+                        Pbooktrade.author.ilike(keyword_pattern),
+                        Pbooktrade.publish.ilike(keyword_pattern),
+                        Pbooktrade.isbn.ilike(keyword_pattern)
+                    ),
+                )
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .all()
+        )
+
+        sale_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                Pbooktrade.pid==decoded_user_id,
+                Pbooktrade.state == PurchaseState.ONSALE.value,
+                or_(
+                        Pbooktrade.title.ilike(keyword_pattern),
+                        Pbooktrade.author.ilike(keyword_pattern),
+                        Pbooktrade.publish.ilike(keyword_pattern),
+                        Pbooktrade.isbn.ilike(keyword_pattern)
+                    ),
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .all()
+        )
+    elif user_type == UserType.COMMERCIAL.value:
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+
+        sold_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                and_(
+                    Cbooktrade.cid==decoded_user_id,
+                    or_(
+                        Cbooktrade.state == PurchaseState.PAYMENT_SUCCESS.value,
+                        Cbooktrade.state == PurchaseState.USER_CANCELLED.value,
+                        Cbooktrade.state == PurchaseState.REFUNDED.value
+                    ),
+                    or_(
+                        Cbooktrade.title.ilike(keyword_pattern),
+                        Cbooktrade.author.ilike(keyword_pattern),
+                        Cbooktrade.publish.ilike(keyword_pattern),
+                        Cbooktrade.isbn.ilike(keyword_pattern)
+                    ),
+                )
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .all()
+        )
+
+        sale_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                Cbooktrade.cid==decoded_user_id,
+                Cbooktrade.state == PurchaseState.ONSALE.value,
+                or_(
+                        Cbooktrade.title.ilike(keyword_pattern),
+                        Cbooktrade.author.ilike(keyword_pattern),
+                        Cbooktrade.publish.ilike(keyword_pattern),
+                        Cbooktrade.isbn.ilike(keyword_pattern)
+                    ),
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .all()
+        )
+    else:
+        return jsonify({"error": "접근 권한 없음"}), 403
+    
+    if not userInfo:
+        return jsonify({"error": "존재하지 않는 회원"}), 404
+    
+    user_info = {
+        "name": userInfo.name,
+        "birth": userInfo.birth,
+        "tel": userInfo.tel,
+        "email": userInfo.email,
+        "nickname": userInfo.nickname,
+        "address": userInfo.address
+    }
+    
+    if (not sold_book_results) and (not sale_book_results) :
+        return jsonify({
+            "decoded_user_id": decoded_user_id,
+            "user_type": user_type,
+            "user_info": user_info,
+            "sold_book_list": [],
+            "on_sale_book_list": []
+        }), 200
+    
+    if sold_book_results:
+        for book in sold_book_results:
+            if book.consumer_type == UserType.PERSONAL.value:
+                receiptInfo = (
+                    db.session.query(Preceipt2p, Personal)
+                    .join(Personal, Preceipt2p.pid == Personal.pid)
+                    .filter(Preceipt2p.orderid == book.orderid)
+                    .first()
+                )
+            elif book.consumer_type == UserType.COMMERCIAL.value:
+                receiptInfo = (
+                    db.session.query(Creceipt2p, Commercial)
+                    .join(Commercial, Creceipt2p.cid == Commercial.cid)
+                    .filter(Creceipt2p.orderid == book.orderid)
+                    .first()
+                )
+            else:
+                return jsonify({"error": "존재하지 않는 주문내역"}), 404
+
+            if not receiptInfo:
+                return jsonify({"error": "존재하지 않는 주문내역"}), 404
+            
+            receipt, owner = receiptInfo
+
+            sold_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+
+                "state": book.state,
+                "orderid": book.orderid,
+                "consumerid": book.consumerid,
+                "consumer_type": book.consumer_type,
+
+                "rid": receipt.rid,
+                "amount": receipt.amount,
+                "installment_month": receipt.installment_month,
+                "reason": receipt.reason,
+                "payment_method": receipt.payment_method,
+                "paidAt": receipt.paidAt.isoformat(),
+
+                "ownerName": owner.name,
+                "ownertel": owner.tel,
+                "ownerEmail": owner.email,
+                "ownerNickname": owner.nickname,
+                "ownerRegion": owner.region,
+                "ownerAddress": owner.address,
+                "ownerType": book.consumer_type
+            })
+    else:
+        sold_book_list = []
+
+
+    if sale_book_results:
+        for book in sale_book_results:
+            on_sale_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+                "state": book.state,
+            })
+    else:
+        on_sale_book_list = []
+    
+    return jsonify({
+        "decoded_user_id": decoded_user_id,
+        "user_type": user_type,
+        "user_info": user_info,
+        "sold_book_list": sold_book_list,
+        "on_sale_book_list": on_sale_book_list
+    }), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-product/detail/<int:bookId>", methods=["GET"])
+@token_required
+def show_my_pd_detail(decoded_user_id, user_type, userId, bookId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if user_type == UserType.PERSONAL.value:
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+        bookInfo = db.session.query(Pbooktrade).filter(Pbooktrade.pid == decoded_user_id, Pbooktrade.bid == bookId).first()
+    elif user_type == UserType.COMMERCIAL.value:
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+        bookInfo = db.session.query(Cbooktrade).filter(Cbooktrade.cid == decoded_user_id, Cbooktrade.bid == bookId).first()
+    else:
+        return jsonify({"error": "접근 권한 없음"}), 403
+    
+    if not userInfo:
+            return jsonify({"error": "존재하지 않는 회원"}), 404
+    
+    if not bookInfo:
+        return jsonify({"error": "해당 책이 존재하지 않습니다."}), 404
+    
+    if (bookInfo.state == PurchaseState.PAYMENT_SUCCESS.value) or (bookInfo.state == PurchaseState.USER_CANCELLED.value) or (bookInfo.state == PurchaseState.REFUNDED.value):
+        if bookInfo.consumer_type == UserType.PERSONAL.value:
+            receiptInfo = (
+                db.session.query(Preceipt2p, Personal)
+                .join(Personal, Preceipt2p.pid == Personal.pid)
+                .filter(Preceipt2p.orderid == bookInfo.orderid)
+                .first()
+            )
+        elif bookInfo.consumer_type == UserType.COMMERCIAL.value:
+            receiptInfo = (
+                db.session.query(Creceipt2p, Commercial)
+                .join(Commercial, Creceipt2p.cid == Commercial.cid)
+                .filter(Creceipt2p.orderid == bookInfo.orderid)
+                .first()
+            )
+        else:
+           return jsonify({"error": "접근 권한 없음"}), 403
+        
+        receipt, owner = receiptInfo
+         
+        book_info = {
+            "bid": bookInfo.bid,
+            "title": bookInfo.title,
+            "author": bookInfo.author,
+            "publish": bookInfo.publish,
+            "isbn": bookInfo.isbn,
+            "price": bookInfo.price,
+            "region": bookInfo.region,
+            "bookimg1": bookInfo.img1,
+            "bookimg2": bookInfo.img2,
+            "bookimg3": bookInfo.img3,
+            "createAt": bookInfo.createAt.isoformat(),
+
+            "state": bookInfo.state,
+            "orderid": bookInfo.orderid,
+            "consumerid": bookInfo.consumerid,
+            "consumer_type": bookInfo.consumer_type,
+
+            "rid": receipt.rid,
+            "amount": receipt.amount,
+            "installment_month": receipt.installment_month,
+            "reason": receipt.reason,
+            "payment_method": receipt.payment_method,
+            "paidAt": receipt.paidAt.isoformat(),
+
+            "ownerName": owner.name,
+            "ownertel": owner.tel,
+            "ownerEmail": owner.email,
+            "ownerNickname": owner.nickname,
+            "ownerRegion": owner.region,
+            "ownerAddress": owner.address,
+            "ownerType": bookInfo.consumer_type
+        }
+    elif bookInfo.state == PurchaseState.ONSALE.value:
+        book_info = {
+            "bid": bookInfo.bid,
+            "title": bookInfo.title,
+            "author": bookInfo.author,
+            "publish": bookInfo.publish,
+            "isbn": bookInfo.isbn,
+            "price": bookInfo.price,
+            "region": bookInfo.region,
+            "bookimg1": bookInfo.img1,
+            "bookimg2": bookInfo.img2,
+            "bookimg3": bookInfo.img3,
+            "createAt": bookInfo.createAt.isoformat(),
+            "state": bookInfo.state,
+        }
+    else:
+        book_info = {}
+    
+    user_info = {
+        "name": userInfo.name,
+        "birth": userInfo.birth,
+        "tel": userInfo.tel,
+        "email": userInfo.email,
+        "nickname": userInfo.nickname,
+        "address": userInfo.address
+    }
+    
+    return jsonify({
+        "decoded_user_id": decoded_user_id,
+        "user_type": user_type,
+        "user_info": user_info,
+        "book_info": book_info,
+    }), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-product/add-product", methods=["POST"])
+@token_required
+def add_my_product(decoded_user_id, user_type, userId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if user_type == UserType.PERSONAL.value:
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+    elif user_type == UserType.COMMERCIAL.value:
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+    else:
+        return jsonify({"error": "접근 권한 없음"}), 403
+
+    if not userInfo:
+        return jsonify({"error": "존재하지 않는 회원"}), 404
+
+  
+    title = request.form.get("title")
+    author = request.form.get("author")
+    publish = request.form.get("publish")
+    isbn = request.form.get("isbn")
+    price = request.form.get("price")
+    try:
+        price = int(price)
+    except ValueError:
+        return jsonify({"error": "가격 형식이 올바르지 않습니다."}), 400
+    detail = request.form.get("detail")
+    region = request.form.get("region")
+    img1 = request.files.get("img1")
+    img2 = request.files.get("img2")
+    img3 = request.files.get("img3")
+
+    if not all([img1, img2, img3]):
+        return jsonify({"error": "모든 이미지 파일을 업로드해야 합니다."}), 400
+    
+    if not all([title, author, publish, isbn, price, region]):
+        return jsonify({"error": "필수 필드 누락"}), 400
+    
+    on_sale_book_list = []
+
+    if user_type == UserType.PERSONAL.value:
+        filename1 = secure_filename(f"{uuid4().hex}_{img1.filename}")
+        save_path1 = os.path.join(PBOOK_UPLOAD_FOLDER, filename1)
+
+        filename2 = secure_filename(f"{uuid4().hex}_{img2.filename}")
+        save_path2 = os.path.join(PBOOK_UPLOAD_FOLDER, filename2)
+
+        filename3 = secure_filename(f"{uuid4().hex}_{img3.filename}")
+        save_path3 = os.path.join(PBOOK_UPLOAD_FOLDER, filename3)
+        
+        try:
+            img1.save(save_path1)
+            img2.save(save_path2)
+            img3.save(save_path3)
+        except Exception as e:
+            return jsonify({"error": f"파일 저장 실패: {str(e)}"}), 500
+
+        img_url1 = f"/{PBOOK_UPLOAD_FOLDER}/{filename1}"
+        img_url2 = f"/{PBOOK_UPLOAD_FOLDER}/{filename2}"
+        img_url3 = f"/{PBOOK_UPLOAD_FOLDER}/{filename3}"   
+
+        new_book = Pbooktrade(
+            pid = decoded_user_id,
+            title = title,
+            author = author,
+            publish = publish,
+            isbn = isbn,
+            price = price,
+            detail = detail,
+            region = region,
+            img1 = img_url1,
+            img2 = img_url2,
+            img3 = img_url3
+        )
+    elif user_type == UserType.COMMERCIAL.value:
+        filename1 = secure_filename(f"{uuid4().hex}_{img1.filename}")
+        save_path1 = os.path.join(CBOOK_UPLOAD_FOLDER, filename1)
+
+        filename2 = secure_filename(f"{uuid4().hex}_{img2.filename}")
+        save_path2 = os.path.join(CBOOK_UPLOAD_FOLDER, filename2)
+
+        filename3 = secure_filename(f"{uuid4().hex}_{img3.filename}")
+        save_path3 = os.path.join(CBOOK_UPLOAD_FOLDER, filename3)
+        
+        try:
+            img1.save(save_path1)
+            img2.save(save_path2)
+            img3.save(save_path3)
+        except Exception as e:
+            return jsonify({"error": f"파일 저장 실패: {str(e)}"}), 500
+
+        img_url1 = f"/{CBOOK_UPLOAD_FOLDER}/{filename1}"
+        img_url2 = f"/{CBOOK_UPLOAD_FOLDER}/{filename2}"
+        img_url3 = f"/{CBOOK_UPLOAD_FOLDER}/{filename3}"   
+
+        new_book = Cbooktrade(
+            pid = decoded_user_id,
+            title = title,
+            author = author,
+            publish = publish,
+            isbn = isbn,
+            price = price,
+            detail = detail,
+            region = region,
+            img1 = img_url1,
+            img2 = img_url2,
+            img3 = img_url3
+        )
+
+    db.session.add(new_book)
+    db.session.commit()
+
+    # 책 추가 후 판매 중인 책 리스트 띄우기
+    if user_type == UserType.PERSONAL.value:
+        sale_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                Pbooktrade.pid==decoded_user_id,
+                Pbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .all()
+        )
+    elif user_type == UserType.COMMERCIAL.value:
+        sale_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                Cbooktrade.cid==decoded_user_id,
+                Cbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .all()
+        )
+
+    if sale_book_results:
+        for book in sale_book_results:
+            on_sale_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+                "state": book.state,
+            })
+    else:
+        pass
+    
+    
+    user_info = {
+        "name": userInfo.name,
+        "birth": userInfo.birth,
+        "tel": userInfo.tel,
+        "email": userInfo.email,
+        "nickname": userInfo.nickname,
+        "address": userInfo.address
+    }
+
+    return jsonify({"message": "책 추가 완료", "on_sale_book_list": on_sale_book_list, "user_info": user_info}), 201
+
+@home_bp.route("/home/<int:userId>/my-page/check-my-product/modify-product/<int:bookId>", methods=["POST"])
+@token_required
+def modify_my_stock(decoded_user_id, user_type, userId, bookId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if user_type == UserType.PERSONAL.value:
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+        bookInfo = db.session.query(Pbooktrade).filter_by(bid=bookId, pid=decoded_user_id).first()
+    elif user_type == UserType.COMMERCIAL.value:
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+        bookInfo = db.session.query(Cbooktrade).filter_by(bid=bookId, cid=decoded_user_id).first()
+    else:
+        return jsonify({"error": "접근 권한 없음"}), 403
+
+    if not userInfo:
+            return jsonify({"error": "존재하지 않는 회원"}), 404
+
+    if not bookInfo:
+        return jsonify({"error": "해당 책을 찾을 수 없습니다."}), 404
+    
+    if bookInfo.state != PurchaseState.ONSALE.value:
+        return jsonify({"message": 2, "message2": "판매 중인 재고가 아닙니다."}), 404
+    
+    img_url1 = bookInfo.img1
+    img_url2 = bookInfo.img2
+    img_url3 = bookInfo.img3
+    
+    title = request.form.get("title")
+    author = request.form.get("author")
+    publish = request.form.get("publish")
+    isbn = request.form.get("isbn")
+    price = request.form.get("price")
+    try:
+        price = int(price)
+    except ValueError:
+        return jsonify({"error": "가격 형식이 올바르지 않습니다."}), 400
+    detail = request.form.get("detail")
+    region = request.form.get("region")
+    img1 = request.files.get("img1")
+    img2 = request.files.get("img2")
+    img3 = request.files.get("img3")
+
+    if not all([title, author, publish, isbn, price]):
+        return jsonify({"error": "필수 필드 누락"}), 400
+    
+    on_sale_book_list = []
+    
+    if user_type == UserType.PERSONAL.value:
+        if img1:
+            filename1 = secure_filename(f"{uuid4().hex}_{img1.filename}")
+            save_path1 = os.path.join(PBOOK_UPLOAD_FOLDER, filename1)
+            try:
+                img1.save(save_path1)
+                img_url1 = f"/{PBOOK_UPLOAD_FOLDER}/{filename1}"
+            except Exception as e:
+                return jsonify({"error": f"img1 저장 실패: {str(e)}"}), 500
+
+        if img2:
+            filename2 = secure_filename(f"{uuid4().hex}_{img2.filename}")
+            save_path2 = os.path.join(PBOOK_UPLOAD_FOLDER, filename2)
+            try:
+                img2.save(save_path2)
+                img_url2 = f"/{PBOOK_UPLOAD_FOLDER}/{filename2}"
+            except Exception as e:
+                return jsonify({"error": f"img2 저장 실패: {str(e)}"}), 500
+
+        if img3:
+            filename3 = secure_filename(f"{uuid4().hex}_{img3.filename}")
+            save_path3 = os.path.join(PBOOK_UPLOAD_FOLDER, filename3)
+            try:
+                img3.save(save_path3)
+                img_url3 = f"/{PBOOK_UPLOAD_FOLDER}/{filename3}"
+            except Exception as e:
+                return jsonify({"error": f"img3 저장 실패: {str(e)}"}), 500
+        
+    elif user_type == UserType.COMMERCIAL.value:
+        if img1:
+            filename1 = secure_filename(f"{uuid4().hex}_{img1.filename}")
+            save_path1 = os.path.join(CBOOK_UPLOAD_FOLDER, filename1)
+            try:
+                img1.save(save_path1)
+                img_url1 = f"/{CBOOK_UPLOAD_FOLDER}/{filename1}"
+            except Exception as e:
+                return jsonify({"error": f"img1 저장 실패: {str(e)}"}), 500
+
+        if img2:
+            filename2 = secure_filename(f"{uuid4().hex}_{img2.filename}")
+            save_path2 = os.path.join(CBOOK_UPLOAD_FOLDER, filename2)
+            try:
+                img2.save(save_path2)
+                img_url2 = f"/{CBOOK_UPLOAD_FOLDER}/{filename2}"
+            except Exception as e:
+                return jsonify({"error": f"img2 저장 실패: {str(e)}"}), 500
+
+        if img3:
+            filename3 = secure_filename(f"{uuid4().hex}_{img3.filename}")
+            save_path3 = os.path.join(CBOOK_UPLOAD_FOLDER, filename3)
+            try:
+                img3.save(save_path3)
+                img_url3 = f"/{CBOOK_UPLOAD_FOLDER}/{filename3}"
+            except Exception as e:
+                return jsonify({"error": f"img3 저장 실패: {str(e)}"}), 500
+        
+    bookInfo.title = title
+    bookInfo.author = author
+    bookInfo.publish = publish
+    bookInfo.isbn = isbn
+    bookInfo.price = price
+    bookInfo.detail = detail
+    bookInfo.region = region
+    bookInfo.img1 = img_url1
+    bookInfo.img2 = img_url2
+    bookInfo.img3 = img_url3  
+
+    db.session.commit()
+
+    # 책 추가 후 판매 중인 책 리스트 띄우기
+    if user_type == UserType.PERSONAL.value:
+        sale_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                Pbooktrade.pid==decoded_user_id,
+                Pbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .all()
+        )
+    elif user_type == UserType.COMMERCIAL.value:
+        sale_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                Cbooktrade.cid==decoded_user_id,
+                Cbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .all()
+        )
+
+    if sale_book_results:
+        for book in sale_book_results:
+            on_sale_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+                "state": book.state,
+            })
+    else:
+        pass
+    
+    user_info = {
+        "name": userInfo.name,
+        "birth": userInfo.birth,
+        "tel": userInfo.tel,
+        "email": userInfo.email,
+        "nickname": userInfo.nickname,
+        "address": userInfo.address
+    }
+
+    return jsonify({"message": "책 수정 완료", "on_sale_book_list": on_sale_book_list, "user_info": user_info}), 200
+
+@home_bp.route("/<int:userId>/my-page/check-my-product/delete-product/<int:bookId>", methods=["DELETE"])
+@token_required
+def delete_my_stock(decoded_user_id, user_type, userId, bookId):
+    if str(decoded_user_id) != str(userId):
+        return jsonify({"error": "권한이 없습니다."}), 403
+    
+    if user_type == UserType.PERSONAL.value:
+        userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
+        bookInfo = db.session.query(Pbooktrade).filter_by(bid=bookId, pid=decoded_user_id).first()
+    elif user_type == UserType.COMMERCIAL.value:
+        userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
+        bookInfo = db.session.query(Cbooktrade).filter_by(bid=bookId, cid=decoded_user_id).first()
+    else:
+        return jsonify({"error": "접근 권한 없음"}), 403
+
+    if not userInfo:
+        return jsonify({"error": "존재하지 않는 회원"}), 404
+
+    if not bookInfo:
+        return jsonify({"error": "존재하지 않는 재고"}), 404
+    
+    if bookInfo.state != PurchaseState.ONSALE.value:
+        return jsonify({"message": 2, "message2": "판매 중인 재고가 아닙니다."}), 404
+    
+    on_sale_book_list = []
+    
+    if user_type == UserType.PERSONAL.value:
+        db.session.query(Pbooktrade).filter_by(pid=decoded_user_id, bid=bookId).delete()
+    elif user_type == UserType.COMMERCIAL.value:
+        db.session.query(Cbooktrade).filter_by(cid=decoded_user_id, bid=bookId).delete()
+    
+    db.session.commit()
+    
+     # 책 추가 후 판매 중인 책 리스트 띄우기
+    if user_type == UserType.PERSONAL.value:
+        sale_book_results = (
+            db.session.query(Pbooktrade)
+            .filter(
+                Pbooktrade.pid==decoded_user_id,
+                Pbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Pbooktrade.bid.desc())
+            .all()
+        )
+    elif user_type == UserType.COMMERCIAL.value:
+        sale_book_results = (
+            db.session.query(Cbooktrade)
+            .filter(
+                Cbooktrade.cid==decoded_user_id,
+                Cbooktrade.state == PurchaseState.ONSALE.value
+            )
+            .order_by(Cbooktrade.bid.desc())
+            .all()
+        )
+
+    if sale_book_results:
+        for book in sale_book_results:
+            on_sale_book_list.append({
+                "bid": book.bid,
+                "title": book.title,
+                "author": book.author,
+                "publish": book.publish,
+                "isbn": book.isbn,
+                "price": book.price,
+                "region": book.region,
+                "bookimg": book.img1,
+                "createAt": book.createAt.isoformat(),
+                "state": book.state,
+            })
+    else:
+        pass
+    
+    user_info = {
+        "name": userInfo.name,
+        "birth": userInfo.birth,
+        "tel": userInfo.tel,
+        "email": userInfo.email,
+        "nickname": userInfo.nickname,
+        "address": userInfo.address
+    }
+
+    return jsonify({"message": "책 삭제 완료", "on_sale_book_list": on_sale_book_list, "user_info": user_info}), 200

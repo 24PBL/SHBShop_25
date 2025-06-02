@@ -3,7 +3,7 @@ from utils.jwt_helper import token_required
 
 start_bp = Blueprint("start", __name__)
 
-@start_bp.route("/", methods=["GET"])
+@start_bp.route("/", methods=["GET"], strict_slashes=False)
 @token_required
 def check_user(decoded_user_id, user_type):
     return jsonify({

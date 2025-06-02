@@ -1,13 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>결제 완료</title>
-</head>
+<html>
+<head><title>결제 성공</title></head>
 <body>
-  <h1>결제가 성공적으로 완료되었습니다!</h1>
-  <p>결제 수단: {{ data.method }}</p>
-  <p>결제 시간: {{ data.approvedAt }}</p>
+  <h1>결제 성공</h1>
+  <p>결제 금액: {{ data.totalAmount }}원</p>
   <p>주문 ID: {{ data.orderId }}</p>
 </body>
 </html>

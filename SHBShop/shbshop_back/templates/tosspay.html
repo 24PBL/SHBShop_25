@@ -1,0 +1,26 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script src="https://js.tosspayments.com/v1/payment"></script>
+    </head>
+    <body>
+        <button id="payButton">결제하기</button>
+        <script>
+            document.getElementById('payButton').addEventListener('click', function () {
+            const tossPayments = TossPayments("${clientKey}");
+
+            tossPayments.requestPayment("카드", {
+                amount: `${paymentData.amount}`,
+                orderId: `${paymentData.orderId}`,
+                orderName: `${paymentData.orderName}`,
+                customerName: `${paymentData.customerName}`,
+                successUrl: `${paymentData.successUrl}`,
+                failUrl: `${paymentData.failUrl}`,
+                availablePaymentMethods: ["카드", "계좌이체"]
+            }).catch(function (error) {
+                alert("결제 실패: " + error.message);
+            });
+        });
+        </script>
+    </body>
+</html>
