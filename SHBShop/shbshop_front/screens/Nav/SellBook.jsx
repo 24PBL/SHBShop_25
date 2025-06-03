@@ -1,8 +1,13 @@
 import { React, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+
+
+const API_URL = Constants.expoConfig.extra.API_URL;
 
 const SellBook = ({ route, navigation }) => {
   const { title, author, publisher, ISBN } = route.params;
@@ -47,6 +52,7 @@ const SellBook = ({ route, navigation }) => {
   formData.append('isbn', ISBN);
   formData.append('price', price);
   formData.append('detail', description);
+  formData.append('region', userData.region);
 
   // 이미지 1~3개를 각각 img1, img2, img3 필드로 추가
   selectedImages.forEach((uri, index) => {
@@ -64,7 +70,7 @@ const SellBook = ({ route, navigation }) => {
   });
 
   try {
-    const response = await fetch(`${API_URL}/home/${userId}/${shopId}/check-stock/add-sbook`, {
+    const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-product/add-product`, {
       method: 'POST',
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -84,7 +90,7 @@ const SellBook = ({ route, navigation }) => {
   index: 0,
   routes: [
     {
-      name: 'MyPageScreen',
+      name: 'HomeScreen',
     },
   ],
 });
@@ -160,8 +166,8 @@ const SellBook = ({ route, navigation }) => {
   </View>
 )}
           <View style={{height:20}}></View>
-          <TouchableOpacity style={{width:'90%', backgroundColor:'#0091da', height:50, alignItems:'center', justifyContent:'center', borderRadius:10 , left:20}}>
-            <Text style={{color:'white', fontWeight:'bold'}}>완료</Text>
+          <TouchableOpacity style={{width:'90%', backgroundColor:'#0091da', height:50, alignItems:'center', justifyContent:'center', borderRadius:10 , left:20}} onPress={handleSubmit}>
+            <Text style={{color:'white', fontWeight:'bold'}}>책 등록</Text>
             </TouchableOpacity>
           <View style={{height:20}}></View>
         </ScrollView>

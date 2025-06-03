@@ -2886,7 +2886,7 @@ def add_my_product(decoded_user_id, user_type, userId):
         img_url3 = f"/{CBOOK_UPLOAD_FOLDER}/{filename3}"   
 
         new_book = Cbooktrade(
-            pid = decoded_user_id,
+            cid = decoded_user_id,
             title = title,
             author = author,
             publish = publish,

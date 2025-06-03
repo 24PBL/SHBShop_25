@@ -14,27 +14,39 @@ const HomeScreen = ({ navigation }) => {
 
   // 화면이 focus 될 때마다 실행되는 loadData 함수
   useFocusEffect(
-    useCallback(() => {
-      const loadData = async () => {
-        try {
-          const jsonValue = await AsyncStorage.getItem('UserData');
-          if (jsonValue != null) {
-            const parsed = JSON.parse(jsonValue);
-            setUserData(parsed);
-            if (parsed.bookList) {
-              const sortedBooks = parsed.bookList.sort(
-                (a, b) => new Date(b.createAt) - new Date(a.createAt)
-              );
-              setBookList(sortedBooks);
-            }
-          }
-        } catch (e) {
-          console.error('JSON 파싱 에러', e);
+  useCallback(() => {
+    const loadData = async () => {
+      try {
+        const Token = await AsyncStorage.getItem('jwtToken');
+        const Data = await AsyncStorage.getItem('UserData');
+        const { decoded_user_id } = JSON.parse(Data);
+
+        const res = await fetch(`${API_URL}/home/${decoded_user_id}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${Token}`,
+          },
+        });
+
+        const json = await res.json();
+
+        setUserData(json);
+
+        if (json.bookList) {
+          const sortedBooks = json.bookList.sort(
+            (a, b) => new Date(b.createAt) - new Date(a.createAt)
+          );
+          setBookList(sortedBooks);
         }
-      };
-      loadData();
-    }, [])
-  );
+      } catch (err) {
+        console.error('책 리스트 로딩 실패:', err);
+      }
+    };
+
+    loadData();
+  }, [])
+);
+
 
   const goToBookSearch = () => {
     navigation.navigate('BookSearch');
