@@ -195,6 +195,24 @@ const MyPageScreen = ({ navigation }) => {
     }
   };
 
+  const goToSellList = async () => {
+    try {
+      if (!userData) return;
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-product`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+      const result = await response.json();
+      navigation.navigate('SellList', { sellData: result });
+    } catch (error) {
+      console.error('오류 발생:', error);
+    }
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
@@ -225,7 +243,7 @@ const MyPageScreen = ({ navigation }) => {
           <View style={{ width: 415, height: 5, backgroundColor: '#ddd', position: 'absolute', top: 160 }} />
 
           <View style={styles.menuList}>
-            <TouchableOpacity style={styles.menuItem} onPress={()=>{console.log(shopId)}}>
+            <TouchableOpacity style={styles.menuItem} onPress={goToSellList}>
               <Text style={styles.menuText}>내 판매목록</Text>
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>
