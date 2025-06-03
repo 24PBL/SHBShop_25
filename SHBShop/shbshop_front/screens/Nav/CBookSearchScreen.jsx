@@ -9,7 +9,7 @@ const CBookSearchScreen = ({navigation, route}) => {
   const {shopId} = route.params;
 
   const goToSellBook1 = () => {
-    navigation.navigate('SellBook1')
+    navigation.navigate('StoreBookRegister1',{shopId : shopId});
   }
 
   const searchBooks = async () => {

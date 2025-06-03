@@ -51,7 +51,7 @@ const BookDetailScreen = ({ route, navigation }) => {
   index: 0,
   routes: [
     {
-      name: 'MyPage'
+      name: 'MyPageScreen'
     }
   ],
 });
