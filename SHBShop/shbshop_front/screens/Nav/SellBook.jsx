@@ -32,6 +32,72 @@ const SellBook = ({ route, navigation }) => {
       navigation.navigate('HomeScreen');
     }
   
+  const handleSubmit = async () => {
+  
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+
+  const formData = new FormData();
+
+  formData.append('title', title);
+  formData.append('author', author);
+  formData.append('publish', publisher);
+  formData.append('isbn', ISBN);
+  formData.append('price', price);
+  formData.append('detail', description);
+
+  // 이미지 1~3개를 각각 img1, img2, img3 필드로 추가
+  selectedImages.forEach((uri, index) => {
+    if (index < 3) {
+      const filename = uri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename ?? '');
+      const type = match ? `image/${match[1]}` : `image`;
+
+      formData.append(`img${index + 1}`, {
+        uri,
+        name: filename,
+        type,
+      });
+    }
+  });
+
+  try {
+    const response = await fetch(`${API_URL}/home/${userId}/${shopId}/check-stock/add-sbook`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${Token}`
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      Alert.alert(
+        '등록 성공',
+        '성공적으로 등록되었습니다.'
+      );
+      navigation.reset({
+  index: 0,
+  routes: [
+    {
+      name: 'MyPageScreen',
+    },
+  ],
+});
+
+    } else {
+      console.error(data);
+      alert('등록 실패: ' + (data?.message || '알 수 없는 오류'));
+    }
+  } catch (error) {
+    console.error(error);
+    alert('서버 오류 발생');
+  }
+};
 
   return (
     <SafeAreaProvider>
