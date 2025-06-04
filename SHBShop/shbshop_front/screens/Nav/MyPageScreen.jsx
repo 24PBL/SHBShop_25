@@ -189,7 +189,8 @@ const MyPageScreen = ({ navigation }) => {
         },
       });
       const result = await response.json();
-      navigation.navigate('NewBuyList', { receiptData: result });
+      console.log(result.books_shop);
+      navigation.navigate('BuyList', { receiptData: result });
     } catch (error) {
       console.error('오류 발생:', error);
     }
@@ -208,6 +209,7 @@ const MyPageScreen = ({ navigation }) => {
         },
       });
       const result = await response.json();
+      console.log(result);
       navigation.navigate('SellList', { sellData: result });
     } catch (error) {
       console.error('오류 발생:', error);
