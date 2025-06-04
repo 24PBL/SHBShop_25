@@ -1862,7 +1862,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
 
 @home_bp.route("/<int:userId>/my-page/show-receipt/detail/<orderid>", methods=["GET"])
 @token_required
-def show_user_receipt_detail(decoded_user_id, user_type, userId, orderId):
+def show_user_receipt_detail(decoded_user_id, user_type, userId, orderid): #orderId -> orderid로 수정
     if str(decoded_user_id) != str(userId):
         return jsonify({"error": "권한이 없습니다."}), 403
     
@@ -1871,15 +1871,15 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, orderId):
     
     if user_type == UserType.PERSONAL.value:
         userInfo = db.session.query(Personal).filter_by(pid=decoded_user_id).first()
-        rpInfo = db.session.query(Preceipt2p).filter_by(pid=decoded_user_id, orderid = orderId).first()
-        rsInfo = db.session.query(Preceipt2s).filter_by(pid=decoded_user_id, orderid = orderId).first()
+        rpInfo = db.session.query(Preceipt2p).filter_by(pid=decoded_user_id, orderid = orderid).first()
+        rsInfo = db.session.query(Preceipt2s).filter_by(pid=decoded_user_id, orderid = orderid).first()
         
         if rpInfo:
             prp_pbs = (
                 db.session.query(Pbooktrade, Personal)
                 .join(Personal, Pbooktrade.pid == Personal.pid)
                 .filter(
-                    Pbooktrade.orderid == orderId,
+                    Pbooktrade.orderid == orderid,
                     Pbooktrade.consumerid == decoded_user_id,
                     Pbooktrade.consumer_type == UserType.PERSONAL.value
                 )
@@ -1889,7 +1889,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, orderId):
                 db.session.query(Cbooktrade, Commercial)
                 .join(Commercial, Cbooktrade.cid == Commercial.cid)
                 .filter(
-                    Cbooktrade.orderid == orderId,
+                    Cbooktrade.orderid == orderid,
                     Cbooktrade.consumerid == decoded_user_id,
                     Cbooktrade.consumer_type == UserType.PERSONAL.value
                 )
@@ -1943,7 +1943,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, orderId):
                 db.session.query(Sbooktrade, Shop)
                 .join(Shop, Sbooktrade.sid == Shop.sid)
                 .filter(
-                    Sbooktrade.orderid == orderId,
+                    Sbooktrade.orderid == orderid,
                     Sbooktrade.consumerid == decoded_user_id,
                     Sbooktrade.consumer_type == UserType.PERSONAL.value
                 )
@@ -1979,15 +1979,15 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, orderId):
             return jsonify({"error": "존재하지 않는 구매내역"}), 404
     elif user_type == UserType.COMMERCIAL.value:
         userInfo = db.session.query(Commercial).filter_by(cid=decoded_user_id).first()
-        rpInfo = db.session.query(Creceipt2p).filter_by(cid=decoded_user_id, orderid = orderId).first()
-        rsInfo = db.session.query(Creceipt2s).filter_by(cid=decoded_user_id, orderid = orderId).first()
+        rpInfo = db.session.query(Creceipt2p).filter_by(cid=decoded_user_id, orderid = orderid).first()
+        rsInfo = db.session.query(Creceipt2s).filter_by(cid=decoded_user_id, orderid = orderid).first()
 
         if rpInfo:
             crp_pbs = (
                 db.session.query(Pbooktrade, Personal)
                 .join(Personal, Pbooktrade.pid == Personal.pid)
                 .filter(
-                    Pbooktrade.orderid == orderId,
+                    Pbooktrade.orderid == orderid,
                     Pbooktrade.consumerid == decoded_user_id,
                     Pbooktrade.consumer_type == UserType.PERSONAL.value
                 )
@@ -1997,7 +1997,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, orderId):
                 db.session.query(Cbooktrade, Commercial)
                 .join(Commercial, Cbooktrade.cid == Commercial.cid)
                 .filter(
-                    Cbooktrade.orderid == orderId,
+                    Cbooktrade.orderid == orderid,
                     Cbooktrade.consumerid == decoded_user_id,
                     Cbooktrade.consumer_type == UserType.PERSONAL.value
                 )

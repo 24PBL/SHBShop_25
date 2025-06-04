@@ -74,42 +74,25 @@ const BuyList = ({ navigation, route }) => {
 
   // 상세 페이지 이동 함수
   const handleClickItem = (item) => {
-    if (item.origin === '매장거래') {
-      CommergoToBookDetail(3, item.rid);
-    } else {
-      goToBookDetail(item.sellerType, item.rid);
-    }
+    goToBookDetail(item.groupOrderId);
   };
 
-  const goToBookDetail = async (sellType, rid) => {
+  const goToBookDetail = async (orderid) => {
     try {
       const userData = JSON.parse(await AsyncStorage.getItem('UserData'));
       const token = await AsyncStorage.getItem('jwtToken');
-      const response = await fetch(`${API_URL}/home/${userData.decoded_user_id}/my-page/show-receipt/detail/${sellType}/${rid}`, {
+      const response = await fetch(`${API_URL}/home/${userData.decoded_user_id}/my-page/show-receipt/detail/${orderid}`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await response.json();
+      console.log(data);
       navigation.navigate('PBuyListDetail', { storedata: data, receiptData });
     } catch (error) {
       Alert.alert('오류', '책 상세 정보를 불러오는 데 실패했습니다.');
     }
   };
 
-  const CommergoToBookDetail = async (sellerType, rid) => {
-    try {
-      const userData = JSON.parse(await AsyncStorage.getItem('UserData'));
-      const token = await AsyncStorage.getItem('jwtToken');
-      const response = await fetch(`${API_URL}/home/${userData.decoded_user_id}/my-page/show-receipt/detail/${sellerType}/${rid}`, {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      const data = await response.json();
-      navigation.navigate('SBuyListDetail', { storedata: data });
-    } catch (error) {
-      Alert.alert('오류', '매장 책 정보를 불러오는 데 실패했습니다.');
-    }
-  };
 
   // 렌더링
   const renderBookItem = ({ item }) => (
@@ -144,7 +127,14 @@ const BuyList = ({ navigation, route }) => {
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: 'MyPageScreen'
+                  },
+                ],
+              })}>
             <Ionicons name="chevron-back-outline" size={23} />
           </TouchableOpacity>
           <Text style={styles.label}>구매내역</Text>

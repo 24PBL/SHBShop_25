@@ -1,144 +1,153 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView,TouchableOpacity } from 'react-native';
+import { View, Text, Image, ScrollView, Dimensions, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 import Constants from 'expo-constants';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import { Ionicons } from '@expo/vector-icons';
 
-const PBuyListDetail = ({ route,navigation }) => {
-  const { storedata } = route.params;
-  const {receiptData} = route.params;
-  const API_URL = Constants.expoConfig.extra.API_URL;
+const API_URL = Constants.expoConfig.extra.API_URL;
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+const { width } = Dimensions.get('window');
 
-  const { receipt_info } = storedata;
+const stateMap = {
+  1: '판매중',
+  2: '결제 성공',
+  3: '판매 거절',
+  4: '판매 승인',
+  5: '구매 확정',
+  6: '사용자 취소',
+  7: '환불 완료',
+  8: '결제 실패',
+  9: '결제 미완료',
+};
 
-  const BuyComplete = async () => {
-    try {
-      const Data = await AsyncStorage.getItem('UserData');
-      const userData = JSON.parse(Data);
-      const userId = userData.decoded_user_id;
-      const Token = await AsyncStorage.getItem('jwtToken');
-      const response = await axios.put(
-        `${API_URL}/home/${userId}/my-page/show-receipt/detail/${receipt_info.sellerType}/${receipt_info.rid}/complete`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${Token}`,
-          },
-        }
-      );
-      console.log("구매 확정 성공");
-    }
-    catch (error) {
-      console.error('구매 확정 실패:', error);
-      Alert.alert("구매 확정 실패", "다시 시도해주세요.");
-    }
-  }
+const PBuyListDetail = ({route, navigation}) => {
+  const { storedata, receiptData } = route.params;
+  const { book_list, receipt_info, user_info } = storedata;
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ backgroundColor: 'white', flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={{flexDirection:'row', alignItems:'center'}}>
-          <TouchableOpacity onPress={()=> {navigation.goBack()}}>
-             <Ionicons name="chevron-back-outline" size={28} style={{paddingBottom:20}}></Ionicons>
+      <SafeAreaView style={styles.container}>
+        <View>
+          <TouchableOpacity>
+            <Ionicons
+              name="chevron-back-outline"
+              size={28}
+              onPress={()=>navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: 'BuyList',
+                    params: { receiptData: receiptData },
+                  },
+                ],
+              })}
+              style={{ padding: 10 }}
+            />
           </TouchableOpacity>
-            <Text style={styles.header}>구매 도서 정보</Text>
-                      {receipt_info.state === 2 && (
-            <TouchableOpacity onPress={BuyComplete}>
-              <View style={{
-                backgroundColor: '#0091da',
-                width: 70,
-                height: 30,
-                justifyContent: 'center',
-                borderRadius: 10,
-                marginBottom: 20,
-                marginLeft: 60
-              }}>
-                <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>구매 확정</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-
-            
-          </View>
-          
-
-          <Image
-            source={{ uri: `${API_URL}${receipt_info.bookimg}` }}
+        </View>
+        <ScrollView style={styles.container}>
+          {/* 이미지 슬라이드 */}
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            style={styles.imageSlider}
+          >
+            {book_list.map((book, index) => (
+              <Image
+            key={index}
+            source={{ uri: `${API_URL}/${book.bookimg}` }}
             style={styles.image}
           />
+        ))}
+      </ScrollView>
 
-          <View style={styles.section}>
-            <Text style={styles.label}>제목</Text>
-            <Text style={styles.value}>{receipt_info.title}</Text>
-
-            <Text style={styles.label}>저자</Text>
-            <Text style={styles.value}>{receipt_info.author}</Text>
-
-            <Text style={styles.label}>출판사</Text>
-            <Text style={styles.value}>{receipt_info.publish}</Text>
-
-            <Text style={styles.label}>가격</Text>
-            <Text style={styles.value}>{receipt_info.price.toLocaleString()}원</Text>
-
-            <Text style={styles.label}>지역</Text>
-            <Text style={styles.value}>{receipt_info.region}</Text>
+      {/* 책 리스트 */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>구매한 책</Text>
+        {book_list.map((book, idx) => (
+          <View key={idx} style={styles.bookItem}>
+            <Text style={styles.bookTitle}>{book.title}</Text>
+            <Text style={styles.bookDetail}>
+              {book.author} / {book.publish}
+            </Text>
+            <Text style={styles.bookPrice}>{book.price.toLocaleString()}원</Text>
           </View>
+        ))}
+      </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>판매자</Text>
-            <Text style={styles.value}>{receipt_info.sellerName}</Text>
-          </View>
+      {/* 영수증 정보 */}
+<View style={styles.receiptBox}>
+  <View style={styles.receiptRow}>
+    <Text style={styles.label}>결제 금액</Text>
+    <Text style={styles.value}>{receipt_info.amount.toLocaleString()}원</Text>
+  </View>
+  <View style={styles.receiptRow}>
+    <Text style={styles.label}>결제 방법</Text>
+    <Text style={styles.value}>{receipt_info.payment_method}</Text>
+  </View>
+  <View style={styles.receiptRow}>
+    <Text style={styles.label}>결제 상태</Text>
+    <Text style={styles.value}>{stateMap[receipt_info.state]}</Text>
+  </View>
+  <View style={styles.receiptRow}>
+    <Text style={styles.label}>결제 일시</Text>
+    <Text style={styles.value}>
+      {new Date(receipt_info.paidAt).toLocaleString()}
+    </Text>
+  </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>결제 정보</Text>
-            <Text style={styles.label}>결제일자</Text>
-            <Text style={styles.value}>{receipt_info.createAt.split('T')[0]}</Text>
+  {/*여기에 판매자/판매처 구분해서 표시 */}
+  <View style={styles.receiptRow}>
+    <Text style={styles.label}>
+      {book_list[0].sellerType === 1 ? '판매자' : '판매처'}
+    </Text>
+    <Text style={styles.value}>
+      {book_list[0].sellerType === 1
+        ? book_list[0].sellerName
+        : book_list[0].shopName}
+    </Text>
+  </View>
+</View>
 
-            <Text style={styles.label}>결제 상태</Text>
-            <Text style={styles.value}>{receipt_info.reason}</Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+    </ScrollView>
+    </SafeAreaView>
     </SafeAreaProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: '#fff',
+  container: { flex: 1, backgroundColor: '#fff' },
+  imageSlider: { height: 280 },
+  image: { width: width, height: 280, resizeMode: 'cover' },
+  section: { padding: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+  bookItem: { marginBottom: 12 },
+  bookTitle: { fontSize: 16, fontWeight: '600' },
+  bookDetail: { color: 'gray', marginBottom: 4 },
+  bookPrice: { fontWeight: 'bold' },
+
+  receiptBox: {
+    margin: 16,
+    padding: 16,
+    borderRadius: 10,
+    backgroundColor: '#fdfaf6',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
-  header: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    marginLeft:90
-  },
-  image: {
-    width: 140,
-    height: 190,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  receiptRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 10,
   },
-  label: {
-    fontSize: 14,
-    marginTop: 8,
-    fontWeight:'bold'
-  },
-  value: {
-    fontSize: 16,
-    color: '#000',
-  },
+  label: { fontWeight: '500', color: '#333' },
+  value: { color: '#444' },
 });
 
 export default PBuyListDetail;

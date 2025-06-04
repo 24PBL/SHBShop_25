@@ -189,7 +189,7 @@ const MyPageScreen = ({ navigation }) => {
         },
       });
       const result = await response.json();
-      console.log(result.books_shop);
+      console.log(result);
       navigation.navigate('BuyList', { receiptData: result });
     } catch (error) {
       console.error('오류 발생:', error);
