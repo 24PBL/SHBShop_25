@@ -97,7 +97,7 @@ const SellList = ({ route, navigation }) => {
                       style={{marginLeft:10}}
                     />
                   </TouchableOpacity>
-                  <Text style={{ fontWeight: 'bold', fontSize: 28, marginLeft:10 }}>내 판매목록</Text>
+                  <Text style={{ fontWeight: 'bold', fontSize: 28, marginLeft:10 }}>내 판매 도서</Text>
                 </View>
         <Container>
       {/* 판매 중인 도서 섹션 */}

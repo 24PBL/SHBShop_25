@@ -246,7 +246,7 @@ const MyPageScreen = ({ navigation }) => {
 
           <View style={styles.menuList}>
             <TouchableOpacity style={styles.menuItem} onPress={goToSellList}>
-              <Text style={styles.menuText}>내 판매목록</Text>
+              <Text style={styles.menuText}>내 판매 도서 조회</Text>
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>
 
