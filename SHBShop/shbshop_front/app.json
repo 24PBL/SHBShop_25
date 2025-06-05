@@ -29,7 +29,7 @@
     },
     "extra": {
       "API_URL": "http://192.168.0.7:5000",
-      "BUY_URL": "https://a029-182-31-40-60.ngrok-free.app",
+      "BUY_URL": "https://e4c7-182-31-40-60.ngrok-free.app",
       "eas": {
         "projectId": "c493c92d-8e82-4442-bab1-ea6a1489f7b1"
       }

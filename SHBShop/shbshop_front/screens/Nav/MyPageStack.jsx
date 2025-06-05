@@ -23,6 +23,8 @@ import ReserveDetail from './ReserverDetail';
 import PBuyListDetailcreen from './PBuyListDetail';
 import StoreBookRegister1 from './StoreBookRegister1';
 import SellList from './SellList';
+import SellingList from './SellingList'
+import SelledList from './SelledList'
 const Stack = createNativeStackNavigator();
 
 const MyPageStack = () => {
@@ -51,7 +53,8 @@ const MyPageStack = () => {
       <Stack.Screen name="PBuyListDetail" component={PBuyListDetailcreen} options={{ headerShown: false }} />
       <Stack.Screen name="StoreBookRegister1" component={StoreBookRegister1} options={{ headerShown: false }} />
       <Stack.Screen name="SellList" component={SellList} options={{ headerShown: false }} />
-
+      <Stack.Screen name="SellingList" component={SellingList} options={{ headerShown: false }} />
+      <Stack.Screen name="SelledList" component={SelledList} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );
