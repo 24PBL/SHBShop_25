@@ -15,7 +15,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const SellListSearch = () => {
+const SellListSearch = ({navigation}) => {
   const [keyword, setKeyword] = useState('');
   const [onSaleBooks, setOnSaleBooks] = useState([]);
   const [soldBooks, setSoldBooks] = useState([]);
@@ -57,19 +57,52 @@ const SellListSearch = () => {
   };
 
   const renderBook = (item) => (
-    <View key={item.bid.toString()} style={styles.bookItem}>
-      <Image
-        source={{ uri: `${API_URL}${item.bookimg}` }}
-        style={styles.bookImage}
-      />
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text>{item.author} | {item.publish}</Text>
-        <Text style={{ fontWeight: 'bold' }}>{item.price.toLocaleString()}원</Text>
-      </View>
+  <TouchableOpacity
+    key={item.bid.toString()}
+    style={styles.bookItem}
+    onPress={()=>{goToSellDetail(item.bid)}}
+  >
+    <Image
+      source={{ uri: `${API_URL}${item.bookimg}` }}
+      style={styles.bookImage}
+    />
+    <View style={{ flex: 1 }}>
+      <Text style={styles.title}>{item.title}</Text>
+      <Text>{item.author} | {item.publish}</Text>
+      <Text style={{ fontWeight: 'bold' }}>{item.price.toLocaleString()}원</Text>
     </View>
-  );
+  </TouchableOpacity>
+);
 
+const goToSellDetail = async (bid) => {
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+
+      if (!Token) {
+        console.log('토큰이 없습니다.');
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/home/${userId}/my-page/check-my-product/detail/${bid}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${Token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      console.log(data);
+      navigation.navigate("SellDetail",data)
+
+    } catch (error) {
+      console.error('Fetch 오류:', error);
+    }
+  };
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ backgroundColor: 'white', flex: 1 }}>

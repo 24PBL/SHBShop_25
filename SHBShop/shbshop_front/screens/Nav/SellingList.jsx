@@ -4,6 +4,7 @@ import styled from 'styled-components/native';
 import Constants from 'expo-constants';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
@@ -27,9 +28,39 @@ const SellingList = ({ route, navigation }) => {
               })
     }
 
+    const goToSellDetail = async (bid) => {
+        try {
+          const Data = await AsyncStorage.getItem('UserData');
+          const userData = JSON.parse(Data);
+          const userId = userData.decoded_user_id;
+          const Token = await AsyncStorage.getItem('jwtToken');
+    
+          if (!Token) {
+            console.log('토큰이 없습니다.');
+            return;
+          }
+    
+          const response = await fetch(
+            `${API_URL}/home/${userId}/my-page/check-my-product/detail/${bid}`,
+            {
+              method: 'GET',
+              headers: {
+                Authorization: `Bearer ${Token}`,
+              },
+            }
+          );
+          const data = await response.json();
+          console.log(data);
+          navigation.navigate("SellDetail",data)
+    
+        } catch (error) {
+          console.error('Fetch 오류:', error);
+        }
+      };
+
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('BookDetailScreen', { bid: item.bid })}
+      onPress={() => {goToSellDetail(item.bid)}}
     >
       <BookCard>
         <BookImage source={{ uri: `${API_URL}/${item.bookimg}` }} />

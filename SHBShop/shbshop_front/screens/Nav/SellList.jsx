@@ -17,7 +17,7 @@ const SellList = ({ route, navigation }) => {
 
   // 각 책 항목 렌더링
   const renderBookItem = ({ item }) => (
-    <BookCard>
+    <BookCard onPress={()=>{goToSellDetail(item.bid)}}>
       <BookImage source={{ uri: `${API_URL}/${item.bookimg}` }} />
       <BookInfo>
         <Title numberOfLines={1}>{item.title}</Title>
@@ -83,9 +83,62 @@ const SellList = ({ route, navigation }) => {
   const goToSearch = () => {
     navigation.navigate("SellListSearch")
   }
+
+  const goToSellDetail = async (bid) => {
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+
+      if (!Token) {
+        console.log('토큰이 없습니다.');
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/home/${userId}/my-page/check-my-product/detail/${bid}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${Token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      console.log(data);
+      navigation.navigate("SellDetail",data)
+
+    } catch (error) {
+      console.error('Fetch 오류:', error);
+    }
+  };
+
+  const goToBookSearch = () => {
+    navigation.navigate('MyBookSearch', {sellData});
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{flex:1, backgroundColor:'white'}}>
+        <TouchableOpacity
+                  onPress={goToBookSearch}
+                  style={{
+                    width: 60,
+                    height: 50,
+                    backgroundColor: '#0091da',
+                    borderRadius: 15,
+                    justifyContent: 'center',
+                    position: 'absolute',
+                    zIndex: 999,
+                    bottom: 50,
+                    right: 30,
+                  }}
+                >
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 17, textAlign: 'center' }}>
+                    물품 등록
+                  </Text>
+                </TouchableOpacity>
         <View
                   style={{
                     flexDirection: 'row',
@@ -177,7 +230,7 @@ const MoreText = styled.Text`
   color: #007bff;
 `;
 
-const BookCard = styled.View`
+const BookCard = styled.TouchableOpacity`
   width: 140px;
   margin-right: 12px;
 `;

@@ -2953,7 +2953,7 @@ def add_my_product(decoded_user_id, user_type, userId):
 
     return jsonify({"message": "책 추가 완료", "on_sale_book_list": on_sale_book_list, "user_info": user_info}), 201
 
-@home_bp.route("/home/<int:userId>/my-page/check-my-product/modify-product/<int:bookId>", methods=["POST"])
+@home_bp.route("/<int:userId>/my-page/check-my-product/modify-product/<int:bookId>", methods=["POST"]) #여기 home 적혀있어서 지웠어용
 @token_required
 def modify_my_stock(decoded_user_id, user_type, userId, bookId):
     if str(decoded_user_id) != str(userId):
