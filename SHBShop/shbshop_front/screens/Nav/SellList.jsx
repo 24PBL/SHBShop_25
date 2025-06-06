@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
+
 const API_URL = Constants.expoConfig.extra.API_URL;
 const SellList = ({ route, navigation }) => {
   const { sellData } = route.params;
@@ -78,6 +79,10 @@ const SellList = ({ route, navigation }) => {
       ],
     });
   };
+
+  const goToSearch = () => {
+    navigation.navigate("SellListSearch")
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{flex:1, backgroundColor:'white'}}>
@@ -85,8 +90,7 @@ const SellList = ({ route, navigation }) => {
                   style={{
                     flexDirection: 'row',
                     alignItems:'center',
-                    justifyContent:'center',
-                    marginRight:230
+                    justifyContent:"space-between",
                   }}
                 >
                   <TouchableOpacity onPress={goToHome}>
@@ -94,10 +98,13 @@ const SellList = ({ route, navigation }) => {
                       name="chevron-back-outline"
                       size={30}
                       color="black"
-                      style={{marginLeft:10}}
+                      style={{marginLeft:0}}
                     />
                   </TouchableOpacity>
                   <Text style={{ fontWeight: 'bold', fontSize: 28, marginLeft:10 }}>내 판매 도서</Text>
+                  <TouchableOpacity onPress={goToSearch}>
+                    <Ionicons name="search-outline" size={28} style={{paddingRight:20}}/>
+                  </TouchableOpacity>
                 </View>
         <Container>
       {/* 판매 중인 도서 섹션 */}

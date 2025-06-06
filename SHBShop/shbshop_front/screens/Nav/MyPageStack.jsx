@@ -25,6 +25,7 @@ import StoreBookRegister1 from './StoreBookRegister1';
 import SellList from './SellList';
 import SellingList from './SellingList'
 import SelledList from './SelledList'
+import SellListSearch from './SellListSearch';
 const Stack = createNativeStackNavigator();
 
 const MyPageStack = () => {
@@ -55,6 +56,7 @@ const MyPageStack = () => {
       <Stack.Screen name="SellList" component={SellList} options={{ headerShown: false }} />
       <Stack.Screen name="SellingList" component={SellingList} options={{ headerShown: false }} />
       <Stack.Screen name="SelledList" component={SelledList} options={{ headerShown: false }} />
+      <Stack.Screen name='SellListSearch' component={SellListSearch} options={{headerShown: false}}/>
 
     </Stack.Navigator>
   );
