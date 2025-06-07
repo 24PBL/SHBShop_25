@@ -1,11 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, FlatList } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { useFocusEffect } from '@react-navigation/native';
-
+import fetchChatRoomsAndJoin from '../Chat/fetchChatRoomsAndJoin';
+import Socket from '../Chat/Socket';
 const API_URL = Constants.expoConfig.extra.API_URL;
 
 const HomeScreen = ({ navigation }) => {
@@ -92,6 +93,27 @@ const HomeScreen = ({ navigation }) => {
       <View style={{ width: '100%', backgroundColor: '#d9d9d9', height: 1 }} />
     </View>
   );
+
+  useEffect(() => {
+  const setupChatRooms = async () => {
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+
+      if (userId && Token) {
+        await fetchChatRoomsAndJoin(userId, Token); // 인자 전달
+      } else {
+        console.warn("userId 또는 Token이 없습니다.");
+      }
+    } catch (err) {
+      console.error("채팅방 정보를 가져오는 중 오류 발생:", err);
+    }
+  };
+
+  setupChatRooms();
+}, []);
 
   return (
     <SafeAreaProvider>

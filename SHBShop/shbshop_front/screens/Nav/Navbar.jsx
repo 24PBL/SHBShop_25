@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import ChatScreen from './ChatScreen';
+import ChatStack from './ChatStack';
 import HomeStack from './HomeStack';
 import BookStack from './BookStack';
 import MyPageStack from './MyPageStack';
@@ -62,7 +62,7 @@ const Navbar = ({ navigation }) => {
 
       <Tab.Screen
         name="채팅"
-        component={ChatScreen}
+        component={ChatStack}
         options={{ headerShown: false }}
       />
 

@@ -58,7 +58,7 @@ const App = () => {
 
   const handleUrl = (url) => {
     console.log('앱이 열림 URL:', url);
-    // URL이 myapp://payment-success 이면 Home 화면으로 이동
+   
     if (url === 'myapp://payment-success') {
       navigationRef.current?.navigate('Navbar');
     }
