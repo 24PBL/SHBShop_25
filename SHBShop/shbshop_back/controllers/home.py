@@ -1862,7 +1862,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
 
 @home_bp.route("/<int:userId>/my-page/show-receipt/detail/<orderid>", methods=["GET"])
 @token_required
-def show_user_receipt_detail(decoded_user_id, user_type, userId, orderid): #orderId -> orderid로 수정
+def show_user_receipt_detail(decoded_user_id, user_type, userId, orderid):
     if str(decoded_user_id) != str(userId):
         return jsonify({"error": "권한이 없습니다."}), 403
     
@@ -2051,7 +2051,7 @@ def show_user_receipt_detail(decoded_user_id, user_type, userId, orderid): #orde
                 db.session.query(Sbooktrade, Shop)
                 .join(Shop, Sbooktrade.sid == Shop.sid)
                 .filter(
-                    Sbooktrade.orderid == orderId,
+                    Sbooktrade.orderid == orderid,
                     Sbooktrade.consumerid == decoded_user_id,
                     Sbooktrade.consumer_type == UserType.PERSONAL.value
                 )
@@ -2953,7 +2953,7 @@ def add_my_product(decoded_user_id, user_type, userId):
 
     return jsonify({"message": "책 추가 완료", "on_sale_book_list": on_sale_book_list, "user_info": user_info}), 201
 
-@home_bp.route("/<int:userId>/my-page/check-my-product/modify-product/<int:bookId>", methods=["POST"]) #여기 home 적혀있어서 지웠어용
+@home_bp.route("/<int:userId>/my-page/check-my-product/modify-product/<int:bookId>", methods=["POST"])
 @token_required
 def modify_my_stock(decoded_user_id, user_type, userId, bookId):
     if str(decoded_user_id) != str(userId):

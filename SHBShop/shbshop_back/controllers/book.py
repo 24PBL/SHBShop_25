@@ -630,7 +630,7 @@ def payment_success4p():
                 preceipt.paidAt = paid_at
                 preceipt.payment_method = payment_method
                 preceipt.payment_key = payment_key
-                preceipt.install_month = installment
+                preceipt.installment_months = installment
                 preceipt.reason = "결제완료"
             else:
                 return jsonify({"error": "이미 처리된 결제"}), 400
@@ -640,7 +640,7 @@ def payment_success4p():
                 creceipt.paidAt = paid_at
                 creceipt.payment_method = payment_method
                 creceipt.payment_key = payment_key
-                creceipt.install_month = installment
+                creceipt.installment_months = installment
                 creceipt.reason = "결제완료"
             else:
                 return jsonify({"error": "이미 처리된 결제"}), 400
@@ -763,7 +763,7 @@ def payment_success4s():
                 preceipt.paidAt = paid_at
                 preceipt.payment_method = payment_method
                 preceipt.payment_key = payment_key
-                preceipt.install_month = installment
+                preceipt.installment_months = installment
                 preceipt.reason = "결제완료"
             else:
                 return jsonify({"error": "이미 처리된 결제"}), 400
@@ -773,7 +773,7 @@ def payment_success4s():
                 creceipt.paidAt = paid_at
                 creceipt.payment_method = payment_method
                 creceipt.payment_key = payment_key
-                creceipt.install_month = installment
+                creceipt.installment_months = installment
                 creceipt.reason = "결제완료"
             else:
                 return jsonify({"error": "이미 처리된 결제"}), 400

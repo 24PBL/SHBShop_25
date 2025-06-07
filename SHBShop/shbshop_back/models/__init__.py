@@ -34,6 +34,8 @@ from .preceipt2p import Preceipt2p
 from .preceipt2s import Preceipt2s
 from .creceipt2p import Creceipt2p
 from .creceipt2s import Creceipt2s
+from .chatroom import Chatroom
+from .chatmessage import Chatmessage
 
 __all__ = [
     "Base",
@@ -71,5 +73,7 @@ __all__ = [
     "Preceipt2p",
     "Preceipt2s",
     "Creceipt2p",
-    "Creceipt2s"
+    "Creceipt2s",
+    "Chatroom",
+    "Chatmessage"
 ]
