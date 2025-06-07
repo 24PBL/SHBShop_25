@@ -43,6 +43,7 @@ const  ManageStore = ({navigation, route}) => {
       },
     });
     const data = await response.json();
+    console.log(data)
     navigation.navigate('ReserveList', {storedata : {data}});
     
   }

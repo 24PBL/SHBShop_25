@@ -6,30 +6,51 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Dimensions,
   Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 const { width } = Dimensions.get('window');
 const API_URL = Constants.expoConfig.extra.API_URL;
 
 const ReserveDetail = ({ route, navigation }) => {
-  const { ReserverListData } = route.params.storedata;
-  const { receipt_info } = ReserverListData;
+  const {
+    book_info,
+    receipt_info,
+    shop_info,
+    user_info,
+    user_type,
+    decoded_user_id,
+  } = route.params.storedata.ReserverListData;
 
   const {
-    title, author, publish, price, isbn, bookimg, detail,
-    ownerName, ownerNickname, ownerEmail, ownertel, ownerAddress, reason,
-    createAt,
+    title,
+    author,
+    publish,
+    price,
+    isbn,
+    bookimg,
+  } = book_info;
+
+  const {
+    ownerName,
+    ownerNickname,
+    ownerEmail,
+    ownertel,
+    ownerAddress,
+    reason,
+    paidAt,
+    orderid,
+    rid,
+    ownerType,
   } = receipt_info;
 
-  const formattedDate = new Date(createAt)
+  const formattedDate = new Date(paidAt)
     .toLocaleString('ko-KR', {
       year: 'numeric',
       month: '2-digit',
@@ -41,7 +62,6 @@ const ReserveDetail = ({ route, navigation }) => {
     .replace(' ', ' ')
     .replace(/\s/g, '');
 
-  // Modal 상태 관리
   const [modalVisible, setModalVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -49,105 +69,98 @@ const ReserveDetail = ({ route, navigation }) => {
     setModalVisible(true);
   };
 
+  const handleApprove = async () => {
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
 
+      const now = new Date();
+      const approvalTime = now
+        .toLocaleString('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+        .replace(/\./g, '-')
+        .replace(/\s/g, '');
 
-const handleApprove = async () => {
-  try {
-    const Data = await AsyncStorage.getItem('UserData');
-    const userData = JSON.parse(Data);
-    const userId = userData.decoded_user_id;
-    const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(
+        `${API_URL}/shop/${userId}/${shop_info.shopId}/check-pr/${ownerType}/${rid}/review`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${Token}`,
+          },
+          body: JSON.stringify({
+            decision: 2,
+            reason: approvalTime,
+          }),
+        }
+      );
 
-    const now = new Date();
-    const approvalTime = now
-      .toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-      .replace(/\./g, '-')
-      .replace(/\s/g, '');
+      if (!response.ok) {
+        console.error('승인 실패', await response.text());
+        return;
+      }
 
-    const response = await fetch(`${API_URL}/shop/${userId}/${ReserverListData.shop_info.shopId}/check-pr/${receipt_info.ownerType}/${receipt_info.rid}/review`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Token}`,
-      },
-      body: JSON.stringify({
-        decision: 2,
-        reason: approvalTime,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error('승인 실패', await response.text());
-      return;
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MyPageScreen' }],
+      });
+    } catch (error) {
+      console.error('승인 중 오류 발생:', error);
     }
-
-    navigation.reset({
-  index: 0,
-  routes: [
-    {
-      name: 'MyPageScreen'
-    },
-  ],
-});
-  } catch (error) {
-    console.error('승인 중 오류 발생:', error);
-  }
-};
-
+  };
 
   const handleSubmitReject = async () => {
-  try {
-    const Data = await AsyncStorage.getItem('UserData');
-    const userData = JSON.parse(Data);
-    const userId = userData.decoded_user_id;
-    const Token = await AsyncStorage.getItem('jwtToken');
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
 
-    const response = await fetch(`${API_URL}/shop/${userId}/${ReserverListData.shop_info.shopId}/check-pr/${receipt_info.ownerType}/${receipt_info.rid}/review`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Token}`,
-      },
-      body: JSON.stringify({
-        decision: 3,
-        reason: rejectReason,
-      }),
-    });
+      const response = await fetch(
+        `${API_URL}/shop/${userId}/${shop_info.shopId}/check-pr/${ownerType}/${rid}/review`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${Token}`,
+          },
+          body: JSON.stringify({
+            decision: 3,
+            reason: rejectReason,
+          }),
+        }
+      );
 
-    if (response.ok) {
-      setModalVisible(false);
-      navigation.reset({
-  index: 0,
-  routes: [
-    {
-      name: 'MyPageScreen'
-    },
-  ],
-});
-    } else {
-      const errorData = await response.json();
-      console.error('거절 실패:', errorData);
-      alert('거절에 실패했습니다. 다시 시도해주세요.');
+      if (response.ok) {
+        setModalVisible(false);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MyPageScreen' }],
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('거절 실패:', errorData);
+        alert('거절에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('요청 오류:', error);
+      alert('네트워크 오류가 발생했습니다.');
     }
-  } catch (error) {
-    console.error('요청 오류:', error);
-    alert('네트워크 오류가 발생했습니다.');
-  }
-};
-
+  };
 
   const handleCancel = () => {
     setModalVisible(false);
     setRejectReason('');
   };
 
-  
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ paddingBottom: 10, paddingLeft: 10, flexDirection: 'row', alignItems: 'center' }}>
@@ -157,8 +170,6 @@ const handleApprove = async () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-
-        {/* 책 이미지 */}
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: `${API_URL}${bookimg}` }}
@@ -166,41 +177,50 @@ const handleApprove = async () => {
           />
         </View>
 
-        {/* 프로필 닉네임 */}
         <View style={styles.profileBox}>
           <View style={styles.avatar} />
-          <Text style={styles.nickname}>{ownerNickname}({ownerName})</Text>
+          <Text style={styles.nickname}>구매자 : {ownerName}</Text>
         </View>
 
-        {/* 책 정보 */}
         <View style={styles.inputGroup}>
-          <TextInput style={styles.input} value={title} editable={false} placeholder="제목" />
-          <TextInput style={styles.input} value={author} editable={false} placeholder="저자" />
-          <TextInput style={styles.input} value={publish} editable={false} placeholder="출판사" />
-          <TextInput style={styles.input} value={`${price.toLocaleString()}원`} editable={false} placeholder="가격" />
-          <TextInput style={styles.input} value={isbn} editable={false} placeholder="ISBN" />
-          <TextInput style={styles.input} value={formattedDate} editable={false} placeholder="신청날짜 및 시간" />
-          <TextInput style={styles.input} value={reason} editable={false} placeholder="상태" />
-        </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.label}>제목</Text>
+            <Text style={styles.value}>{title}</Text>
+          </View>
 
-        {/* 버튼 */}
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.approveButton} onPress={handleApprove}>
-            <Text style={{ fontWeight: 'bold', color: 'white' }}>승인</Text>
-            </TouchableOpacity>
+          <View style={styles.infoItem}>
+            <Text style={styles.label}>저자</Text>
+            <Text style={styles.value}>{author}</Text>
+          </View>
 
-          <TouchableOpacity style={styles.rejectButton} onPress={handleReject}>
-            <Text style={{ fontWeight: 'bold', color: 'white' }}>거절</Text>
-          </TouchableOpacity>
+          <View style={styles.infoItem}>
+            <Text style={styles.label}>출판사</Text>
+            <Text style={styles.value}>{publish}</Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Text style={styles.label}>가격</Text>
+            <Text style={styles.value}>{price.toLocaleString()}원</Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Text style={styles.label}>ISBN</Text>
+            <Text style={styles.value}>{isbn}</Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Text style={styles.label}>신청일시</Text>
+            <Text style={styles.value}>{formattedDate}</Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Text style={styles.label}>상태</Text>
+            <Text style={styles.value}>{reason}</Text>
+          </View>
         </View>
       </ScrollView>
-
-      {/* 거절 사유 입력 Modal */}
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        animationType="slide"
-      >
+{/*
+  <Modal transparent={true} visible={modalVisible} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>거절 사유 입력</Text>
@@ -222,6 +242,9 @@ const handleApprove = async () => {
           </View>
         </View>
       </Modal>
+*/}
+      
+
     </SafeAreaView>
   );
 };
@@ -229,7 +252,6 @@ const handleApprove = async () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { alignItems: 'center' },
-
   imageContainer: {
     width: '100%',
     height: 200,
@@ -242,12 +264,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     resizeMode: 'cover',
   },
-  imageLabel: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-
   profileBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -266,39 +282,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-
   inputGroup: {
     width: '90%',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#aaa',
-    borderRadius: 8,
-    padding: 10,
+  infoItem: {
     marginBottom: 12,
+  },
+  label: {
+    fontSize: 13,
+    color: '#555',
+    marginBottom: 4,
+  },
+  value: {
     fontSize: 14,
-    backgroundColor: '#fff',
-  },
-
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 24,
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  approveButton: {
-    backgroundColor: '#0091da',
-    padding: 14,
+    padding: 10,
+    backgroundColor: '#f4f4f4',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
   },
-  rejectButton: {
-    backgroundColor: '#F44336',
-    padding: 14,
-    borderRadius: 8,
-  },
-
-  // Modal 스타일
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

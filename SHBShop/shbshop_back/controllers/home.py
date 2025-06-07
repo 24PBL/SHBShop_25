@@ -1722,7 +1722,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
 
         rs_results = (
             db.session.query(Creceipt2s)
-            .filter(Creceipt2s.sid == userId)
+            .filter(Creceipt2s.cid == userId) #sid -> cid로 수정했어용
             .order_by(Creceipt2s.rid.desc())
             .all()
         )
