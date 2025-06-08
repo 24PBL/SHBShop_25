@@ -9,7 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Image
+  Image,
+  Modal
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -29,7 +30,8 @@ const ChatRoomScreen = ({ route, navigation}) => {
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState(null);
   const [otheruser, setotheruser] = useState(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalImageUri, setModalImageUri] = useState(null);
 
   const [isAttachmentVisible, setIsAttachmentVisible] = useState(false);
 
@@ -145,13 +147,11 @@ const takePhoto = async () => {
 }, [roomId]); 
 
 
- const toggleModal = () => {
-    setIsModalVisible(!isModalVisible); // 모달 열기/닫기
-  };
+ 
 
   const flatListRef = useRef();
 
-  const sendMessage = async () => {
+ const sendMessage = async () => {
   if (!input.trim() && !selectedImage) return;
 
   const Token = await AsyncStorage.getItem('jwtToken');
@@ -167,7 +167,7 @@ const takePhoto = async () => {
   }
 
   try {
-    const response = await axios.post(
+    await axios.post(
       `${API_URL}/chat/${userId}/chat-room/${roomId}/send`,
       formData,
       {
@@ -178,17 +178,8 @@ const takePhoto = async () => {
       }
     );
 
-    // 성공 후
-    const newMessage = {
-      message: input,
-      sender_id: userId,
-      createAt: new Date().toISOString(),
-      sender_nickname: '나',
-      room_id: roomId,
-      id: response.data.message_id,
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
+    // 전송 후에는 메시지를 직접 추가하지 않고, 
+    // 서버가 보내는 'receive_message' 이벤트에서 메시지 업데이트를 기다림
     setInput('');
     setSelectedImage(null);
 
@@ -197,6 +188,8 @@ const takePhoto = async () => {
     Alert.alert('메시지 전송 실패', '다시 시도해주세요.');
   }
 };
+
+
 
 
   const groupMessagesByDate = useCallback((messages) => {
@@ -226,41 +219,69 @@ const takePhoto = async () => {
   }, [messages, convertGroupedMessagesToArray, groupMessagesByDate]);
 
   const renderItem = ({ item }) => {
-    if (item.type === 'header') {
-      return (
-        <View style={styles.headerContainer}>
-          <View style={styles.headerLine} />
-          <Text style={styles.headerText}>{item.date}</Text>
-          <View style={styles.headerLine} />
-        </View>
-      );
-    } else {
-      const isMe = item.sender_id === userId;
-      return (
-        
-        <View
-          style={[
-            styles.messageContainer,
-            isMe ? styles.myMessage : styles.otherMessage,
-          ]}
-        >
-          {!isMe && <Image style={styles.avatar} source={{uri : `${API_URL}/${otheruser.elseimg}`}}/>}
-          <View style={[styles.bubble, isMe ? styles.myBubble : styles.otherBubble]}>
-            {!isMe && (
-              <Text style={styles.nickname}>{otheruser.otherName || '알 수 없음'}</Text>
-            )}
-            <Text style={isMe ? styles.messageText : styles.othermessageText}>{item.message}</Text>
-            <Text style={isMe ? styles.timestamp : styles.othertimestamp}>
-              {new Date(item.createAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+  if (item.type === 'header') {
+    return (
+      <View style={styles.headerContainer}>
+        <View style={styles.headerLine} />
+        <Text style={styles.headerText}>{item.date}</Text>
+        {item.image_url && (
+          <TouchableOpacity onPress={() => {
+            setModalImageUri(`${API_URL}${item.image_url}`);
+            setModalVisible(true)}}>
+            <Image
+            style={{ width: 200, height: 200, borderRadius: 10, marginTop: 5 }}
+            source={{ uri: `${API_URL}${item.image_url}` }}
+            resizeMode="cover"
+          />
+          </TouchableOpacity>
+          
+        )}
+        <View style={styles.headerLine} />
+      </View>
+    );
+  } else {
+    const isMe = item.sender_id === userId;
+    return (
+      <View
+        style={[
+          styles.messageContainer,
+          isMe ? styles.myMessage : styles.otherMessage,
+        ]}
+      >
+        {!isMe && (
+          <Image
+            style={styles.avatar}
+            source={{ uri: `${API_URL}/${otheruser.elseimg}` }}
+          />
+        )}
+        <View style={[styles.bubble, isMe ? styles.myBubble : styles.otherBubble]}>
+          {!isMe && (
+            <Text style={styles.nickname}>
+              {otheruser.otherName || '알 수 없음'}
             </Text>
-          </View>
+          )}
+          <Text style={isMe ? styles.messageText : styles.othermessageText}>
+            {item.message}
+          </Text>
+          {item.image_url && (
+            <Image
+              style={{ width: 200, height: 200, borderRadius: 10, marginTop: 5 }}
+              source={{ uri: `${API_URL}${item.image_url}` }}
+              resizeMode="cover"
+            />
+          )}
+          <Text style={isMe ? styles.timestamp : styles.othertimestamp}>
+            {new Date(item.createAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Text>
         </View>
-      );
-    }
-  };
+      </View>
+    );
+  }
+};
+
 
   const keyExtractor = useCallback((item, index) => {
     return `message-${item.room_id}-${item.id || item.cmid}-${index}`;
@@ -365,13 +386,30 @@ const takePhoto = async () => {
         <TouchableOpacity onPress={toggleAttachment}>
           <Ionicons name="add-outline" size={35} style={{alignSelf:'center', paddingRight:5}}/>
         </TouchableOpacity>
-        <TextInput
-          style={styles.input}
-          value={input}
-          onChangeText={setInput}
-          placeholder="메시지를 입력하세요"
-          placeholderTextColor="#999"
-        />
+        <View style={styles.inputPreviewContainer}>
+  {selectedImage && (
+    <View style={styles.previewWrapper}>
+      <Image
+        source={{ uri: selectedImage.uri }}
+        style={styles.previewImage}
+      />
+      <TouchableOpacity
+        style={styles.removePreviewButton}
+        onPress={() => setSelectedImage(null)}
+      >
+        <Ionicons name="close-circle" size={24} color="red" />
+      </TouchableOpacity>
+    </View>
+  )}
+  <TextInput
+    style={styles.input}
+    value={input}
+    onChangeText={setInput}
+    placeholder="메시지를 입력하세요"
+    placeholderTextColor="#999"
+  />
+</View>
+
         <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
           <Text style={styles.sendText}>전송</Text>
         </TouchableOpacity>
@@ -394,6 +432,25 @@ const takePhoto = async () => {
     </TouchableOpacity>
   </View>
 )}
+
+<Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <TouchableOpacity style={styles.closeArea} onPress={() => setModalVisible(false)} />
+          <Image
+            source={{ uri: modalImageUri }}
+            style={styles.fullImage}
+            resizeMode="contain"
+          />
+          <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+            <Text style={styles.closeText}>닫기</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
 
       </SafeAreaView>
@@ -437,7 +494,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   myBubble: {
-    backgroundColor: '#0091da',
+    backgroundColor: 'dodgerblue',
     borderTopRightRadius: 0,
   },
   otherBubble: {
@@ -533,6 +590,32 @@ attachmentText: {
   fontSize: 12,
   marginTop: 4,
 },
+inputPreviewContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  flex: 1,
+},
+
+previewWrapper: {
+  position: 'relative',
+  marginRight: 8,
+},
+
+previewImage: {
+  width: 50,
+  height: 50,
+  borderRadius: 8,
+},
+
+removePreviewButton: {
+  position: 'absolute',
+  top: -5,
+  right: -5,
+  backgroundColor: 'white',
+  borderRadius: 12,
+},
+
+
 
 });
 
