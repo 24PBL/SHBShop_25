@@ -15,14 +15,63 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Constants from 'expo-constants';
 import socket from '../Chat/Socket';
+import { SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const ChatRoomScreen = ({ route }) => {
+const ChatRoomScreen = ({ route, navigation}) => {
+  const [selectedImage, setSelectedImage] = useState(null);
   const { roomId } = route.params;
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState(null);
+  const [otheruser, setotheruser] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const [isAttachmentVisible, setIsAttachmentVisible] = useState(false);
+
+  const pickImage = async () => {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) {
+    Alert.alert("권한 필요", "갤러리 접근 권한이 필요합니다.");
+    return;
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 0.7,
+  });
+
+  if (!result.canceled) {
+    setSelectedImage(result.assets[0]);
+  }
+};
+
+const takePhoto = async () => {
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+  if (!permission.granted) {
+    Alert.alert("권한 필요", "카메라 접근 권한이 필요합니다.");
+    return;
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    allowsEditing: true,
+    quality: 0.7,
+  });
+
+  if (!result.canceled) {
+    setSelectedImage(result.assets[0]);
+  }
+};
+
+
+  const toggleAttachment = () => {
+  setIsAttachmentVisible((prev) => !prev);
+};
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -37,12 +86,12 @@ const ChatRoomScreen = ({ route }) => {
       try {
         const Token = await AsyncStorage.getItem('jwtToken');
         const res = await axios.get(
-          `${API_URL}/chat/${userId}/chat-room/${roomId}`,  // 백틱으로 수정
+          `${API_URL}/chat/${userId}/chat-room/${roomId}`,  
           {
-            headers: { Authorization: `Bearer ${Token}` },  // 백틱으로 수정
+            headers: { Authorization: `Bearer ${Token}` },  
           }
         );
-
+        setotheruser(res.data.other_info)
         if (res.data && Array.isArray(res.data.message_list)) {
           setMessages(res.data.message_list); // API 응답으로 메시지 설정
         } else {
@@ -60,96 +109,95 @@ const ChatRoomScreen = ({ route }) => {
   }, [roomId, userId]);
 
   useEffect(() => {
-    const setupSocket = async () => {
-      const Token = await AsyncStorage.getItem('jwtToken');
-      if (!Token) {
-        console.log("No JWT token found, cannot connect to socket or join room");
-        return; // 토큰 없으면 진행 중단
-      }
+  const setupSocket = async () => {
+    const Token = await AsyncStorage.getItem('jwtToken');
+    if (!Token) return;
 
-      if (!socket.connected) {
-        socket.auth = { token: Token };
-        socket.connect();
-        socket.on('connect', () => {
-          console.log('소켓 서버에 연결되었습니다.');
-          socket.emit('join', { token: Token, room_id: roomId });
-          console.log(`Joined room: ${roomId}`);
-        });
-        socket.on('connect_error', (error) => {
-          console.error("Socket connection error during setup:", error);
-        });
-      } else {
-        socket.emit('join', { token: Token, room_id: roomId });
-        console.log(`Socket already connected. Joined room: ${roomId}`);
-      }
-    };
+    socket.auth = { token: Token };
+    socket.connect();
 
-    setupSocket();
-
-    socket.on('receive_message', (data) => {
-      console.log("'receive_message' 이벤트 수신:", data);
-      if (data.room_id === roomId) {
-        setMessages((prev) => [...prev, data]);
-      }
+    socket.on('connect', () => {
+      console.log('소켓 연결됨');
+      socket.emit('join', { token: Token, room_id: roomId });
     });
 
-    return () => {
-      socket.emit('leave', { room_id: roomId });
-      socket.off('receive_message');
-      socket.off('connect');
-      socket.off('connect_error');
-    };
-  }, [roomId]);
+    socket.on('reconnect', (attemptNumber) => {
+      console.log('소켓 재연결됨:', attemptNumber);
+      socket.emit('join', { token: Token, room_id: roomId });  // 🔁 재참여
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error("소켓 연결 오류:", error);
+    });
+  };
+
+  setupSocket();
+
+  socket.on('receive_message', (data) => {
+    if (data.room_id === roomId) {
+      setMessages((prev) => [...prev, data]);
+    }
+  });
+
+  return () => {
+    
+  };
+}, [roomId]); 
+
+
+ const toggleModal = () => {
+    setIsModalVisible(!isModalVisible); // 모달 열기/닫기
+  };
 
   const flatListRef = useRef();
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+  if (!input.trim() && !selectedImage) return;
 
-    const messageToSend = input;
-    setInput('');
+  const Token = await AsyncStorage.getItem('jwtToken');
+  const formData = new FormData();
 
-    // 1. UI 즉시 업데이트
+  if (input.trim()) formData.append('message', input.trim());
+  if (selectedImage) {
+    formData.append('image', {
+      uri: selectedImage.uri,
+      type: 'image/jpeg',
+      name: 'photo.jpg',
+    });
+  }
+
+  try {
+    const response = await axios.post(
+      `${API_URL}/chat/${userId}/chat-room/${roomId}/send`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${Token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    // 성공 후
     const newMessage = {
-      message: messageToSend,
+      message: input,
       sender_id: userId,
       createAt: new Date().toISOString(),
       sender_nickname: '나',
       room_id: roomId,
+      id: response.data.message_id,
     };
+
     setMessages((prev) => [...prev, newMessage]);
+    setInput('');
+    setSelectedImage(null);
 
-    try {
-      const Token = await AsyncStorage.getItem('jwtToken');
-      const formData = new URLSearchParams();
-      formData.append('message', messageToSend);
+  } catch (err) {
+    console.error('메시지 전송 실패:', err);
+    Alert.alert('메시지 전송 실패', '다시 시도해주세요.');
+  }
+};
 
-      const response = await axios.post(
-        `${API_URL}/chat/${userId}/chat-room/${roomId}/send`,  // 백틱으로 수정
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${Token}`,  // 백틱으로 수정
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
-
-      if (response.data && response.data.message_id) {
-        const updatedMessage = { ...newMessage, id: response.data.message_id };
-        setMessages((prev) =>
-          prev.map((message) =>
-            message.message === newMessage.message && message.sender_id === newMessage.sender_id
-              ? updatedMessage
-              : message
-          )
-        );
-      }
-    } catch (err) {
-      console.error('메시지 전송 실패:', err);
-      Alert.alert('메시지 전송 실패', '메시지 전송에 실패했습니다. 잠시 후 다시 시도해주세요.');
-    }
-  };
 
   const groupMessagesByDate = useCallback((messages) => {
     return messages.reduce((acc, message) => {
@@ -189,16 +237,17 @@ const ChatRoomScreen = ({ route }) => {
     } else {
       const isMe = item.sender_id === userId;
       return (
+        
         <View
           style={[
             styles.messageContainer,
             isMe ? styles.myMessage : styles.otherMessage,
           ]}
         >
-          {!isMe && <Image style={styles.avatar} source={{uri : `${API_URL}/${item.sender_img}`}}/>}
+          {!isMe && <Image style={styles.avatar} source={{uri : `${API_URL}/${otheruser.elseimg}`}}/>}
           <View style={[styles.bubble, isMe ? styles.myBubble : styles.otherBubble]}>
             {!isMe && (
-              <Text style={styles.nickname}>{item.sender_nickname || '상대방'}</Text>
+              <Text style={styles.nickname}>{otheruser.otherName || '알 수 없음'}</Text>
             )}
             <Text style={isMe ? styles.messageText : styles.othermessageText}>{item.message}</Text>
             <Text style={isMe ? styles.timestamp : styles.othertimestamp}>
@@ -223,8 +272,83 @@ const ChatRoomScreen = ({ route }) => {
     }
   }, [messages]);
 
+  const goToHome = () =>{
+    navigation.goBack();
+  }
+
+  const leaveChat = async () => {
+  try {
+    const Token = await AsyncStorage.getItem('jwtToken');
+    if (!Token || !userId) {
+      Alert.alert('에러', '유저 정보가 없습니다.');
+      return;
+    }
+
+    // 1. 소켓에서 leave 이벤트 emit
+    socket.emit('leave', { token: Token, room_id: roomId });
+
+    // 2. 서버에 DELETE 요청 보내서 채팅방 나가기 처리
+    await axios.delete(
+      `${API_URL}/chat/${userId}/chat-room/${roomId}/out`,
+      {
+        headers: { Authorization: `Bearer ${Token}` },
+      }
+    );
+    socket.off();
+    socket.disconnect();
+
+    // 4. 채팅방 리스트 화면으로 이동 (예: 'ChatList'라는 이름)
+    navigation.navigate('ChatListScreen');
+
+  } catch (error) {
+    console.error('채팅방 나가기 실패:', error);
+    Alert.alert('오류', '채팅방 나가기에 실패했습니다. 다시 시도해주세요.');
+  }
+};
+
+  if (!otheruser) {
   return (
-    <KeyboardAvoidingView
+    <SafeAreaView style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <Text>로딩 중...</Text>
+    </SafeAreaView>
+  );
+}
+
+
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView style={{flex:1, backgroundColor:'white'}}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', borderBottomWidth: 0.5, paddingBottom: 10, paddingHorizontal: 10 }}>
+  <TouchableOpacity onPress={goToHome} style={{ paddingRight: 10 }}>
+    <Ionicons name="chevron-back-outline" size={30} color="black" />
+  </TouchableOpacity>
+
+  <Text
+    style={{ flex: 1, fontWeight: 'bold', fontSize: 22 }}
+    numberOfLines={1}
+    ellipsizeMode="tail"
+  >
+    {otheruser && otheruser.otherName ? otheruser.otherName : '접속 중'}님과의 채팅
+  </Text>
+
+  <TouchableOpacity
+    onPress={leaveChat}
+    style={{
+      borderRadius: 5,
+      borderWidth: 0.8,
+      width: 50,
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: 30,
+      borderColor: 'red',
+    }}
+  >
+    <Text style={{ fontWeight: 'bold', color: 'red' }}>나가기</Text>
+  </TouchableOpacity>
+</View>
+
+
+         <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.select({ ios: 'padding' })}
       keyboardVerticalOffset={90}
@@ -238,6 +362,9 @@ const ChatRoomScreen = ({ route }) => {
         contentContainerStyle={styles.flatListContent}
       />
       <View style={styles.inputContainer}>
+        <TouchableOpacity onPress={toggleAttachment}>
+          <Ionicons name="add-outline" size={35} style={{alignSelf:'center', paddingRight:5}}/>
+        </TouchableOpacity>
         <TextInput
           style={styles.input}
           value={input}
@@ -250,6 +377,28 @@ const ChatRoomScreen = ({ route }) => {
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
+
+    {isAttachmentVisible && (
+  <View style={styles.attachmentOptions}>
+    <TouchableOpacity style={styles.attachmentButton} onPress={pickImage}>
+      <Ionicons name="image-outline" size={24} color="black" />
+      <Text style={styles.attachmentText}>사진</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.attachmentButton} onPress={takePhoto}>
+      <Ionicons name="camera-outline" size={24} color="black" />
+      <Text style={styles.attachmentText}>카메라</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.attachmentButton} onPress={() => console.log('거래')}>
+      <Ionicons name="cash-outline" size={24} color="black" />
+      <Text style={styles.attachmentText}>거래</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
+
+      </SafeAreaView>
+    </SafeAreaProvider>
+   
   );
 };
 
@@ -366,6 +515,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 8,
   },
+  attachmentOptions: {
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  backgroundColor: 'white',
+  paddingVertical: 10,
+  borderTopWidth: 1,
+  borderColor: '#ddd',
+},
+
+attachmentButton: {
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+attachmentText: {
+  fontSize: 12,
+  marginTop: 4,
+},
+
 });
 
 export default ChatRoomScreen;
