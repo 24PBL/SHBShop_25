@@ -39,6 +39,7 @@ class UrChocie(Enum):
 P_PROFILE_UPLOAD_FOLDER = "static/user/personal"
 C_PROFILE_UPLOAD_FOLDER = "static/user/commercial"
 LICENCE_UPLOAD_FOLDER = "static/licence"
+BANK_UPLOAD_FOLDER = "static/account"
 
 def delete_auth_code_4_join(kind, email, authCode):
     with current_app.app_context():
@@ -320,6 +321,8 @@ def personal_signup():
     password = request.form.get("password")
     nickname = request.form.get("nickname")
     address = request.form.get("address")
+    bankname = request.form.get("bankname")
+    bankaccount = request.form.get("bankaccount")
     imgfile = request.files.get("imgfile")
 
     try:
@@ -327,7 +330,7 @@ def personal_signup():
     except (TypeError, ValueError):
         return jsonify({"error": "잘못된 인증코드 형식입니다."}), 400
 
-    if not all([name, birth, tel, email, password, nickname, address, authCode, imgfile]):
+    if not all([name, birth, tel, email, password, nickname, address, bankname, bankaccount, authCode, imgfile]):
         return jsonify({"error": "모든 정보를 입력해주세요."}), 400
     
     hashed_pw = generate_password_hash(password)
@@ -362,6 +365,8 @@ def personal_signup():
             nickname = nickname,
             address = address,
             region = region,
+            bankname = bankname,
+            bankaccount = bankaccount,
             img = profile_url
         )
         db.session.add(new_user)
@@ -454,15 +459,18 @@ def commercial_signup():
     nickname = request.form.get("nickname")
     address = request.form.get("address")
     coNumber = request.form.get("coNumber")
+    bankname = request.form.get("bankname")
+    bankaccount = request.form.get("bankaccount")
     imgfile = request.files.get("imgfile")
     licence = request.files.get("licence")
+    accountPhoto = request.files.get("accountPhoto")
 
     try:
         authCode = int(request.form.get("authCode"))
     except (TypeError, ValueError):
         return jsonify({"error": "잘못된 인증코드 형식입니다."}), 400
 
-    if not all([name, presidentName, businessmanName, birth, tel, email, businessEmail, password, nickname, address, authCode, imgfile, licence, coNumber]):
+    if not all([name, presidentName, businessmanName, birth, tel, email, businessEmail, password, nickname, address, authCode, imgfile, licence, coNumber, bankname, bankaccount, accountPhoto]):
         return jsonify({"error": "모든 정보를 입력해주세요."}), 400
     
     hashed_pw = generate_password_hash(password)
@@ -496,6 +504,16 @@ def commercial_signup():
 
         pdf_url = f"/{LICENCE_UPLOAD_FOLDER}/{pdf_filename}"
 
+        account_filename = secure_filename(f"{uuid4().hex}_{accountPhoto.filename}")
+        account_save_path = os.path.join(BANK_UPLOAD_FOLDER, account_filename)
+
+        try:
+            accountPhoto.save(account_save_path)
+        except Exception as e:
+            return jsonify({"error": f"통장 사본 저장 실패: {str(e)}"}), 500
+
+        account_url = f"/{BANK_UPLOAD_FOLDER}/{account_filename}"
+
         region = address.split()[0] + "-" + address.split()[1]
 
         new_user = Commercial(
@@ -509,8 +527,11 @@ def commercial_signup():
             password=hashed_pw,
             nickname = nickname,
             address = address,
+            bankname = bankname,
+            bankaccount = bankaccount,
             img=profile_url,
             licence=pdf_url,
+            accountPhoto = account_url,
             coNumber=coNumber,
             region=region
         )
@@ -528,8 +549,11 @@ def commercial_signup():
             email=email,
             businessEmail = businessEmail,
             address = address,
+            bankname = bankname,
+            bankaccount = bankaccount,
             coNumber=coNumber,
             licence=pdf_url,
+            accountPhoto = account_url,
             cid=cuser.cid
         )
 

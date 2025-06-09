@@ -69,7 +69,10 @@ def check_licence_info(decoded_user_id, user_type, licenceId):
         "businessEmail": licenceInfo.businessEmail,
         "address": licenceInfo.address,
         "coNumber": licenceInfo.coNumber,
+        "bankname": licenceInfo.bankname,
+        "bankaccount": licenceInfo.bankaccount,
         "licence": licenceInfo.licence,
+        "accountPhoto": licenceInfo.accountPhoto,
         "reason": licenceInfo.reason,
         "state": licenceInfo.state,
         "createAt": licenceInfo.createAt.isoformat()

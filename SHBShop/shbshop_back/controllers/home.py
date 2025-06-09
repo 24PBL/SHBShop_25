@@ -20,6 +20,7 @@ P_PROFILE_UPLOAD_FOLDER = "static/user/personal"
 C_PROFILE_UPLOAD_FOLDER = "static/user/commercial"
 PBOOK_UPLOAD_FOLDER = "static/product/personal"
 CBOOK_UPLOAD_FOLDER = "static/product/commercial"
+BANK_UPLOAD_FOLDER = "static/account"
 
 class UserType(Enum):
     PERSONAL = 1
@@ -849,7 +850,9 @@ def get_my_page(decoded_user_id, user_type, userId):
         "nickname": userData.nickname,
         "email": userData.email,
         "region": userData.region,
-        "profile": userData.img
+        "profile": userData.img,
+        "bankname": userData.bankname,
+        "bankaccount": userData.bankaccount
     }
 
     return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo, "isShopExist": isShopExist, "shop_info": shop_info}), 200
@@ -932,10 +935,13 @@ def get_my_cert_detail(decoded_user_id, user_type, userId, certId):
         "businessEmail": cert.businessEmail,
         "coNumber": cert.coNumber,
         "address": cert.address,
+        "bankname": cert.bankname,
+        "bankaccount": cert.bankaccount,
         "state": cert.state,
         "reason": cert.reason,
         "createAt": cert.createAt.isoformat(),
-        "licence": cert.licence
+        "licence": cert.licence,
+        "accountPhoto": cert.accountPhoto
     }
 
     return jsonify({"decoded_user_id": decoded_user_id, "user_type": user_type, "user_info": userInfo, "cert": certInfo}), 200
@@ -949,9 +955,13 @@ def re_submit_cert(decoded_user_id, user_type, userId, certId):
     businessEmail = request.form.get("businessEmail")
     coNumber = request.form.get("coNumber")
     address = request.form.get("address")
+    bankname = request.form.get("bankname")
+    bankaccount = request.form.get("bankaccount")
     licence = request.files.get("licence")
+    accountPhoto = request.files.get("accountPhoto")
+    
 
-    if not all([name, presidentName, businessmanName, businessEmail, address, licence, coNumber]):
+    if not all([name, presidentName, businessmanName, businessEmail, address, licence, coNumber, bankname, bankaccount, accountPhoto]):
         return jsonify({"error": "모든 정보를 입력해주세요."}), 400
 
     if str(decoded_user_id) != str(userId):
@@ -990,6 +1000,16 @@ def re_submit_cert(decoded_user_id, user_type, userId, certId):
 
     pdf_url = f"/{LICENCE_UPLOAD_FOLDER}/{pdf_filename}"
 
+    account_filename = secure_filename(f"{uuid4().hex}_{accountPhoto.filename}")
+    account_save_path = os.path.join(BANK_UPLOAD_FOLDER, account_filename)
+
+    try:
+        accountPhoto.save(account_save_path)
+    except Exception as e:
+        return jsonify({"error": f"통장 사본 저장 실패: {str(e)}"}), 500
+
+    account_url = f"/{BANK_UPLOAD_FOLDER}/{account_filename}"
+
     region = address.split()[0] + "-" + address.split()[1]
 
     userData.name = name
@@ -999,7 +1019,10 @@ def re_submit_cert(decoded_user_id, user_type, userId, certId):
     userData.coNumber = coNumber
     userData.address = address
     userData.region = region
+    userData.bankname = bankname
+    userData.bankaccount = bankaccount
     userData.licence = pdf_url
+    userData.accountPhoto = account_url
 
     new_certReq = Commercialcert(
         name = name,
@@ -1011,7 +1034,10 @@ def re_submit_cert(decoded_user_id, user_type, userId, certId):
         businessEmail = businessEmail,
         address = address,
         coNumber = coNumber,
+        bankname = bankname,
+        bankaccount = bankaccount,
         licence=pdf_url,
+        accountPhoto = account_url,
         cid=userData.cid
     )
 
@@ -1196,8 +1222,10 @@ def modify_info(decoded_user_id, user_type, userId):
     tel = request.form.get("tel")
     nickname = request.form.get("nickname")
     address = request.form.get("address")
+    bankname = request.form.get("bankname")
+    bankaccount = request.form.get("bankaccount")
 
-    if not all([randomCode, tel, nickname, address]):
+    if not all([randomCode, tel, nickname, address, bankname, bankaccount]):
         return jsonify({"error": "모든 정보를 입력해주세요."}), 400
 
     if str(decoded_user_id) != str(userId):
@@ -1239,6 +1267,8 @@ def modify_info(decoded_user_id, user_type, userId):
         db.session.query(Pbooktrade).filter_by(pid=userId).update({"region": parts[0] + "-" + parts[1]})
         user.address = address
         user.region = region
+        user.bankname = bankname
+        user.bankaccount = bankaccount
     
     db.session.commit()
 
