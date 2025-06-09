@@ -36,6 +36,9 @@ from .creceipt2p import Creceipt2p
 from .creceipt2s import Creceipt2s
 from .chatroom import Chatroom
 from .chatmessage import Chatmessage
+from .ppayment import Ppayment
+from .cpayment import Cpayment
+from .spayment import Spayment
 
 __all__ = [
     "Base",
@@ -75,5 +78,8 @@ __all__ = [
     "Creceipt2p",
     "Creceipt2s",
     "Chatroom",
-    "Chatmessage"
+    "Chatmessage",
+    "Ppayment",
+    "Cpayment",
+    "Spayment"
 ]

@@ -40,6 +40,8 @@ class PurchaseState(Enum):
     REFUNDED = 7 #환불완료
     PAYMENT_FAILED = 8 #결제실패
     PENDING = 9 #결제진행중
+    CALCULATE = 10 #정산 요청 중
+    CALCULATED = 11 #정산 완료
 
 @home_bp.route("/<int:userId>", methods=["GET"])
 @token_required
@@ -1722,7 +1724,7 @@ def show_user_receipt(decoded_user_id, user_type, userId):
 
         rs_results = (
             db.session.query(Creceipt2s)
-            .filter(Creceipt2s.cid == userId) #sid -> cid로 수정했어용
+            .filter(Creceipt2s.sid == userId)
             .order_by(Creceipt2s.rid.desc())
             .all()
         )

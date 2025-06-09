@@ -37,6 +37,8 @@ class PurchaseState(Enum):
     REFUNDED = 7 #환불완료
     PAYMENT_FAILED = 8 #결제실패
     PENDING = 9 #결제진행중
+    CALCULATE = 10 #정산 요청 중
+    CALCULATED = 11 #정산 완료
 
 TOSS_HEADERS = {
     "Authorization": f"Basic {base64.b64encode(f'{TOSS_SECRET_KEY}:'.encode()).decode()}",

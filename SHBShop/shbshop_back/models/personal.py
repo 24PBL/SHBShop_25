@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .pbasket2s import Pbasket2s
     from .preceipt2p import Preceipt2p
     from .preceipt2s import Preceipt2s
+    from .ppayment import Ppayment
 
 class Personal(Base):
     __tablename__ = 'personal'
@@ -25,6 +26,8 @@ class Personal(Base):
     nickname: Mapped[str] = mapped_column(String(64, 'utf8mb4_general_ci'))
     address: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     region: Mapped[str] = mapped_column(String(64, 'utf8mb4_general_ci'))
+    bankname: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
+    bankaccount: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
     img: Mapped[Optional[str]] = mapped_column(String(255, 'utf8mb4_general_ci'))
 
@@ -35,3 +38,4 @@ class Personal(Base):
     preceipt2p: Mapped[List['Preceipt2p']] = relationship('Preceipt2p', back_populates='personal')
     pbasket2s: Mapped[List['Pbasket2s']] = relationship('Pbasket2s', back_populates='personal')
     preceipt2s: Mapped[List['Preceipt2s']] = relationship('Preceipt2s', back_populates='personal')
+    ppayment: Mapped[List['Ppayment']] = relationship('Ppayment', back_populates='personal')

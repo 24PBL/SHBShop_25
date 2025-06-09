@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from .cbasket2s import Cbasket2s
     from .creceipt2p import Creceipt2p
     from .creceipt2s import Creceipt2s
+    from .cpayment import Cpayment
 
 class Commercial(Base):
     __tablename__ = 'commercial'
@@ -33,6 +34,9 @@ class Commercial(Base):
     region: Mapped[str] = mapped_column(String(64, 'utf8mb4_general_ci'))
     coNumber: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     licence: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    bankname: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
+    bankaccount: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
+    accountPhoto: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
     state: Mapped[int] = mapped_column(Integer, server_default=text("'1'"))
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
     img: Mapped[Optional[str]] = mapped_column(String(255, 'utf8mb4_general_ci'))
@@ -47,3 +51,4 @@ class Commercial(Base):
     favorite4c: Mapped[List['Favorite4c']] = relationship('Favorite4c', back_populates='commercial')
     cbasket2s: Mapped[List['Cbasket2s']] = relationship('Cbasket2s', back_populates='commercial')
     creceipt2s: Mapped[List['Creceipt2s']] = relationship('Creceipt2s', back_populates='commercial')
+    cpayment: Mapped[List['Cpayment']] = relationship('Cpayment', back_populates='commercial')

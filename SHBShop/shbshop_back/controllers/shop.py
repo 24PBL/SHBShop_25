@@ -36,6 +36,8 @@ class PurchaseState(Enum):
     REFUNDED = 7 #환불완료
     PAYMENT_FAILED = 8 #결제실패
     PENDING = 9 #결제진행중
+    CALCULATE = 10 #정산 요청 중
+    CALCULATED = 11 #정산 완료
 
 SBOOK_UPLOAD_FOLDER = "static/product/shop"
 S_IMAGE_UPLOAD_FOLDER = "static/shop"

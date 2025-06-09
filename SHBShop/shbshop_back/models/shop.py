@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from .favorite4c import Favorite4c
     from .favorite4p import Favorite4p
     from .sbooktrade import Sbooktrade
+    from .spayment import Spayment
 
 class Shop(Base):
     __tablename__ = 'shop'
@@ -39,3 +40,4 @@ class Shop(Base):
     favorite4c: Mapped[List['Favorite4c']] = relationship('Favorite4c', back_populates='shop')
     favorite4p: Mapped[List['Favorite4p']] = relationship('Favorite4p', back_populates='shop')
     sbooktrade: Mapped[List['Sbooktrade']] = relationship('Sbooktrade', back_populates='shop')
+    spayment: Mapped[List['Spayment']] = relationship('Spayment', back_populates='shop')

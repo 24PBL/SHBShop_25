@@ -40,7 +40,6 @@ def handle_leave(user_id, user_type, data):
 @socketio.on('connect')
 def handle_connect():
     token = request.args.get("token")
-    
     if not token:
         disconnect()
         return
