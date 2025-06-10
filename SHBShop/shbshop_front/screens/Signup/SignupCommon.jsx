@@ -315,7 +315,7 @@ const BirthCheck = (text) => {
       <Label>은행명</Label>
       <SignInput placeholder='은행명' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={setBankName}></SignInput>
       <Label>계좌번호</Label>
-      <SignInput placeholder='- 없이 입력하세요' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={setBankNum}></SignInput>
+      <SignInput placeholder='-를 포함하세요' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={setBankNum}></SignInput>
       <Label>주소</Label>
       <View>
       <Text style={{color: zipcode ? "black" : "rgba(0,0,0,0.5)", fontSize:17, borderWidth: 1, padding: 10, width:270, borderRadius:10, height:55, textAlignVertical:'center', alignSelf:'center'}}>{zipcode || "우편번호"}</Text>
