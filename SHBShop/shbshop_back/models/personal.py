@@ -26,8 +26,8 @@ class Personal(Base):
     nickname: Mapped[str] = mapped_column(String(64, 'utf8mb4_general_ci'))
     address: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     region: Mapped[str] = mapped_column(String(64, 'utf8mb4_general_ci'))
-    bankname: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
-    bankaccount: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
+    bankname: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    bankaccount: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
     img: Mapped[Optional[str]] = mapped_column(String(255, 'utf8mb4_general_ci'))
 

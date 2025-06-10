@@ -27,9 +27,9 @@ class Commercialcert(Base):
     coNumber: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     licence: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     reason: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), server_default=text("'심사중'"))
-    bankname: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
-    bankaccount: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
-    accountPhoto: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'), nullable=True)
+    bankname: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    bankaccount: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
+    accountPhoto: Mapped[str] = mapped_column(String(255, 'utf8mb4_general_ci'))
     state: Mapped[int] = mapped_column(Integer, server_default=text("1"))
     createAt: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
 

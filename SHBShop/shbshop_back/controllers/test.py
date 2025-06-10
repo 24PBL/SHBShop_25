@@ -25,6 +25,8 @@ LICENCE_UPLOAD_FOLDER = "static/licence"
 PBOOK_UPLOAD_FOLDER = "static/product/personal"
 CBOOK_UPLOAD_FOLDER = "static/product/commercial"
 SBOOK_UPLOAD_FOLDER = "static/product/shop"
+PAYMENT_UPLOAD_FOLDER = "static/paymentphoto"
+BANK_UPLOAD_FOLDER = "static/account"
 
 class UserType(Enum):
     PERSONAL = 1
@@ -436,6 +438,8 @@ def read_personal(userId):
         "address": exUser.address,
         "region": exUser.region,
         "img": exUser.img,
+        "bankname": exUser.bankname,
+        "bankaccount": exUser.bankaccount,
         "createAt": exUser.createAt
     }
 
@@ -690,26 +694,6 @@ def add_p2p():
 
     return jsonify({"message": "구매 신청 완료" }), 201
 
-@test_bp.route("/add-p2c", methods=["POST"])
-def add_p2c():
-    pid = request.form.get("pid")
-    pid = int(pid)
-    bid = request.form.get("bid")
-    bid = int(bid)
-    sellerid = request.form.get("sellerid")
-    sellerid = int(sellerid)
-
-    newRe = Preceipt2c(
-        pid=pid,
-        bid=bid,
-        sellerid=sellerid
-    )
-
-    db.session.add(newRe)
-    db.session.commit()
-
-    return jsonify({"message": "구매 신청 완료" }), 201
-
 @test_bp.route("/add-p2s", methods=["POST"])
 def add_p2s():
     pid = request.form.get("pid")
@@ -740,26 +724,6 @@ def add_c2p():
     sellerid = int(sellerid)
 
     newRe = Creceipt2p(
-        cid=cid,
-        bid=bid,
-        sellerid=sellerid
-    )
-
-    db.session.add(newRe)
-    db.session.commit()
-
-    return jsonify({"message": "구매 신청 완료" }), 201
-
-@test_bp.route("/add-c2c", methods=["POST"])
-def add_c2c():
-    cid = request.form.get("cid")
-    cid = int(cid)
-    bid = request.form.get("bid")
-    bid = int(bid)
-    sellerid = request.form.get("sellerid")
-    sellerid = int(sellerid)
-
-    newRe = Creceipt2c(
         cid=cid,
         bid=bid,
         sellerid=sellerid
@@ -809,24 +773,6 @@ def read_p2p(pid):
 
     return jsonify({"cs_list": cs_list }), 200
 
-@test_bp.route("/read-p2c/<int:pid>", methods=["GET"])
-def read_p2c(pid):
-    pc = db.session.query(Preceipt2c).filter_by(pid = pid).all()
-
-    cs_list = [
-        {
-            "rid": css.rid,
-            "pid": css.pid,
-            "bid": css.bid,
-            "sellerid": css.sellerid,
-            "state": css.state,
-            "reason": css.reason,
-            "createAt": css.createAt
-        }
-        for css in pc
-    ]
-
-    return jsonify({"cs_list": cs_list }), 200
 
 @test_bp.route("/read-p2s/<int:pid>", methods=["GET"])
 def read_p2s(pid):
@@ -862,25 +808,6 @@ def read_c2p(cid):
             "createAt": css.createAt
         }
         for css in cp
-    ]
-
-    return jsonify({"cs_list": cs_list }), 200
-
-@test_bp.route("/read-c2c/<int:cid>", methods=["GET"])
-def read_c2c(cid):
-    cc = db.session.query(Creceipt2c).filter_by(cid = cid).all()
-
-    cs_list = [
-        {
-            "rid": css.rid,
-            "cid": css.cid,
-            "bid": css.bid,
-            "sellerid": css.sellerid,
-            "state": css.state,
-            "reason": css.reason,
-            "createAt": css.createAt
-        }
-        for css in cc
     ]
 
     return jsonify({"cs_list": cs_list }), 200
@@ -923,3 +850,120 @@ def read_modiadr(idx):
         }
 
     return jsonify({"modi": modi_info }), 200
+
+@test_bp.route("/add-pbank/<int:pid>", methods=["POST"])
+def p_bank(pid):
+    bankname = request.form.get("bankname")
+    bankaccount = request.form.get("bankaccount")
+
+    user = db.session.query(Personal).filter_by(pid = pid).first()
+
+    if not user:
+        return jsonify({"error": "유저 없음" }), 404
+
+    user.bankname = bankname
+    user.bankaccount = bankaccount
+
+    db.session.commit()
+    
+    return jsonify({"success": "성공" }), 200
+
+@test_bp.route("/add-cbank/<int:cid>", methods=["POST"])
+def c_bank(cid):
+    bankname = request.form.get("bankname")
+    bankaccount = request.form.get("bankaccount")
+    accountPhoto = request.files.get("accountPhoto")
+
+    user = db.session.query(Commercial).filter_by(cid = cid).first()
+
+    if not user:
+        return jsonify({"error": "유저 없음" }), 404
+    
+    account_filename = secure_filename(f"{uuid4().hex}_{accountPhoto.filename}")
+    account_save_path = os.path.join(BANK_UPLOAD_FOLDER, account_filename)
+
+    try:
+        accountPhoto.save(account_save_path)
+    except Exception as e:
+        return jsonify({"error": f"통장 사본 저장 실패: {str(e)}"}), 500
+
+    account_url = f"/{BANK_UPLOAD_FOLDER}/{account_filename}"
+
+    user.bankname = bankname
+    user.bankaccount = bankaccount
+    user.accountPhoto = account_url
+
+    comcert = db.session.query(Commercialcert).filter_by(cid=cid).all()
+
+    for comc in comcert:
+        comc.bankname = bankname
+        comc.bankaccount = bankaccount
+        comc.accountPhoto = account_url
+
+    db.session.commit()
+    
+    return jsonify({"success": "성공", "photo_url": account_url}), 200
+
+@test_bp.route("/check-pbank", methods=["GET"])
+def isPbank():
+    users = db.session.query(Personal).all()
+
+    for user in users:
+        if not user.bankname:
+            return jsonify({"fail": user.pid }), 200
+        
+        if not user.bankaccount:
+            return jsonify({"fail2": user.pid }), 200
+        
+    return jsonify({"success": "성공" }), 200
+
+@test_bp.route("/check-cbank", methods=["GET"])
+def isCbank():
+    users = db.session.query(Commercial).all()
+
+    for user in users:
+        if not user.bankname:
+            return jsonify({"fail": user.cid }), 200
+        
+        if not user.bankaccount:
+            return jsonify({"fail2": user.cid }), 200
+        
+        if not user.accountPhoto:
+            return jsonify({"fail3": user.cid }), 200
+        
+    return jsonify({"success": "성공" }), 200
+
+@test_bp.route("/add-pbankname/<int:pid>", methods=["POST"])
+def p_bankname(pid):
+    bankname = request.form.get("bankname")
+
+    user = db.session.query(Personal).filter_by(pid = pid).first()
+
+    if not user:
+        return jsonify({"error": "유저 없음" }), 404
+
+    user.bankname = bankname
+
+    db.session.commit()
+    
+    return jsonify({"success": "성공" }), 200
+
+@test_bp.route("/add-cbankname/<int:cid>", methods=["POST"])
+def c_bankname(cid):
+    bankname = request.form.get("bankname")
+
+    user = db.session.query(Commercial).filter_by(cid = cid).first()
+
+    if not user:
+        return jsonify({"error": "유저 없음" }), 404
+
+    user.bankname = bankname
+
+    comcert = db.session.query(Commercialcert).filter_by(cid=cid).all()
+
+    for comc in comcert:
+        comc.bankname = bankname
+
+    db.session.commit()
+    
+    return jsonify({"success": "성공"}), 200
