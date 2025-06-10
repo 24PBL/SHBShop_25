@@ -25,6 +25,8 @@ export default function SignupCommon({ navigation, route }) {
   const [BirthError, setBirthError] = useState("");
   const [PNumError, setPNumError] = useState("");
   const [PNum, setPNum] = useState("");
+  const [BankName, setBankName] = useState("");
+  const [BankNum, setBankNum] = useState("");
 
   const [modalVisible, setModalVisible] = useState(false);
   const [zipcode, setZipcode] = useState("");
@@ -66,7 +68,9 @@ formData.append("email", inputValue);
 formData.append("authCode", verificationCode);
 formData.append("password", PW);
 formData.append("nickname", NickName);
-formData.append("address", finaladdress);  
+formData.append("address", finaladdress);
+formData.append("bankname", BankName);
+formData.append("bankaccount", BankNum);
 formData.append("imgfile", {
   uri: image,
   type: 'image/jpeg', 
@@ -308,6 +312,10 @@ const BirthCheck = (text) => {
       <Label>전화번호</Label>
       <SignInput placeholder='010-XXXX-XXXX' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={CheckPhone}></SignInput>
       <Text style={{ color: "red" , marginLeft:50, marginTop:5}}>{PNumError}</Text>
+      <Label>은행명</Label>
+      <SignInput placeholder='은행명' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={setBankName}></SignInput>
+      <Label>계좌번호</Label>
+      <SignInput placeholder='- 없이 입력하세요' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={setBankNum}></SignInput>
       <Label>주소</Label>
       <View>
       <Text style={{color: zipcode ? "black" : "rgba(0,0,0,0.5)", fontSize:17, borderWidth: 1, padding: 10, width:270, borderRadius:10, height:55, textAlignVertical:'center', alignSelf:'center'}}>{zipcode || "우편번호"}</Text>
@@ -377,8 +385,9 @@ const Container = styled.View`
 
 const Label = styled.Text`
   font-size: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   margin-left : 50px;
+  margin-top : 8px;
 `;
 
 

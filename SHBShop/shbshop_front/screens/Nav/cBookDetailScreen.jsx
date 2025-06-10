@@ -119,6 +119,41 @@ useEffect(() => {
     ]
 }
 
+const handleChat = async () => {
+  try {
+    const Data = await AsyncStorage.getItem('UserData');
+    const userData = JSON.parse(Data);
+    const userId = userData.decoded_user_id;
+    const Token = await AsyncStorage.getItem('jwtToken');
+
+    const elseId = data.seller.sellerId; // 상대 유저 ID
+    const elseType = data.seller.userType; // 상대 유저 타입
+
+    const res = await axios.get(`${API_URL}/chat/${userId}/chat-room/${elseType}/${elseId}`, {
+      headers: {
+        Authorization: `Bearer ${Token}`,
+      },
+    });
+
+    const roomId = res.data.room_id || res.data.roomId; // 명세에 따라 key 다를 수 있음
+
+    // 채팅방 참여 socket.emit (소켓 전역 객체가 있다고 가정)
+    socket.emit('join', {
+      token: Token,
+      room_id: roomId,
+    });
+
+    // 채팅방으로 이동
+    navigation.navigate('ChatRoomScreen', {
+      roomId: roomId,
+    });
+
+  } catch (err) {
+    console.error('채팅방 생성/조회 실패:', err);
+    Alert.alert("채팅 연결 실패", "다시 시도해주세요.");
+  }
+};
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{backgroundColor:'white', flex:1}}>
