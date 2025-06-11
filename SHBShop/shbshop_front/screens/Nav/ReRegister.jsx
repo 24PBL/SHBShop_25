@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Button, Modal} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Button, Modal, Image} from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { WebView } from "react-native-webview";
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-
+import * as ImagePicker from 'expo-image-picker';
 
 const ReRegister = ({ route, navigation }) => {
   const { data } = route.params;
@@ -19,13 +19,15 @@ const ReRegister = ({ route, navigation }) => {
   const [businessname, setbusinessName] = useState(commerData.cert.businessmanName);
   const [email, setemail] = useState(commerData.cert.businessEmail);
   const [coNumber, setcoNumber] = useState(commerData.cert.coNumber);
+  const [bankname, setbankname] = useState(commerData.cert.bankname);
+  const [banknum, setbanknum] = useState(commerData.cert.bankaccount);
   const [etc, setetc] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [zipcode, setZipcode] = useState("");
   const [address, setAddress] = useState("");
   const [detailAddress, setDetailAddress] = useState("");
   const [files, setFiles] = useState([]);
-
+  const [bankCopyImage, setBankCopyImage] = useState(null);
   const finaladdress = address + ' ' + detailAddress
 
 
@@ -42,16 +44,24 @@ const ReRegister = ({ route, navigation }) => {
     formData.append('businessEmail', email);
     formData.append('coNumber', coNumber);
     formData.append('address', finaladdress);
-
+    formData.append('bankname', bankname);
+    formData.append('bankaccount', banknum);
     formData.append('licence', {
       uri: files[0].uri,
       name: files[0].name,
       type: 'application/pdf',
     });
 
+    if (bankCopyImage) {
+  formData.append('accountPhoto', {
+    uri: bankCopyImage.uri,
+    name: 'bank_copy.jpg',
+    type: 'image/jpeg',
+  });
+}
 
     try{
-      console.log(data.result)
+      console.log(FormData)
     const response = await fetch(`${API_URL}/home/${userId}/my-page/check-my-commer/${commerData.cert.certId}/re-cert`, {
       method: 'POST',
       headers: {
@@ -87,6 +97,22 @@ const ReRegister = ({ route, navigation }) => {
       setFiles([]);
     };
   
+  
+    const pickBankCopyImage = async () => {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+    
+      if (!result.canceled) {
+        setBankCopyImage(result.assets[0]);
+      }
+    };
+    
+    const removeBankCopyImage = () => {
+      setBankCopyImage(null);
+    };
 
   return (
     <SafeAreaProvider>
@@ -119,6 +145,12 @@ const ReRegister = ({ route, navigation }) => {
 
           <Text style={styles.Label}>사업자 번호</Text>
           <View style={styles.TextBox}><TextInput style={styles.BoxText} value={coNumber} onChangeText={setcoNumber}></TextInput></View>
+
+          <Text style={styles.Label}>은행명</Text>
+          <View style={styles.TextBox}><TextInput style={styles.BoxText} value={bankname} onChangeText={setbankname}></TextInput></View>
+
+          <Text style={styles.Label}>계좌번호</Text>
+          <View style={styles.TextBox}><TextInput style={styles.BoxText} value={banknum} onChangeText={setbanknum}></TextInput></View>
 
           <Text style={styles.Label}>주소</Text>
           <View>
@@ -153,7 +185,7 @@ const ReRegister = ({ route, navigation }) => {
                 justifyContent: 'space-between'}}>
             {files.length === 0 ? (
               <TouchableOpacity style={{justifyContent:'center', alignItems:'center'}} onPress={pickFile}>
-                <Ionicons name="document-attach-outline" size={35} color="#aaa" />
+                <Ionicons name="add-outline" size={35} />
               </TouchableOpacity>
             ) : (
               <View style={{flexDirection: 'row',
@@ -175,7 +207,30 @@ const ReRegister = ({ route, navigation }) => {
             )}
           </View>
 
+          <Text style={styles.Label}>통장 사본</Text>
+          <View style={{flexDirection: 'row',
+                alignItems: 'center',
+                padding: 10,
+                marginBottom: 10,
+                width: 270,
+                height: 55,
+                justifyContent: 'space-between'}}>
+            {!bankCopyImage ? (
+              <TouchableOpacity style={{justifyContent:'cetner', alignItems:'center'}} onPress={pickBankCopyImage}>
+                <Ionicons name="add-outline" size={35} />
+              </TouchableOpacity>
+            ) : (
+              <View style={{ alignItems: 'center' }}>
+                <Image source={{ uri: bankCopyImage.uri }} style={{ width: 80, height: 80, borderRadius: 10, marginTop:10 }} />
+                <TouchableOpacity onPress={removeBankCopyImage} style={styles.deleteButton}>
+                  <Ionicons name="close-circle" size={20} color="red" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
 
+          <Separator/>
+          <Separator/>
           <TouchableOpacity style={{backgroundColor:'#0091da', width:'80%', borderRadius:10, height:50, alignItems:'center', justifyContent:'center'}} onPress={ReApprove}>
             <Text style={{fontSize:18, fontWeight:'bold', color:'white'}}>재요청</Text>
             </TouchableOpacity>
@@ -262,6 +317,13 @@ const styles = StyleSheet.create({
   AddImageButtonText: {
     fontSize: 40,
     color: '#333',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: -2,
+    right: -5,
+    backgroundColor: 'white',
+    borderRadius: 10,
   },
 });
 

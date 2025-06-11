@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>라이센스 상세 정보</title>
+  <title>사업자 상세 정보</title>
   <style>
     body {
       font-family: sans-serif;
@@ -30,26 +30,33 @@
       margin-bottom: 20px;
       font-size: 16px;
     }
-    #pdfViewer {
-      width: 100%;
-      height: 600px;
-      border: 1px solid #ddd;
-      margin-top: 20px;
+    canvas {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+      margin-top: 10px;
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
 </head>
 <body>
   <div class="detail-container">
-    <h2>라이센스 상세 정보</h2>
+    <h2>사업자 상세 정보</h2>
     <div id="licenceDetails" class="detail-info"></div>
-    
-    <div id="pdfViewer"></div>
 
+    <!-- 사업자 등록증 -->
+    <div id="licencePdfContainer" style="margin-top: 30px; text-align: center;">
+      <p style="font-weight: bold; margin-bottom: 10px;">사업자 등록증</p>
+      <div id="pdfViewer" style="border: 1px solid #ddd;"></div>
+    </div>
+
+    <!-- 통장 사본 -->
+    <div id="bankImageContainer" style="margin-top: 30px; text-align: center;"></div>
+
+    <!-- 승인/거절 영역 -->
     <div style="margin-top: 20px; text-align: center;">
       <textarea id="reviewReason" placeholder="사유를 입력하세요" rows="3"
-        style="width: 80%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; display: none;">
-      </textarea>
+        style="width: 80%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; display: none;"></textarea>
       <br /><br />
       <button id="approveBtn" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer; display: none;">
         승인
@@ -64,7 +71,6 @@
     async function loadLicenceDetails() {
       const token = localStorage.getItem('jwtToken');
       const licenceDetailsDiv = document.getElementById('licenceDetails');
-      const pdfViewerDiv = document.getElementById('pdfViewer');
       const reviewBox = document.getElementById('reviewReason');
       const approveBtn = document.getElementById('approveBtn');
       const rejectBtn = document.getElementById('rejectBtn');
@@ -98,8 +104,6 @@
         }
 
         const data = await response.json();
-        console.log('상세 정보:', data);
-
         const state = data.licenceInfo.state;
         const reason = data.licenceInfo.reason || '';
 
@@ -120,13 +124,14 @@
           <p><strong>사업자 번호 : </strong> ${data.licenceInfo.coNumber}</p>
           <p><strong>승인 요청일 : </strong> ${new Date(data.licenceInfo.createAt).toLocaleDateString()}</p>
           <p><strong>전화번호 : </strong> ${data.licenceInfo.tel}</p>
+          <p><strong>은행명 : </strong> ${data.licenceInfo.bankname}</p>
+          <p><strong>계좌번호 : </strong> ${data.licenceInfo.bankaccount}</p>
         `;
         licenceDetailsDiv.innerHTML = licenceDetails;
 
-        // 상태에 따라 UI 조절
         if (state === 1) {
           reviewBox.style.display = 'block';
-          reviewBox.value = '';  // 사유칸 초기화
+          reviewBox.value = '';
           reviewBox.disabled = false;
           approveBtn.style.display = 'inline-block';
           rejectBtn.style.display = 'inline-block';
@@ -134,9 +139,6 @@
           reviewBox.style.display = 'none';
           approveBtn.style.display = 'none';
           rejectBtn.style.display = 'none';
-          const approvedMsg = document.createElement('p');
-          approvedMsg.innerHTML = `<strong style="color: blue;">승인 완료</strong>`;
-          licenceDetailsDiv.appendChild(approvedMsg);
         } else if (state === 3) {
           reviewBox.style.display = 'block';
           reviewBox.value = reason;
@@ -145,9 +147,32 @@
           rejectBtn.style.display = 'none';
         }
 
+        // 사업자 등록증 렌더링
         if (data.licenceInfo.licence) {
           const pdfUrl = `http://192.168.0.7:5000${data.licenceInfo.licence}`;
           renderPDF(pdfUrl);
+        }
+
+        // 통장 사본 이미지 렌더링
+        if (data.licenceInfo.accountPhoto) {
+          const imageUrl = `http://192.168.0.7:5000${data.licenceInfo.accountPhoto}`;
+          const bankImageContainer = document.getElementById('bankImageContainer');
+
+          const title = document.createElement('p');
+          title.textContent = '통장 사본';
+          title.style.fontWeight = 'bold';
+          title.style.marginBottom = '10px';
+
+          const img = document.createElement('img');
+          img.src = imageUrl;
+          img.alt = '통장 사본 이미지';
+          img.style.maxWidth = '400px';
+          img.style.border = '1px solid #ccc';
+          img.style.borderRadius = '8px';
+          img.style.boxShadow = '0px 2px 10px rgba(0,0,0,0.1)';
+
+          bankImageContainer.appendChild(title);
+          bankImageContainer.appendChild(img);
         }
 
       } catch (error) {
@@ -158,12 +183,12 @@
 
     function renderPDF(pdfUrl) {
       const pdfViewerDiv = document.getElementById('pdfViewer');
+      pdfViewerDiv.innerHTML = ''; // 기존 내용 제거
 
-      pdfjsLib.getDocument(pdfUrl).promise.then(pdfDoc_ => {
-        const pdfDoc = pdfDoc_;
-        pdfDoc.getPage(1).then(function(page) {
+      pdfjsLib.getDocument(pdfUrl).promise.then(pdfDoc => {
+        pdfDoc.getPage(1).then(page => {
           const scale = 0.7;
-          const viewport = page.getViewport({ scale: scale });
+          const viewport = page.getViewport({ scale });
 
           const canvas = document.createElement('canvas');
           pdfViewerDiv.appendChild(canvas);
@@ -177,7 +202,7 @@
             viewport: viewport
           });
         });
-      }).catch(function(error) {
+      }).catch(error => {
         console.error('PDF 렌더링 실패:', error);
         alert('PDF를 불러오는 데 실패했습니다.');
       });
@@ -228,7 +253,6 @@
     document.getElementById('approveBtn').addEventListener('click', () => sendReview(2));
     document.getElementById('rejectBtn').addEventListener('click', () => sendReview(3));
 
-    // 페이지 로드시 데이터 불러오기
     loadLicenceDetails();
   </script>
 </body>
