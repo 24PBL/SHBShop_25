@@ -235,7 +235,7 @@ const handleChat = async () => {
             <Text style={styles.chatText}>채팅</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.buybutton} onPress={Buy}>
-            <Text style={styles.chatText}>물품 구매</Text>
+            <Text style={styles.chatText}>구매</Text>
           </TouchableOpacity>
         </View>
       </View>

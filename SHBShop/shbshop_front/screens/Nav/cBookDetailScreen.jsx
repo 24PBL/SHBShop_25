@@ -6,7 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-
+import socket from '../Chat/Socket';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 const BUY_URL = Constants.expoConfig.extra.BUY_URL;
@@ -230,8 +230,11 @@ const handleChat = async () => {
 
             <Text style={styles.priceText}>{data.book.price.toLocaleString()}원</Text>
           </View>
-          <TouchableOpacity style={styles.chatbutton} onPress={Buy}>
-            <Text style={styles.chatText}>물품 구매</Text>
+          <TouchableOpacity style={styles.chatbutton} onPress={handleChat}>
+                      <Text style={styles.chatText}>채팅</Text>
+                    </TouchableOpacity>
+          <TouchableOpacity style={styles.buybutton} onPress={Buy}>
+            <Text style={styles.chatText}>구매</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -339,6 +342,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 10,
     borderRadius: 10,
+    marginLeft:150
   },
   chatText: {
     color: '#fff',
@@ -348,6 +352,12 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#ccc',
     marginVertical: 0,
+  },
+  buybutton: {
+    backgroundColor: '#0091DA',
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 10,
   },
 });
 
