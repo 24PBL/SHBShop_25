@@ -5,7 +5,7 @@ import { Alert, Linking } from 'react-native';
 const TossPaymentScreen = ({ route }) => {
   const { paymentData } = route.params;
 
-  const clientKey = "test_ck_ORzdMaqN3wxJoKBA2kGDV5AkYXQG";  // 실제 키로 교체하세요.
+  const clientKey = "test_ck_XZYkKL4MrjeEAl5Pmy2kV0zJwlEW";  // 실제 키로 교체하세요.
 
   const html = `
     <html>

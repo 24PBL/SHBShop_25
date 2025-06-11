@@ -198,7 +198,9 @@ const EditProfileScreen = ({ route, navigation }) => {
               onChangeText={setNickname}
             />
           </View>
-
+        
+        {userType !== 2 ? (
+            <>
           <Text style={styles.sectionLabel1}>계좌 정보 변경</Text>
           <Text style={styles.sectionLabel}>은행명을 입력하세요</Text>
           <View style={styles.inputContainer}>
@@ -223,7 +225,14 @@ const EditProfileScreen = ({ route, navigation }) => {
               onChangeText={setbanknum}
             />
           </View>
-
+          </>) : (
+            <View style={styles.inputContainer}>
+              <Text style={{fontSize: 18, fontWeight: 'bold', marginTop: 20}}>사업자 주소 변경</Text>
+              <TouchableOpacity>
+                  <Text style={{fontSize: 14, fontWeight: 'bold', marginTop: 30, color:'#0091da'}}>사업자 계좌 변경은 이곳을 클릭해 주세요</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           {/* 확인 버튼 */}
           <TouchableOpacity style={styles.button} onPress={infoChange}>
             <Text style={styles.buttonText}>확인</Text>

@@ -31,6 +31,7 @@ import EditSellDetail from './EditSellDetail';
 import MySellBook from './MySellBook';
 import MyBookSearchScreen from './MyBookSearchScreen';
 import MySellBook1 from './MySellBook1';
+import MySelledList from './MySelledList'
 const Stack = createNativeStackNavigator();
 
 const MyPageStack = () => {
@@ -64,9 +65,10 @@ const MyPageStack = () => {
       <Stack.Screen name='SellListSearch' component={SellListSearch} options={{headerShown: false}}/>
       <Stack.Screen name='SellDetail' component={SellDetail} options={{headerShown: false}}/>
       <Stack.Screen name='EditSellDetail' component={EditSellDetail} options={{headerShown: false}}/>
-            <Stack.Screen name="MySellBook" component={MySellBook} options={{ headerShown:false }} />
-            <Stack.Screen name="MyBookSearch" component={MyBookSearchScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="MySellBook1" component={MySellBook1} options={{ headerShown: false }} />
+      <Stack.Screen name="MySellBook" component={MySellBook} options={{ headerShown:false }} />
+      <Stack.Screen name="MyBookSearch" component={MyBookSearchScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MySellBook1" component={MySellBook1} options={{ headerShown: false }} />
+      <Stack.Screen name="MySelledList" component={MySelledList} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );

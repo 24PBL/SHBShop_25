@@ -12,6 +12,7 @@ const API_URL = Constants.expoConfig.extra.API_URL;
 const MyPageScreen = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [nickname, setNickname] = useState('닉네임');
+  const [name, setname] = useState("");
   const [bookstoreName, setBookstoreName] = useState('');
   const [userData, setUserData] = useState(null);
   const [shopId, setShopId] = useState(null);
@@ -140,6 +141,7 @@ const MyPageScreen = ({ navigation }) => {
           setSendData(result);
           console.log(result)
           if (result.user_info.nickname) setNickname(result.user_info.nickname);
+          if (result.user_info.name) setname(result.user_info.name);
           if (result.user_info.bookstoreName) setBookstoreName(`(${result.user_info.bookstoreName})`);
           if (result.user_info.profile) {
             const fullProfileUri = `${API_URL}${result.user_info.profile}`;
@@ -221,6 +223,26 @@ const MyPageScreen = ({ navigation }) => {
       console.error('오류 발생:', error);
     }
   }
+
+  const goToSelledList = async () => {
+    try {
+      if (!userData) return;
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/check-payment`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+      const result = await response.json();
+      navigation.navigate("MySelledList", {data : result})
+      console.log(result);
+    } catch (error) {
+      console.error('오류 발생:', error);
+    }
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
@@ -243,7 +265,7 @@ const MyPageScreen = ({ navigation }) => {
               {bankaccount : banknum, bankname : bankname}
             )}>
               <View style={styles.nicknameTextContainer}>
-                <Text style={styles.nickname}>{nickname}</Text>
+                <Text style={styles.nickname}>{name} ({nickname})</Text>
                 <Text style={styles.bookstoreName}>{bookstoreName}</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color="#000" />
@@ -254,6 +276,11 @@ const MyPageScreen = ({ navigation }) => {
 
           <View style={styles.menuList}>
             <TouchableOpacity style={styles.menuItem} onPress={goToSellList}>
+              <Text style={styles.menuText}>등록 도서 조회</Text>
+              <Ionicons name="chevron-forward" size={18} color="#000" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} onPress={goToSelledList}>
               <Text style={styles.menuText}>내 판매 도서 조회</Text>
               <Ionicons name="chevron-forward" size={18} color="#000" />
             </TouchableOpacity>
