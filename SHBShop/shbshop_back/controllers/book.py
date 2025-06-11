@@ -181,6 +181,7 @@ def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
             }
     
     sellerInfo = {
+                "sellerId": seller.cid,
                 "name": seller.name,
                 "tel": seller.tel,
                 "nickname": seller.nickname,
@@ -190,6 +191,7 @@ def show_sbook_info(decoded_user_id, user_type, userId, shopId, bookId):
             }
     
     shopInfo = {
+                "shopId": shop.sid,
                 "shopName": shop.shopName,
                 "shoptel": shop.shoptel,
                 "address": shop.address,
