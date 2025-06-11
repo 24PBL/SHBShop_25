@@ -636,6 +636,16 @@ def payment_success4p():
                 preceipt.payment_key = payment_key
                 preceipt.installment_months = installment
                 preceipt.reason = "결제완료"
+
+                for pba in books:
+                    pbp = db.session.query(Pbasket2p).filter(Pbasket2p.bid == pba.bid, Pbasket2p.pid == preceipt.pid).first()
+                    pbc = db.session.query(Pbasket2c).filter(Pbasket2c.bid == pba.bid, Pbasket2c.pid == preceipt.pid).first()
+
+                    if pbp:
+                        db.session.query(Pbasket2p).filter(Pbasket2p.bid == pba.bid, Pbasket2p.pid == preceipt.pid).delete()
+                    
+                    if pbc:
+                        db.session.query(Pbasket2c).filter(Pbasket2c.bid == pba.bid, Pbasket2c.pid == preceipt.pid).delete()
             else:
                 return jsonify({"error": "이미 처리된 결제"}), 400
         elif creceipt:
@@ -646,6 +656,16 @@ def payment_success4p():
                 creceipt.payment_key = payment_key
                 creceipt.installment_months = installment
                 creceipt.reason = "결제완료"
+
+                for cba in books:
+                    cbp = db.session.query(Cbasket2p).filter(Cbasket2p.bid == cba.bid, Cbasket2p.cid == creceipt.cid).first()
+                    cbc = db.session.query(Cbasket2c).filter(Cbasket2c.bid == cba.bid, Cbasket2c.cid == creceipt.cid).first()
+
+                    if cbp:
+                        db.session.query(Cbasket2p).filter(Cbasket2p.bid == cba.bid, Cbasket2p.cid == creceipt.cid).delete()
+                    
+                    if cbc:
+                        db.session.query(Cbasket2c).filter(Cbasket2c.bid == cba.bid, Cbasket2c.cid == creceipt.cid).delete()
             else:
                 return jsonify({"error": "이미 처리된 결제"}), 400
         else:
@@ -769,6 +789,9 @@ def payment_success4s():
                 preceipt.payment_key = payment_key
                 preceipt.installment_months = installment
                 preceipt.reason = "결제완료"
+
+                for psb in books:
+                    db.session.query(Pbasket2s).filter(Pbasket2s.bid == psb.bid, Pbasket2s.pid == preceipt.pid).delete()
             else:
                 return jsonify({"error": "이미 처리된 결제"}), 400
         elif creceipt:
@@ -779,6 +802,9 @@ def payment_success4s():
                 creceipt.payment_key = payment_key
                 creceipt.installment_months = installment
                 creceipt.reason = "결제완료"
+
+                for csb in books:
+                    db.session.query(Cbasket2s).filter(Cbasket2s.bid == csb.bid, Cbasket2s.cid == creceipt.cid).delete()
             else:
                 return jsonify({"error": "이미 처리된 결제"}), 400
         else:
