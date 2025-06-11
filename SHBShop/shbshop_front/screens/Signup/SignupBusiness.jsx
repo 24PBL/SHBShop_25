@@ -27,7 +27,8 @@ export default function SignupCommon({ navigation, route }) {
 
   const [NickName, setNickName] = useState("");
   const [Name, setName] = useState("");
-
+const [BankName, setBankName] = useState("");
+  const [BankNum, setBankNum] = useState("");
    const [image, setImage] = useState(null); // 하나만 저장
 
   const {userType} = route.params; //이전 창에서 받은 유저유형
@@ -185,7 +186,10 @@ const BirthCheck = (text) => {
       name : Name,
       birth : Birth,
       phone : PNum,
-      img : image })
+      img : image,
+     bankname : BankName,
+     banknum : BankNum
+    })
   }
 
   const verifyCode = async () => {
@@ -270,6 +274,12 @@ const BirthCheck = (text) => {
       <Label>전화번호</Label>
       <SignInput placeholder='010-XXXX-XXXX' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={CheckPhone}></SignInput>
       <Text style={{ color: "red" , marginLeft:50, marginTop:5}}>{PNumError}</Text>
+      <Separator/>
+      <Label>은행명</Label>
+      <SignInput placeholder='은행명' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={setBankName}></SignInput>
+      <Separator/>
+      <Label>계좌번호</Label>
+      <SignInput placeholder='-를 포함하세요' placeholderTextColor = "rgba(0,0,0,0.4)" onChangeText={setBankNum}></SignInput>
       <Separator/>
       <Label>프로필 사진</Label>
       <View style={{width:150, height:150, backgroundColor:'#d9d9d9', alignSelf:'center', alignItems:'center', justifyContent:'center', borderRadius:100, marginTop:20}}>

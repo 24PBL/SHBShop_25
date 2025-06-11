@@ -11,12 +11,13 @@ const API_URL = Constants.expoConfig.extra.API_URL;
 
 const EditProfileScreen = ({ route, navigation }) => {
   const { result } = route.params.data;
-
+  const {bankaccount, bank_name} = route.params; 
   const [random, setRandom] = useState(result.randomCode);
   const [PNum, setPNum] = useState(result.userInfo.tel);
   const [address, setAddress] = useState(result.userInfo.address);
   const [nickname, setNickname] = useState(result.userInfo.nickname);
-
+  const [bankname, setbankname] = useState(bank_name);
+  const [banknum, setbanknum] = useState(bankaccount);
   const [modalVisible, setModalVisible] = useState(false);
   const [zipcode, setZipcode] = useState('');
   const [changeAddress, setChangeAddress] = useState('');
@@ -45,7 +46,8 @@ const EditProfileScreen = ({ route, navigation }) => {
     formData.append("randomCode", random);
     formData.append("tel", PNum);
     formData.append("nickname", nickname);
-
+    formData.append("bankname", bankname);
+    formData.append("bankaccount", banknum);
     // userType이 2면 "commercial" 주소를 넣고, 아니면 실제 주소를 넣음
     if (userType === 2) {
       formData.append("address", "commercial");
@@ -194,6 +196,31 @@ const EditProfileScreen = ({ route, navigation }) => {
               placeholderTextColor="rgba(0,0,0,0.4)"
               value={nickname}
               onChangeText={setNickname}
+            />
+          </View>
+
+          <Text style={styles.sectionLabel1}>계좌 정보 변경</Text>
+          <Text style={styles.sectionLabel}>은행명을 입력하세요</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>은행명</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="은행명"
+              placeholderTextColor="rgba(0,0,0,0.4)"
+              value={bankname}
+              onChangeText={setbankname}
+            />
+          </View>
+
+          <Text style={styles.sectionLabel}>계좌번호를 입력하세요</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>계좌번호 <Text style={{fontSize:10, color:'gray'}}>(-를 포함하세요)</Text></Text>
+            <TextInput
+              style={styles.input}
+              placeholder="-을 포함해주세요"
+              placeholderTextColor="rgba(0,0,0,0.4)"
+              value={banknum}
+              onChangeText={setbanknum}
             />
           </View>
 

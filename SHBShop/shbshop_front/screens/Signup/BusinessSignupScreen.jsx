@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, Button, ScrollView} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, Button, ScrollView, Image} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import { WebView } from "react-native-webview";
 import axios from 'axios';
 import Constants from 'expo-constants';
+import * as ImagePicker from 'expo-image-picker';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
@@ -17,6 +18,23 @@ const BusinessSignupScreen = ({route, navigation}) => {
     phoneNumber: '',
     businessemail: '',
   });
+const [bankCopyImage, setBankCopyImage] = useState(null);
+
+const pickBankCopyImage = async () => {
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 1,
+  });
+
+  if (!result.canceled) {
+    setBankCopyImage(result.assets[0]);
+  }
+};
+
+const removeBankCopyImage = () => {
+  setBankCopyImage(null);
+};
 
   const handleSubmit = async () => {
     if (
@@ -53,6 +71,8 @@ const BusinessSignupScreen = ({route, navigation}) => {
     formData.append('birth', birth);
     formData.append('tel', phone);
     formData.append('address', finaladdress);
+    formData.append('bankname', bankname);
+    formData.append('bankaccount', banknum);
     formData.append('businessmanName', form.businessName);
     formData.append('presidentName', form.representativeName);
     formData.append('businessEmail', form.businessemail);
@@ -72,6 +92,14 @@ const BusinessSignupScreen = ({route, navigation}) => {
       type: 'application/pdf',
     });
   
+    if (bankCopyImage) {
+  formData.append('accountPhoto', {
+    uri: bankCopyImage.uri,
+    name: 'bank_copy.jpg',
+    type: 'image/jpeg',
+  });
+}
+
 
     try{
       const response = axios.post(
@@ -92,7 +120,7 @@ const BusinessSignupScreen = ({route, navigation}) => {
   };
   
 
-  const {email, authCode, password, nickname, name, birth, phone, img} = route.params;
+  const {email, authCode, password, nickname, name, birth, phone, img, bankname, banknum} = route.params;
 
   const [files, setFiles] = useState([]);
 
@@ -181,11 +209,11 @@ const BusinessSignupScreen = ({route, navigation}) => {
 </View>
 
 
-          <Text style={styles.subtitle}>사업자등록증</Text>
+          <Text style={styles.subtitle}>사업자등록증 <Text style={{fontSize:13, color:'gray'}}>(PDF파일 첨부)</Text></Text>
           <View style={styles.fileContainer}>
             {files.length === 0 ? (
               <TouchableOpacity style={styles.filePickerButton} onPress={pickFile}>
-                <Ionicons name="document-attach-outline" size={35} color="#aaa" />
+                <Ionicons name="add-outline" size={35} />
               </TouchableOpacity>
             ) : (
               <View style={styles.fileWrapper}>
@@ -196,6 +224,23 @@ const BusinessSignupScreen = ({route, navigation}) => {
               </View>
             )}
           </View>
+          
+          <Text style={styles.subtitle}>통장 사본</Text>
+<View style={styles.fileContainer}>
+  {!bankCopyImage ? (
+    <TouchableOpacity style={styles.filePickerButton} onPress={pickBankCopyImage}>
+      <Ionicons name="add-outline" size={35} />
+    </TouchableOpacity>
+  ) : (
+    <View style={{ alignItems: 'center' }}>
+      <Image source={{ uri: bankCopyImage.uri }} style={{ width: 80, height: 80, borderRadius: 10, marginTop:10 }} />
+      <TouchableOpacity onPress={removeBankCopyImage} style={styles.deleteButton}>
+        <Ionicons name="close-circle" size={20} color="red" />
+      </TouchableOpacity>
+    </View>
+  )}
+</View>
+
 
           <Text style={styles.note}>
             <Text style={{ fontWeight: 'bold' }}>회원가입 후 사업자 기능은 승인 후 이용 가능합니다.</Text>

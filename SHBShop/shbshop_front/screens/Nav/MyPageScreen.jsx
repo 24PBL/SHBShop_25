@@ -16,6 +16,8 @@ const MyPageScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const [shopId, setShopId] = useState(null);
   const [sendData, setSendData] = useState(null);
+  const [bankname, setbankname] = useState("");
+  const [banknum, setbanknum] = useState("");
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
@@ -135,12 +137,15 @@ const MyPageScreen = ({ navigation }) => {
 
           const result = await response.json();
           setSendData(result);
+          console.log(result)
           if (result.user_info.nickname) setNickname(result.user_info.nickname);
           if (result.user_info.bookstoreName) setBookstoreName(`(${result.user_info.bookstoreName})`);
           if (result.user_info.profile) {
             const fullProfileUri = `${API_URL}${result.user_info.profile}`;
             setSelectedImage(fullProfileUri);
           }
+          if (result.user_info.bankaccount) setbanknum(result.user_info.bankaccount);
+          if (result.user_info.bankname) setbankname(result.user_info.bankname);
           if (result.shop_info.shopId) setShopId(result.shop_info.shopId);
           setUserData((prev) => ({
             ...prev,
@@ -233,7 +238,9 @@ const MyPageScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.nicknameRow} onPress={() => navigation.navigate('CommonPWConfirm')}>
+            <TouchableOpacity style={styles.nicknameRow} onPress={() => navigation.navigate('CommonPWConfirm',
+              {bankaccount : banknum, bankname : bankname}
+            )}>
               <View style={styles.nicknameTextContainer}>
                 <Text style={styles.nickname}>{nickname}</Text>
                 <Text style={styles.bookstoreName}>{bookstoreName}</Text>

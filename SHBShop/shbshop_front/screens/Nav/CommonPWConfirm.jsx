@@ -8,10 +8,10 @@ import axios from 'axios';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const CommonPWConfirm = ({navigation}) => {
+const CommonPWConfirm = ({navigation, route}) => {
 
   const [PW, setPW] = useState(''); // 비밀번호 상태 관리
-
+  const {bankaccount, bankname} = route.params;
   const goToinfoChange = async () =>{
     try{
       const Data = await AsyncStorage.getItem('UserData');
@@ -29,7 +29,7 @@ const CommonPWConfirm = ({navigation}) => {
     );
       const data = response.data;
       console.log(data)
-      navigation.navigate("EditProfileScreen", {data : {result : data}});
+      navigation.navigate("EditProfileScreen", {data : {result : data}, bankaccount : bankaccount, bank_name : bankname});
   } catch (error) {
       console.error('오류 발생:', error);
       Alert.alert("비밀번호 인증 실패", "비밀번호를 다시 확인해주세요.");
