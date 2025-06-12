@@ -34,7 +34,9 @@ import MySellBook1 from './MySellBook1';
 import MySelledList from './MySelledList'
 import AdjustmentList from './AdjustmentList';
 import AdjustmentDetail from './AdjustmentDetail';
-
+import StoreSelledList from './StoreSelledList';
+import ShopAdjustmentList from './ShopAdjustmentList';
+import ShopAdjustmentDetail from './ShopAdjustmentDetail';
 const Stack = createNativeStackNavigator();
 
 const MyPageStack = () => {
@@ -74,6 +76,9 @@ const MyPageStack = () => {
       <Stack.Screen name="MySelledList" component={MySelledList} options={{ headerShown: false }} />
       <Stack.Screen name="AdjustmentList" component={AdjustmentList} options={{ headerShown: false }} />
       <Stack.Screen name="AdjustmentDetail" component={AdjustmentDetail} options={{ headerShown: false }} />
+      <Stack.Screen name="StoreSelledList" component={StoreSelledList} options={{ headerShown: false }} />
+      <Stack.Screen name="ShopAdjustmentList" component={ShopAdjustmentList} options={{ headerShown: false }} />
+      <Stack.Screen name="ShopAdjustmentDetail" component={ShopAdjustmentDetail} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );

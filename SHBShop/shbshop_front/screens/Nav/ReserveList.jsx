@@ -11,13 +11,13 @@ const ReserveList = ({ route, navigation }) => {
   const { storedata } = route.params;
   const { receipt_list, book_list } = storedata.data;
 
-  // receipt와 book을 orderid 기준으로 병합
-  const mergedData = receipt_list.map(receipt => {
-    const matchedBook = book_list.find(book => book.orderid === receipt.orderid);
-    return {
-      ...receipt,
-      ...matchedBook, // title, bookimg, bid 등 추가됨
-    };
+  // 데이터를 병합하되, 각 책(book)에 해당하는 receipt 정보를 찾아서 추가
+  const dataForFlatList = book_list.map(book => {
+      const matchedReceipt = receipt_list.find(receipt => receipt.orderid === book.orderid);
+      return {
+          ...book,
+          receipt: matchedReceipt
+      };
   });
 
   const goToReserveDetail = async (sid, ownerType, rid, bid) => {
@@ -25,7 +25,7 @@ const ReserveList = ({ route, navigation }) => {
     const userData = JSON.parse(Data);
     const userId = userData.decoded_user_id;
     const Token = await AsyncStorage.getItem('jwtToken');
-    
+
     const response = await fetch(`${API_URL}/shop/${userId}/${sid}/check-pr/${ownerType}/${rid}/${bid}`, {
       method: 'GET',
       headers: {
@@ -39,10 +39,16 @@ const ReserveList = ({ route, navigation }) => {
     navigation.navigate('ReserveDetail', { storedata: { ReserverListData } });
   };
 
+  // renderItem 함수 수정
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() => goToReserveDetail(item.sid || storedata.data.shop_info.shopId, item.ownerType, item.rid, item.bid)}
+      onPress={() => item.receipt && goToReserveDetail(
+          storedata.data.shop_info.shopId,
+          item.receipt.ownerType,
+          item.receipt.rid,
+          item.bid
+      )}
     >
       <Image
         source={{ uri: `${API_URL}${item.bookimg}` }}
@@ -51,8 +57,13 @@ const ReserveList = ({ route, navigation }) => {
       />
       <View style={styles.info}>
         <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.name}>예약자: {item.ownerName}</Text>
-        <Text style={styles.reason}>{item.reason}</Text>
+        {/* ✅ 조건부 렌더링 되는 Fragment 내부의 공백/줄바꿈 제거 */}
+        {item.receipt && (<>
+            <Text style={styles.name}>예약자: {item.receipt.ownerName}</Text>
+            <Text style={styles.reason}>{item.receipt.reason}</Text>
+            <Text style={styles.price}>가격: {item.price.toLocaleString()}원</Text>
+            <Text style={styles.date}>결제일: {new Date(item.receipt.paidAt).toLocaleDateString()}</Text>
+        </>)}
       </View>
     </TouchableOpacity>
   );
@@ -66,11 +77,11 @@ const ReserveList = ({ route, navigation }) => {
         <Text style={styles.header}>예약 주문 조회</Text>
       </View>
 
-      {mergedData && mergedData.length > 0 ? (
+      {dataForFlatList && dataForFlatList.length > 0 ? (
         <FlatList
-          data={mergedData}
+          data={dataForFlatList}
+          keyExtractor={(item) => item.bid.toString()}
           renderItem={renderItem}
-          keyExtractor={(item) => item.rid.toString()}
           contentContainerStyle={styles.list}
         />
       ) : (
@@ -106,16 +117,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    alignItems: 'center',
   },
   image: {
     width: 60,
     height: 85,
     backgroundColor: '#ccc',
     borderRadius: 4,
+    marginRight: 12,
   },
   info: {
     flex: 1,
-    marginLeft: 12,
     justifyContent: 'center',
   },
   title: {
@@ -133,6 +145,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     fontWeight: 'bold',
+  },
+  price: {
+      fontSize: 14,
+      color: '#555',
+      marginTop: 2,
+  },
+  date: {
+      fontSize: 13,
+      color: '#888',
+      marginTop: 2,
   },
   emptyView: {
     flex: 1,

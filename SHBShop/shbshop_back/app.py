@@ -9,7 +9,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
-app.config["PUBLIC_URL"] = "https://e0a2-182-31-40-60.ngrok-free.app"
+app.config["PUBLIC_URL"] = "https://b695-182-31-40-60.ngrok-free.app"
 
 CORS(app)
 
