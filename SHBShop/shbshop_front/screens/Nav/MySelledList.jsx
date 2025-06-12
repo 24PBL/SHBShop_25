@@ -1,26 +1,27 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import Constants from 'expo-constants';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants.expoConfig.extra.API_URL;
 
-const MySelledList = ({ route }) => {
+const MySelledList = ({ route, navigation }) => {
   const { data } = route.params;
-  const books = data.payment_book_list;
+
+  const [bookList, setBookList] = useState(data.payment_book_list); // books → state 관리
+  const [selectedOrders, setSelectedOrders] = useState([]); // 선택된 orderid 목록
 
   // orderid 기준으로 그룹화
   const groupedBooks = useMemo(() => {
     const groups = {};
-    for (const book of books) {
+    for (const book of bookList) {
       if (!groups[book.orderid]) groups[book.orderid] = [];
       groups[book.orderid].push(book);
     }
     return Object.values(groups); // [[book, book], [book], ...]
-  }, [books]);
-
-  const [selectedOrders, setSelectedOrders] = useState([]); // 선택된 orderid 목록
+  }, [bookList]);
 
   const toggleSelect = (orderid) => {
     if (selectedOrders.includes(orderid)) {
@@ -32,7 +33,7 @@ const MySelledList = ({ route }) => {
 
   const isSelected = (orderid) => selectedOrders.includes(orderid);
 
-  const handleConfirmSelection = () => {
+  const handleConfirmSelection = async () => {
     const selectedBooks = groupedBooks
       .filter(group => selectedOrders.includes(group[0].orderid))
       .flat();
@@ -42,8 +43,58 @@ const MySelledList = ({ route }) => {
       price: selectedBooks.reduce((sum, book) => sum + book.price, 0),
     };
 
-    console.log("선택된 데이터:", selectedData);
-    // API 호출이나 navigation으로 전달 가능
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/check-payment/req-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+        body: JSON.stringify(selectedData),
+      });
+
+      const result = await response.json();
+      console.log(result);
+      Alert.alert('정산 신청', '정산 신청되었습니다.');
+
+      // ✅ 리스트에서 신청된 책 제거
+      setBookList(prev =>
+        prev.filter(book => !selectedBooks.find(sel => sel.bid === book.bid))
+      );
+
+      // ✅ 선택 상태 초기화
+      setSelectedOrders([]);
+    } catch (error) {
+      console.error('오류 발생:', error);
+    }
+  };
+
+  const adjustment = async () => {
+    try {
+      const Data = await AsyncStorage.getItem('UserData');
+      const userData = JSON.parse(Data);
+      const userId = userData.decoded_user_id;
+      const Token = await AsyncStorage.getItem('jwtToken');
+
+      const response = await fetch(`${API_URL}/home/${userId}/my-page/check-payment-req`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Token}`,
+        },
+      });
+
+      const result = await response.json();
+      console.log(result.payment_group[0])
+      navigation.navigate("AdjustmentList", result)
+    } catch (error) {
+      console.error('오류 발생:', error);
+    }
   };
 
   const renderItem = ({ item: group }) => {
@@ -76,30 +127,45 @@ const MySelledList = ({ route }) => {
   };
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-        <View style={styles.container}>
+  <SafeAreaProvider>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+      <View style={styles.container}>
+        <View style={styles.header}>
           <Text style={styles.heading}>판매 완료 목록</Text>
-          <FlatList
-            data={groupedBooks}
-            renderItem={renderItem}
-            keyExtractor={(item) => item[0].orderid}
-          />
-          {selectedOrders.length > 0 && (
-            <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmSelection}>
-              <Text style={styles.confirmText}>
-                {selectedOrders.length}건 선택됨 | 총 {groupedBooks
-                  .filter(g => selectedOrders.includes(g[0].orderid))
-                  .flat()
-                  .reduce((sum, b) => sum + b.price, 0)
-                  .toLocaleString()}원 → 정산 신청
-              </Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity style={styles.adjustmentBtn} onPress={adjustment}>
+            <Text style={styles.adjustmentText}>정산 신청 목록</Text>
+          </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </SafeAreaProvider>
-  );
+
+        {groupedBooks.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>판매 완료된 책이 없습니다.</Text>
+          </View>
+        ) : (
+          <>
+            <FlatList
+              data={groupedBooks}
+              renderItem={renderItem}
+              keyExtractor={(item) => item[0].orderid}
+            />
+            {selectedOrders.length > 0 && (
+              <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmSelection}>
+                <Text style={styles.confirmText}>
+                  {selectedOrders.length}건 선택됨 | 총 {groupedBooks
+                    .filter(g => selectedOrders.includes(g[0].orderid))
+                    .flat()
+                    .reduce((sum, b) => sum + b.price, 0)
+                    .toLocaleString()}원 → 정산 신청
+                </Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
+      </View>
+    </SafeAreaView>
+  </SafeAreaProvider>
+);
+
 };
 
 export default MySelledList;
@@ -161,7 +227,7 @@ const styles = StyleSheet.create({
   },
   confirmBtn: {
     padding: 16,
-    backgroundColor: "#007BFF",
+    backgroundColor: "#0091da",
     borderRadius: 10,
     marginTop: 12,
   },
@@ -170,5 +236,44 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  adjustmentBtn: {
+    backgroundColor: '#0091da',
+    borderRadius: 5,
+    width: 100,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  adjustmentText: {
+    color: 'white',
+    fontWeight: 'bold'
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  adjustmentBtn: {
+    backgroundColor: '#0091da',
+    borderRadius: 5,
+    width: 100,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  adjustmentText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#888',
   },
 });
