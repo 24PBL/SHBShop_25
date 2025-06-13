@@ -25,7 +25,7 @@ const TossPaymentScreen = ({ route }) => {
               customerName: "${paymentData.customerName}",
               successUrl: "${paymentData.successUrl}",
               failUrl: "${paymentData.failUrl}",
-              availablePaymentMethods: ["카드", "계좌이체"]
+              availablePaymentMethods: ["카드"]
             }).catch(function (error) {
               alert("결제 실패: " + error.message);
             });
