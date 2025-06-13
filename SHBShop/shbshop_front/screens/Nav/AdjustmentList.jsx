@@ -47,7 +47,7 @@ const AdjustmentList = () => {
         <Text style={styles.title}> {displayTitle}</Text>
         <Text style={styles.row}> 총 금액: <Text style={styles.value}>{item.price.toLocaleString()}원</Text></Text>
         <Text style={styles.row}> 신청일: <Text style={styles.value}>{dayjs(item.createAt).format('YYYY.MM.DD')}</Text></Text>
-        <Text style={styles.row}> 상태: <Text style={styles.value}>{item.reason}</Text></Text>
+        <Text style={styles.row}> 상태: <Text style={styles.value}>{item.state === 10 ? '정산 진행 중' : item.state === 11 ? '정산 완료' : '알 수 없음'}</Text></Text>
       </TouchableOpacity>
     );
   };

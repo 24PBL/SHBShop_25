@@ -34,7 +34,7 @@ const AdjustmentDetail = () => {
         {/* 정산 정보 */}
         <View style={styles.section}>
           <Text>정산 금액: {payment_info.price.toLocaleString()}원</Text>
-          <Text>정산 상태: {payment_info.reason}</Text>
+          <Text>정산 상태: {payment_info.state === 10 ? '정산 진행 중' : payment_info.state === 11 ? '정산 완료' : '알 수 없음'}</Text>
           <Text>신청 날짜: {formatDate(payment_info.createAt)}</Text>
         </View>
 

@@ -26,6 +26,11 @@
     th {
       background-color: #f0f0f0;
     }
+    /* 행 클릭 시 스타일 변경 */
+    tr:hover {
+      background-color: #e8f4ff;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -34,7 +39,7 @@
     <thead>
       <tr>
         <th>정산 ID</th>
-        <th>매장명</th>
+        <th>매장명</th> <!-- 실제 데이터 속성명과 다를 수 있습니다 -->
         <th>금액</th>
         <th>정산 상태</th>
         <th>날짜</th>
@@ -46,25 +51,86 @@
   </table>
 
   <script>
-    fetch('http://192.168.0.7:5000/admin/check-payment/st')
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.querySelector('#payment-table tbody');
-        data.forEach(item => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${item.id}</td>
-            <td>${item.storeName}</td>
-            <td>${item.amount}</td>
-            <td>${item.status}</td>
-            <td>${item.date}</td>
-          `;
-          tbody.appendChild(row);
+    async function fetchStoreSettlements() {
+      // 1. localStorage에서 JWT 토큰 가져오기
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        // TODO: 로그인 페이지 URL을 실제 경로에 맞게 수정하세요.
+        window.location.href = './adminLogin.html';
+        return;
+      }
+
+      try {
+        // 2. 토큰을 포함하여 API 요청 보내기
+        // TODO: API URL이 정확한지 다시 한번 확인하세요.
+        const res = await fetch('http://192.168.0.7:5000/admin/check-payment/st', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json' // 필요에 따라 Content-Type 추가
+          }
         });
-      })
-      .catch(err => {
-        console.error('데이터 불러오기 실패:', err);
-      });
+
+        // 응답 상태 확인 (예: 200 OK가 아니면 오류 처리)
+        if (!res.ok) {
+             const errorText = await res.text(); // 오류 응답 본문 확인
+             console.error('API 응답 오류:', res.status, errorText);
+             throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log('받은 데이터:', data);
+
+        const tbody = document.querySelector('#payment-table tbody');
+        tbody.innerHTML = ''; // 기존 내용을 비우고 새로 채웁니다.
+
+        // 3. 제공해주신 데이터 형식 ({ payment_group: [...] })에 맞춰 데이터 접근
+        const paymentList = data.payment_group;
+
+        // 데이터가 배열 형태인지 다시 한번 확인 (안정성 강화)
+        if (Array.isArray(paymentList)) {
+             paymentList.forEach(item => {
+               const row = document.createElement('tr');
+
+               // 4. 행 클릭 시 상세 페이지로 이동 기능 추가
+               row.addEventListener('click', () => {
+                 // TODO: 상세 페이지 URL 및 쿼리 파라미터를 실제에 맞게 수정하세요.
+                 // 매장 거래는 kind=2, ID는 item.pyid 사용 (제공된 데이터 형식 기준)
+                 window.location.href = `./store-settlement-detail.html?kind=2&idx=${item.pyid}`;
+               });
+
+               // 5. 테이블 행 내용 채우기 (제공된 데이터 형식의 속성 이름 사용)
+               // TODO: 아래 item.속성명들이 매장 거래 API 응답의 실제 속성명과 일치하는지 확인하고 필요시 수정하세요.
+               // 예: 매장명은 item.storeName일 수도 있습니다.
+               row.innerHTML = `
+                 <td>${item.pyid}</td> <!-- 정산 ID -->
+                 <td>${item.shopName}</td> <!-- 매장명 (개인 거래 형식 참고, 수정 필요 가능성 높음) -->
+                 <td>${item.price.toLocaleString()}원</td> <!-- 금액 -->
+                 <td>${
+                    item.state === 10 // 정산 상태
+                        ? '정산 진행 중'
+                        : item.state === 11
+                        ? '정산 완료'
+                        : item.reason ?? 'N/A' // 사유
+                    }</td>
+                 <td>${new Date(item.createAt).toLocaleDateString()}</td> <!-- 날짜 -->
+               `;
+               tbody.appendChild(row);
+             });
+        } else {
+             console.error('API 응답 형식이 예상과 다릅니다: payment_group이 배열이 아니거나 존재하지 않습니다.', data);
+             alert('데이터 형식이 올바르지 않습니다.');
+        }
+
+      } catch (err) {
+        // 6. 오류 처리
+        console.error('데이터를 불러오는 데 실패했습니다:', err);
+        alert('데이터를 불러오는 데 실패했습니다.');
+      }
+    }
+
+    // 페이지 로드 시 함수 호출
+    fetchStoreSettlements();
   </script>
 </body>
 </html>

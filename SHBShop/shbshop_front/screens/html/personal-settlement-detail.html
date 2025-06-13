@@ -141,7 +141,14 @@
           <p><strong>전화번호:</strong> ${info.tel ?? 'N/A'}</p>
           <p><strong>정산 금액:</strong> ${info.price ? info.price.toLocaleString() + '원' : '금액 없음'}</p>
           <p><strong>계좌 정보:</strong> ${info.bankname ?? ''} ${info.bankaccount ?? ''}</p>
-          <p><strong>정산 상태:</strong> ${info.reason ?? 'N/A'}</p>
+          <p><strong>정산 상태:</strong> ${
+            info.state === 10
+                ? '정산 진행 중'
+                : info.state === 11
+                ? '정산 완료'
+                : info.reason ?? 'N/A'
+            }</p>
+
           <p><strong>등록일:</strong> ${info.createAt ? new Date(info.createAt).toLocaleString() : '날짜 없음'}</p>
         `;
 
