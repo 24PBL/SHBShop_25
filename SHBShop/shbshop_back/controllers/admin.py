@@ -7,11 +7,14 @@ from uuid import uuid4
 from datetime import datetime
 import pytz
 from utils.jwt_helper import token_required
+from dotenv import load_dotenv
 
 from models import Commercial, Commercialcert, Modiaddress, Shop, Sbooktrade, Cbooktrade, Pbooktrade, Ppayment, Cpayment, Spayment, Personal
 from extensions import db
 
 admin_bp = Blueprint("admin", __name__)
+
+load_dotenv()
 
 class UserType(Enum):
     PERSONAL = 1
@@ -552,7 +555,7 @@ def show_payment_req_review(decoded_user_id, user_type, kind, idx):
         fail_book_list = []
         
         for book in books:
-            if book.state != PurchaseState.PAYMENT_SUCCESS.value:
+            if book.state != PurchaseState.CALCULATE.value:
                 fail_book_list.append({
                     "bid": book.bid,
                     "title": book.title,
@@ -835,7 +838,7 @@ def show_spayment_req_review(decoded_user_id, user_type, idx):
         fail_book_list = []
         
         for book in books:
-            if book.state != PurchaseState.PAYMENT_SUCCESS.value:
+            if book.state != PurchaseState.CALCULATE.value:
                 fail_book_list.append({
                     "bid": book.bid,
                     "title": book.title,
