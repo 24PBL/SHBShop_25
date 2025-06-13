@@ -148,7 +148,6 @@
                 ? '정산 완료'
                 : info.reason ?? 'N/A'
             }</p>
-
           <p><strong>등록일:</strong> ${info.createAt ? new Date(info.createAt).toLocaleString() : '날짜 없음'}</p>
         `;
 
@@ -159,6 +158,13 @@
             <p>${book.author}</p>
           </div>
         `).join('');
+
+        // 정산 완료 상태면 action-box 숨기기
+        if (info.state === 11) {
+          document.querySelector('.action-box').style.display = 'none';
+        } else {
+          document.querySelector('.action-box').style.display = 'block';
+        }
 
       } catch (err) {
         console.error('에러:', err);

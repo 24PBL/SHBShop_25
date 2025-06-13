@@ -85,16 +85,22 @@ const ExcelUploadScreen = ({ navigation, route }) => {
       name: file.name,
     });
 
-    // 이미지 파일들 - 실제 파일명으로 업로드 (엑셀 파일명과 맞춰야 함)
+
     images.forEach(img => {
-      const fileName = img.uri.split('/').pop();
-      const fileType = fileName.split('.').pop().toLowerCase();
-      formData.append("images", {
-        uri: img.uri,
-        name: fileName,
-        type: `image/${fileType}`,
-      });
-    });
+
+  const originalFileName = img.fileName;
+
+
+  const fileType = originalFileName.split('.').pop().toLowerCase();
+
+  formData.append("images", {
+    uri: img.uri,
+
+    name: originalFileName,
+    type: `image/${fileType}`,
+  });
+});
+
 
     try {
       const userData = await AsyncStorage.getItem('UserData');
@@ -116,6 +122,14 @@ const ExcelUploadScreen = ({ navigation, route }) => {
       if (response.ok) {
         Alert.alert("성공", "도서 등록이 완료되었습니다.");
         console.log("업로드 성공", result);
+        navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'MyPageScreen'
+              },
+            ],
+          });
       } else {
         Alert.alert("실패", result.error || "등록 실패");
       }

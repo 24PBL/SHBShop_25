@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>매장 거래 정산 상세</title>
   <style>
     body {
@@ -19,36 +19,35 @@
       border-radius: 10px;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-    .item-list { /* 책 목록 대신 일반적인 항목 목록으로 변경 */
+    .item-list {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
     }
-    .item-card { /* 책 카드 대신 일반적인 항목 카드로 변경 */
-      width: 180px; /* 카드 너비 조정 */
+    .item-card {
+      width: 180px;
       background: white;
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 5px;
       text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 그림자 추가 */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .item-card img {
       width: 100%;
-      height: 150px; /* 이미지 높이 조정 */
+      height: 150px;
       object-fit: cover;
-      margin-bottom: 10px; /* 하단 여백 조정 */
-      border-radius: 4px; /* 이미지 모서리 둥글게 */
+      margin-bottom: 10px;
+      border-radius: 4px;
     }
-    .item-card p { /* 항목 정보 텍스트 스타일 */
-        font-size: 14px;
-        margin: 3px 0;
-        color: #333;
+    .item-card p {
+      font-size: 14px;
+      margin: 3px 0;
+      color: #333;
     }
-     .item-card p strong {
-        color: #000;
-     }
-
+    .item-card p strong {
+      color: #000;
+    }
     .action-box {
       background: white;
       padding: 20px;
@@ -83,35 +82,33 @@
       border-radius: 5px;
       cursor: pointer;
       margin-right: 10px;
-      transition: background-color 0.3s ease; /* 호버 효과 추가 */
+      transition: background-color 0.3s ease;
     }
     .btn-approve {
-      background-color: #28a745; /* 승인 버튼 색상 변경 (초록색 계열) */
+      background-color: #28a745;
       color: white;
     }
-     .btn-approve:hover {
-        background-color: #218838;
-     }
+    .btn-approve:hover {
+      background-color: #218838;
+    }
     .btn-reject {
       background-color: #dc3545;
       color: white;
     }
-     .btn-reject:hover {
-        background-color: #c82333;
-     }
+    .btn-reject:hover {
+      background-color: #c82333;
+    }
   </style>
 </head>
 <body>
   <h1>매장 거래 정산 상세 보기</h1>
 
   <div class="info-box" id="infoBox">
-    <!-- 매장 정보 및 정산 요약이 여기에 표시됩니다 -->
     <p>데이터를 불러오는 중...</p>
   </div>
 
-  <h2>거래 항목 목록</h2> <!-- 책 목록 대신 거래 항목 목록으로 변경 -->
+  <h2>거래 항목 목록</h2>
   <div class="item-list" id="itemList">
-    <!-- 거래 항목 리스트가 여기에 표시됩니다 -->
     <p>데이터를 불러오는 중...</p>
   </div>
 
@@ -120,41 +117,36 @@
     <label for="reason">거부 사유</label>
     <textarea id="reason" placeholder="거부 사유를 입력하세요 (정산 시 생략 가능)"></textarea>
 
-    <label for="photoInput">정산 결과 첨부 (선택 사항)</label> <!-- 선택 사항임을 명시 -->
-    <input type="file" id="photoInput" accept="image/*">
+    <label for="photoInput">정산 결과 첨부 (선택 사항)</label>
+    <input type="file" id="photoInput" accept="image/*" />
 
-    <button class="btn btn-approve" onclick="submitDecision(2)">정산 승인</button> <!-- 버튼 텍스트 변경 -->
-    <button class="btn btn-reject" onclick="submitDecision(3)">정산 거부</button> <!-- 버튼 텍스트 변경 -->
+    <button class="btn btn-approve" onclick="submitDecision(2)">정산 승인</button>
+    <button class="btn btn-reject" onclick="submitDecision(3)">정산 거부</button>
   </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const kind = params.get('kind'); // URL에서 kind 파라미터 가져오기 (매장 거래는 2일 것으로 예상)
-    const idx = params.get('idx');   // URL에서 idx 파라미터 가져오기 (정산 ID)
-    const token = localStorage.getItem('jwtToken'); // localStorage에서 토큰 가져오기
+    const kind = params.get('kind');
+    const idx = params.get('idx');
+    const token = localStorage.getItem('jwtToken');
 
-    // 필수 파라미터 및 토큰 유효성 검사
     if (!kind || !idx || !token) {
       alert('잘못된 접근입니다. 필요한 정보가 부족합니다.');
-      window.history.back(); // 이전 페이지로 돌아가기
+      window.history.back();
     }
 
-    // 정산 상세 정보를 불러오는 비동기 함수
     async function fetchSettlementDetail() {
       try {
-        // TODO: 매장 거래 정산 상세 API URL 확인 및 수정
-        // 개인 거래와 유사한 구조로 가정: /admin/check-payment/st/{kind}/{idx}
-        const apiUrl = `http://192.168.0.7:5000/admin/check-payment/st/${kind}/${idx}`;
+        const apiUrl = `http://192.168.0.7:5000/admin/check-payment/st/${idx}`;
         console.log(`Fetching settlement detail from: ${apiUrl}`);
 
         const res = await fetch(apiUrl, {
           headers: {
-            'Authorization': `Bearer ${token}`, // 인증 헤더 추가
-            'Content-Type': 'application/json' // 필요에 따라 Content-Type 추가
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
 
-        // 응답 상태 확인
         if (!res.ok) {
           const errorText = await res.text();
           console.error('API 응답 오류:', res.status, errorText);
@@ -164,122 +156,98 @@
         const data = await res.json();
         console.log('매장 정산 상세 데이터:', data);
 
-        // TODO: 실제 매장 거래 상세 API 응답 데이터 구조에 맞게 수정
-        // 개인 거래 상세 구조를 참고하여 가정: data.settlement_info, data.transaction_list
-        const settlementInfo = data.settlement_info; // 정산 요약 정보 객체
-        const transactionList = data.transaction_list; // 거래 항목 목록 배열
+        const settlementInfo = data.payment_info;
+        const transactionList = data.book_list;
 
-        // 정산 요약 정보 표시
         const infoBox = document.getElementById('infoBox');
         if (settlementInfo) {
-             // TODO: settlementInfo 객체의 실제 속성 이름에 맞게 수정
-             infoBox.innerHTML = `
-               <p><strong>매장명:</strong> ${settlementInfo.storeName ?? 'N/A'}</p> <!-- 예시 속성명 -->
-               <p><strong>정산 금액:</strong> ${settlementInfo.price ? settlementInfo.price.toLocaleString() + '원' : '금액 없음'}</p> <!-- 예시 속성명 -->
-               <p><strong>정산 상태:</strong> ${
-                 // TODO: settlementInfo.state 속성 이름 및 상태 값 확인
-                 settlementInfo.state === 10
-                     ? '정산 진행 중'
-                     : settlementInfo.state === 11
-                     ? '정산 완료'
-                     : settlementInfo.reason ?? 'N/A' // 예시 속성명
-                 }</p>
-               <p><strong>등록일:</strong> ${settlementInfo.createAt ? new Date(settlementInfo.createAt).toLocaleString() : '날짜 없음'}</p> <!-- 예시 속성명 -->
-               <!-- 필요에 따라 매장 계좌 정보 등 추가 -->
-               <p><strong>계좌 정보:</strong> ${settlementInfo.bankname ?? ''} ${settlementInfo.bankaccount ?? ''}</p> <!-- 예시 속성명 -->
-             `;
+          infoBox.innerHTML = `
+            <p><strong>매장명:</strong> ${settlementInfo.shopName ?? 'N/A'}</p>
+            <p><strong>정산 금액:</strong> ${settlementInfo.price ? settlementInfo.price.toLocaleString() + '원' : '금액 없음'}</p>
+            <p><strong>정산 상태:</strong> ${
+              settlementInfo.state === 10 ? '정산 진행 중' :
+              settlementInfo.state === 11 ? '정산 완료' :
+              settlementInfo.reason ?? 'N/A'
+            }</p>
+            <p><strong>등록일:</strong> ${settlementInfo.createAt ? new Date(settlementInfo.createAt).toLocaleString() : '날짜 없음'}</p>
+            <p><strong>계좌 정보:</strong> ${settlementInfo.bankname ?? ''} ${settlementInfo.bankaccount ?? ''}</p>
+          `;
+
+          const actionBox = document.querySelector('.action-box');
+          if (settlementInfo.state === 11) {
+            actionBox.style.display = 'none';
+          } else {
+            actionBox.style.display = 'block';
+          }
         } else {
-             infoBox.innerHTML = '<p>정산 요약 정보를 불러올 수 없습니다.</p>';
+          infoBox.innerHTML = '<p>정산 요약 정보를 불러올 수 없습니다.</p>';
         }
 
-
-        // 거래 항목 목록 표시
         const itemList = document.getElementById('itemList');
-        itemList.innerHTML = ''; // 기존 내용 비우기
+        itemList.innerHTML = '';
         if (Array.isArray(transactionList) && transactionList.length > 0) {
-             // TODO: transactionList 배열 각 항목(item)의 실제 속성 이름에 맞게 수정
-             itemList.innerHTML = transactionList.map(item => `
-               <div class="item-card">
-                 <!-- TODO: 이미지 URL 속성명 확인 및 수정 -->
-                 <img src="http://192.168.0.7:5000${item.img}" alt="${item.itemName ?? '항목 이미지'}"> <!-- 예시 속성명 -->
-                 <p><strong>${item.itemName ?? '항목 이름 없음'}</strong></p> <!-- 예시 속성명 -->
-                 <p>${item.itemPrice ? item.itemPrice.toLocaleString() + '원' : '가격 없음'}</p> <!-- 예시 속성명 -->
-                 <!-- 필요에 따라 수량 등 추가 정보 표시 -->
-               </div>
-             `).join('');
+          itemList.innerHTML = transactionList.map(item => `
+            <div class="item-card">
+              <img src="http://192.168.0.7:5000${item.img}" alt="${item.title ?? '항목 이미지'}" />
+              <p><strong>${item.title ?? '항목 이름 없음'}</strong></p>
+              <p>${item.price ? item.price.toLocaleString() + '원' : '가격 없음'}</p>
+            </div>
+          `).join('');
         } else {
-             itemList.innerHTML = '<p>거래 항목 목록이 없습니다.</p>';
+          itemList.innerHTML = '<p>거래 항목 목록이 없습니다.</p>';
         }
-
 
       } catch (err) {
         console.error('정산 상세 정보를 불러오는 중 에러 발생:', err);
         alert('정산 정보를 불러올 수 없습니다.');
-        // 오류 발생 시 이전 페이지로 돌아갈 수도 있습니다.
-        // window.history.back();
       }
     }
 
-    // 정산 승인/거부 결정을 서버에 제출하는 비동기 함수
     async function submitDecision(decision) {
       const reason = document.getElementById('reason').value;
       const photoInput = document.getElementById('photoInput');
-      const file = photoInput.files[0]; // 선택된 파일 가져오기
+      const file = photoInput.files[0];
 
-      // 거부 시 사유 필수 입력 검사
       if (decision === 3 && !reason.trim()) {
         alert('정산 거부 시 사유를 입력해야 합니다.');
         return;
       }
 
       const formData = new FormData();
-      formData.append('decision', decision); // 2: 승인, 3: 거부
-      formData.append('reason', reason || ''); // 사유 (없으면 빈 문자열)
+      formData.append('decision', decision);
+      formData.append('reason', reason || '');
 
-      // 파일이 선택되었으면 FormData에 추가
       if (file) {
-          formData.append('completePhoto', file); // 'completePhoto'는 서버에서 기대하는 필드 이름
-      } else {
-          // 파일이 선택되지 않았고, 서버에서 필드를 기대한다면 null 또는 빈 값 추가 (서버 API 명세 확인 필요)
-          // formData.append('completePhoto', null); // 또는 formData.append('completePhoto', '');
-          // 파일이 필수가 아니라면 이 else 블록은 필요 없을 수 있습니다.
+        formData.append('completePhoto', file);
       }
 
-
       try {
-        // TODO: 매장 거래 정산 처리 API URL 확인 및 수정
-        // 개인 거래와 유사한 구조로 가정: /admin/check-payment/st/{kind}/{idx}/review
-        const reviewApiUrl = `http://192.168.0.7:5000/admin/check-payment/st/${kind}/${idx}/review`;
+        const reviewApiUrl = `http://192.168.0.7:5000/admin/check-payment/st/${idx}/review`;
         console.log(`Submitting decision to: ${reviewApiUrl}`);
 
         const res = await fetch(reviewApiUrl, {
-          method: 'POST', // POST 메서드 사용
+          method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}` // 인증 헤더 추가
-            // FormData를 사용할 때는 Content-Type 헤더를 명시적으로 설정하지 않습니다.
-            // 브라우저가 자동으로 'multipart/form-data'와 boundary를 설정해 줍니다.
+            'Authorization': `Bearer ${token}`
           },
-          body: formData // FormData 객체를 body로 전송
+          body: formData
         });
 
-        // 응답 상태 확인
         if (!res.ok) {
-          const errText = await res.text(); // 서버에서 보낸 오류 메시지 확인
+          const errText = await res.text();
           console.error('제출 API 응답 오류:', res.status, errText);
           throw new Error(`처리 실패: ${res.status} - ${errText}`);
         }
 
-        // 성공 시 처리
         alert('정산 처리가 완료되었습니다.');
-        location.reload(); // 페이지 새로고침하여 최신 상태 반영
+        location.reload();
 
       } catch (err) {
         console.error('정산 처리 제출 중 오류 발생:', err);
-        alert('정산 처리 중 오류가 발생했습니다.\n' + err.message); // 사용자에게 오류 메시지 표시
+        alert('정산 처리 중 오류가 발생했습니다.\n' + err.message);
       }
     }
 
-    // 페이지 로드 시 정산 상세 정보 불러오기
     fetchSettlementDetail();
   </script>
 </body>
