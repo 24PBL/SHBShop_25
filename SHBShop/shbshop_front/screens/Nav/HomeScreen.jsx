@@ -150,9 +150,6 @@ const HomeScreen = ({ navigation }) => {
             <Text style={{ fontSize: 28, fontWeight: 'bold', paddingLeft: 15 }}>{userData.region}</Text>
             <Text></Text>
             <View style={{ flexDirection: 'row' }}>
-              <TouchableOpacity style={{ paddingRight: 5 }}>
-                <Ionicons name="notifications-outline" size={33} color="black" />
-              </TouchableOpacity>
               <TouchableOpacity style={{ paddingRight: 10 }} onPress={goToSerach}>
                 <Ionicons name="search-outline" size={33} color="black" />
               </TouchableOpacity>
