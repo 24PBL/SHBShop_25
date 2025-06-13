@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>매장 거래 정산</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #0091da;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: white;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>매장 거래 정산 내역</h1>
+  <table id="payment-table">
+    <thead>
+      <tr>
+        <th>정산 ID</th>
+        <th>매장명</th>
+        <th>금액</th>
+        <th>정산 상태</th>
+        <th>날짜</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 데이터가 여기에 채워짐 -->
+    </tbody>
+  </table>
+
+  <script>
+    fetch('http://192.168.0.7:5000/admin/check-payment/st')
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector('#payment-table tbody');
+        data.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.id}</td>
+            <td>${item.storeName}</td>
+            <td>${item.amount}</td>
+            <td>${item.status}</td>
+            <td>${item.date}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      })
+      .catch(err => {
+        console.error('데이터 불러오기 실패:', err);
+      });
+  </script>
+</body>
+</html>

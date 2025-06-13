@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>개인 거래 정산 상세</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+    h1 {
+      color: #0091da;
+    }
+    .info-box {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .book-list {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .book-card {
+      width: 150px;
+      background: white;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .book-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      margin-bottom: 5px;
+    }
+    .action-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      font-size: 14px;
+    }
+    input[type="file"] {
+      display: block;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .btn {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .btn-approve {
+      background-color: #007bff;
+      color: white;
+    }
+    .btn-reject {
+      background-color: #dc3545;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>정산 상세 보기</h1>
+
+  <div class="info-box" id="infoBox">
+    <!-- 판매자 정보가 여기에 표시됩니다 -->
+  </div>
+
+  <h2>책 목록</h2>
+  <div class="book-list" id="bookList">
+    <!-- 책 리스트가 여기에 표시됩니다 -->
+  </div>
+
+  <h2>정산 처리</h2>
+  <div class="action-box">
+    <label for="reason">거부 사유</label>
+    <textarea id="reason" placeholder="거부 사유를 입력하세요 (정산 시 생략 가능)"></textarea>
+
+    <label for="photoInput">정산 결과 첨부</label>
+    <input type="file" id="photoInput" accept="image/*">
+
+    <button class="btn btn-approve" onclick="submitDecision(2)">정산</button>
+    <button class="btn btn-reject" onclick="submitDecision(3)">거부</button>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const kind = params.get('kind');
+    const idx = params.get('idx');
+    const token = localStorage.getItem('jwtToken');
+
+    if (!kind || !idx || !token) {
+      alert('잘못된 접근입니다.');
+      window.history.back();
+    }
+
+    async function fetchSettlementDetail() {
+      try {
+        const res = await fetch(`http://192.168.0.7:5000/admin/check-payment/pt/${kind}/${idx}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!res.ok) throw new Error('데이터 요청 실패');
+
+        const data = await res.json();
+        console.log('정산 상세:', data);
+
+        const info = data.payment_info;
+        const books = data.book_list;
+
+        document.getElementById('infoBox').innerHTML = `
+          <p><strong>판매자 이름:</strong> ${info.name ?? 'N/A'}</p>
+          <p><strong>이메일:</strong> ${info.email ?? 'N/A'}</p>
+          <p><strong>전화번호:</strong> ${info.tel ?? 'N/A'}</p>
+          <p><strong>정산 금액:</strong> ${info.price ? info.price.toLocaleString() + '원' : '금액 없음'}</p>
+          <p><strong>계좌 정보:</strong> ${info.bankname ?? ''} ${info.bankaccount ?? ''}</p>
+          <p><strong>정산 상태:</strong> ${info.reason ?? 'N/A'}</p>
+          <p><strong>등록일:</strong> ${info.createAt ? new Date(info.createAt).toLocaleString() : '날짜 없음'}</p>
+        `;
+
+        document.getElementById('bookList').innerHTML = books.map(book => `
+          <div class="book-card">
+            <img src="http://192.168.0.7:5000${book.img}" alt="${book.title}">
+            <p><strong>${book.title}</strong></p>
+            <p>${book.author}</p>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        console.error('에러:', err);
+        alert('정산 정보를 불러올 수 없습니다.');
+      }
+    }
+
+    async function submitDecision(decision) {
+      const reason = document.getElementById('reason').value;
+      const photoInput = document.getElementById('photoInput');
+      const file = photoInput.files[0];
+
+      const formData = new FormData();
+      formData.append('decision', decision);
+      formData.append('reason', reason || '');
+
+      if (decision === 3 && !reason.trim()) {
+        alert('거부 시 사유를 입력해야 합니다.');
+        return;
+      }
+
+      formData.append('completePhoto', file || null);
+
+      try {
+        const res = await fetch(`http://192.168.0.7:5000/admin/check-payment/pt/${kind}/${idx}/review`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText);
+        }
+
+        alert('처리가 완료되었습니다.');
+        location.reload();
+      } catch (err) {
+        console.error('제출 오류:', err);
+        alert('처리 중 오류가 발생했습니다.');
+      }
+    }
+
+    fetchSettlementDetail();
+  </script>
+</body>
+</html>
