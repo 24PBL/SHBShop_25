@@ -435,10 +435,6 @@ const takePhoto = async () => {
       <Ionicons name="camera-outline" size={24} color="black" />
       <Text style={styles.attachmentText}>카메라</Text>
     </TouchableOpacity>
-    <TouchableOpacity style={styles.attachmentButton} onPress={() => console.log('거래')}>
-      <Ionicons name="cash-outline" size={24} color="black" />
-      <Text style={styles.attachmentText}>거래</Text>
-    </TouchableOpacity>
   </View>
 )}
 
