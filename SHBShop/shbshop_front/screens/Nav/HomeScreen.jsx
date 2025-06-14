@@ -121,7 +121,7 @@ const HomeScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={goToBookSearch}
           style={{
-            width: 60,
+            width: 80,
             height: 50,
             backgroundColor: '#0091da',
             borderRadius: 15,

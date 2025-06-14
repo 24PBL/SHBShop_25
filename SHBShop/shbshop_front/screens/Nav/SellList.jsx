@@ -124,7 +124,7 @@ const SellList = ({ route, navigation }) => {
         <TouchableOpacity
                   onPress={goToBookSearch}
                   style={{
-                    width: 60,
+                    width: 80,
                     height: 50,
                     backgroundColor: '#0091da',
                     borderRadius: 15,
@@ -154,7 +154,7 @@ const SellList = ({ route, navigation }) => {
                       style={{marginLeft:0}}
                     />
                   </TouchableOpacity>
-                  <Text style={{ fontWeight: 'bold', fontSize: 28, marginLeft:10 }}>내 판매 도서</Text>
+                  <Text style={{ fontWeight: 'bold', fontSize: 28, marginLeft:10 }}>내 등록 도서</Text>
                   <TouchableOpacity onPress={goToSearch}>
                     <Ionicons name="search-outline" size={28} style={{paddingRight:20}}/>
                   </TouchableOpacity>

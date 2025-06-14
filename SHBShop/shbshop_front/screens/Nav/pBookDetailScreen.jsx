@@ -323,27 +323,30 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#ccc',
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
   },
   thumb: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight:'auto'
   },
   priceText: {
     fontSize: 16,
     fontWeight: 'bold',
+    marginLeft:5
   },
   chatbutton: {
     backgroundColor: '#0091DA',
     paddingVertical: 7,
     paddingHorizontal: 10,
     borderRadius: 10,
-    marginLeft:150
+    marginLeft:10,
+    marginRight:10
   },
   buybutton: {
     backgroundColor: '#0091DA',

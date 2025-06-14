@@ -69,7 +69,14 @@ const handleLogin = async () => {
         await AsyncStorage.setItem('UserData', userData);
 
         if (homeRes.data.user_type == 1 || homeRes.data.user_type == 2) {
-            navigation.navigate('Navbar');
+            navigation.reset({
+  index: 0,
+  routes: [
+    {
+      name: 'Navbar',
+    },
+  ],
+});
         }
 
     } catch (error) {

@@ -263,10 +263,11 @@ const BirthCheck = (text) => {
     <SafeAreaView style={{backgroundColor:'white', flex:1}}>
     <ScrollView showsVerticalScrollIndicator={false}>
     <Container>
-      <Text style={{fontSize : 30, fontWeight : 'bold', textAlign : 'center', marginRight:170}}>개인 회원가입</Text>
+      <Text style={{fontSize : 30, fontWeight : 'bold', textAlign : 'center'}}>개인 회원가입</Text>
       <Text></Text>
       <Label>이메일</Label>
-      <TextAndTouch><SignInputBox placeholder="이메일" placeholderTextColor = "rgba(0,0,0,0.4)" value={inputValue} onChangeText={handleInputChange}></SignInputBox>
+      <TextAndTouch>
+        <SignInputBox placeholder="이메일" placeholderTextColor = "rgba(0,0,0,0.4)" value={inputValue} onChangeText={handleInputChange}></SignInputBox>
         <TouchbleBox onPress={handleSubmit} disabled={isRequestDisabled}>
           <Text style={{color:'#0091DA', fontSize:17}}>요청</Text>
         </TouchbleBox>
