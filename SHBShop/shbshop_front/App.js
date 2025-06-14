@@ -32,6 +32,7 @@ import PBookDetailScreen from './screens/Nav/PBookDetailScreen';
 import CBookDetailScreen from './screens/Nav/CBookDetailScreen';
 import ReRegister from './screens/Nav/ReRegister';
 import TossPaymentScreen from './screens/Nav/TossPaymentScreen';
+import ChatRoomScreen from './screens/Nav/ChatRoomScreen'
 
 const Stack = createNativeStackNavigator();
 
@@ -91,6 +92,7 @@ const App = () => {
         <Stack.Screen name="CBookDetailScreen" component={CBookDetailScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ReRegister" component={ReRegister} options={{ headerShown: false }} />
         <Stack.Screen name="TossPaymentScreen" component={TossPaymentScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ChatRoomScreen" component={ChatRoomScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

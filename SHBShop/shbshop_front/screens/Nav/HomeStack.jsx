@@ -8,7 +8,7 @@ import BookSearchScreen from './BookSearchScreen';
 import SellBook1 from './SellBook1';
 import PBookDetailScreen from './PBookDetailScreen';
 import CBookDetailScreen from './CBookDetailScreen'
-import ChatRoomScreen from './ChatRoomScreen';
+
 const Stack = createNativeStackNavigator();
 
 const HomeStack = () => {
@@ -21,7 +21,6 @@ const HomeStack = () => {
       <Stack.Screen name="SellBook1" component={SellBook1} options={{ headerShown: false }} />
       <Stack.Screen name="PBookDetailScreen" component={PBookDetailScreen} options={{headerShown: false}}/>
       <Stack.Screen name="CBookDetailScreen" component={CBookDetailScreen} options={{headerShown: false}}/>
-      <Stack.Screen name="ChatRoomScreen" component={ChatRoomScreen} options={{headerShown: false}}/>
     </Stack.Navigator>
   );
 };

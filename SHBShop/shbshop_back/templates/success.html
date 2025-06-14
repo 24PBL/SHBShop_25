@@ -2,7 +2,55 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 모바일 뷰포트 설정 추가 -->
   <title>결제 성공</title>
+  <style>
+    body {
+      font-family: sans-serif; /* 가독성 좋은 폰트 사용 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh; /* 전체 화면 높이 사용 */
+      margin: 0;
+      padding: 20px; /* 모바일 화면에서 내용이 가장자리에 붙지 않도록 패딩 추가 */
+      text-align: center; /* 텍스트 중앙 정렬 */
+      background-color: #f8f8f8; /* 배경색 추가 */
+    }
+
+    h1 {
+      color: #28a745; /* 성공 메시지 색상 */
+      margin-bottom: 10px;
+      font-size: 24px; /* 모바일에서 적절한 크기 */
+    }
+
+    p {
+      color: #555;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #007bff; /* 버튼 색상 */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 12px 20px; /* 버튼 크기 조정 */
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 기존 줌 버튼 관련 스타일은 이 페이지에서는 필요 없으므로 제거했습니다. */
+    /* 만약 다른 용도로 사용하신다면 해당 스타일은 별도로 관리해야 합니다. */
+
+  </style>
+  <!-- 카카오 지도 API 스크립트는 이 페이지에서는 필요 없으므로 제거했습니다. -->
+  <!-- <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aa5c4ca21b29b73b3cbfd8204d7e4628&libraries=services"></script> -->
 </head>
 <body>
   <h1>결제가 성공적으로 완료되었습니다!</h1>
@@ -21,9 +69,10 @@
 
       // 3초 후 앱으로 돌아가지 않으면 안내 메시지 띄우기
       setTimeout(function () {
-        alert('앱이 설치되어 있지 않거나 자동 이동이 되지 않았습니다.\n"앱으로 돌아가기" 버튼을 눌러 주세요.');
-      }, 3000);
-    };
+        // alert는 사용자 경험을 해칠 수 있으므로,
+        // 실제 앱에서는 다른 안내 방식(예: 페이지에 메시지 표시)을 고려하는 것이 좋습니다.
+      
+    })};
   </script>
 </body>
 </html>

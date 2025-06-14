@@ -319,7 +319,14 @@ const takePhoto = async () => {
     socket.disconnect();
 
     // 4. 채팅방 리스트 화면으로 이동 (예: 'ChatList'라는 이름)
-    navigation.navigate('ChatListScreen');
+    navigation.reset({
+  index: 0,
+  routes: [
+    {
+      name: 'Navbar'
+    }
+  ],
+});
 
   } catch (error) {
     console.error('채팅방 나가기 실패:', error);

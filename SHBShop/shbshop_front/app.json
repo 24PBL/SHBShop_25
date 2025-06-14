@@ -1,12 +1,11 @@
 {
   "expo": {
-    "name": "pro_app",
+    "name": "헌책방",
     "slug": "pro_app",
     "version": "1.0.0",
     "scheme": "myapp",
-    "deepLinking": true,
     "orientation": "portrait",
-    "icon": "./assets/app_icon.jpg",
+    "icon": "./assets/app_icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -28,8 +27,8 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "API_URL": "http://192.168.0.7:5000",
-      "BUY_URL": "https://b695-182-31-40-60.ngrok-free.app",
+      "API_URL": "https://6b37-182-31-40-60.ngrok-free.app",
+      "BUY_URL": "https://6b37-182-31-40-60.ngrok-free.app",
       "eas": {
         "projectId": "c493c92d-8e82-4442-bab1-ea6a1489f7b1"
       }
