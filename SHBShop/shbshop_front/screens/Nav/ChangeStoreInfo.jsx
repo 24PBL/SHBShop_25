@@ -71,8 +71,9 @@ const ChangeStoreInfo = ({ navigation, route }) => {
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: false,
+      allowsMultipleSelection: true,
       quality: 1,
+      selectionLimit: 3
     });
 
     if (!result.canceled && result.assets?.length > 0) {

@@ -24,6 +24,7 @@ const pickImage = async () => {
     allowsEditing: true,
     quality: 1,
     allowsMultipleSelection: true,
+    selectionLimit: 3
   });
 
   if (!result.canceled) {

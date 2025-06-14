@@ -23,6 +23,7 @@ const SellBook1 = ({ navigation }) => {
         allowsEditing: true,
         quality: 1,
         allowsMultipleSelection: true, // 다중 선택 활성화
+        selectionLimit: 3,
       });
     
       if (!result.canceled) {

@@ -20,7 +20,8 @@ const SellBook = ({ route, navigation }) => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
-      allowsMultipleSelection: true, // 다중 선택 활성화
+      allowsMultipleSelection: true,
+      selectionLimit: 3
     });
   
     if (!result.canceled) {

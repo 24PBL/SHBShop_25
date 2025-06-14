@@ -27,8 +27,8 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "API_URL": "https://shbshop.store",
-      "BUY_URL": "https://shbshop.store",
+      "API_URL": "https://6b37-182-31-40-60.ngrok-free.app",
+      "BUY_URL": "https://6b37-182-31-40-60.ngrok-free.app",
       "eas": {
         "projectId": "c493c92d-8e82-4442-bab1-ea6a1489f7b1"
       }

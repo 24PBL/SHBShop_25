@@ -34,6 +34,7 @@ const EditSellDetail = ({ route, navigation }) => {
       allowsEditing: true,
       quality: 1,
       allowsMultipleSelection: true,
+      selectionLimit: 3,
     });
 
     if (!result.canceled) {
