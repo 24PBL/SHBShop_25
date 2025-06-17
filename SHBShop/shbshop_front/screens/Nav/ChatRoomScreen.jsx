@@ -93,7 +93,7 @@ const takePhoto = async () => {
             headers: { Authorization: `Bearer ${Token}` },  
           }
         );
-        const data = await res.json();
+        const data = await res.data;
         console.log(`채팅방 정보 ${data}`)
         setotheruser(res.data.other_info)
         if (res.data && Array.isArray(res.data.message_list)) {
