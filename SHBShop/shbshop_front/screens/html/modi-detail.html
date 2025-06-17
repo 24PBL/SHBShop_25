@@ -104,7 +104,7 @@
       }
 
       try {
-        const res = await fetch(`http://192.168.0.7:5000/admin/check-modi-address/${idx}`, {
+        const res = await fetch(`https://www.shbshop.store/admin/check-modi-address/${idx}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -165,7 +165,7 @@
           ${reasonHtml}
         `;
 
-        const pdfUrl = `http://192.168.0.7:5000${detail.licence}`;
+        const pdfUrl = `https://www.shbshop.store${detail.licence}`;
         document.getElementById("pdfViewer").src = pdfUrl;
 
         // 심사중일 때만 승인/거절 섹션 보여주기
@@ -209,7 +209,7 @@
       const decision = isApprove ? 2 : 3;
 
       try {
-        const res = await fetch(`http://192.168.0.7:5000/admin/check-modi-address/${currentItem.idx}/review`, {
+        const res = await fetch(`https://www.shbshop.store/admin/check-modi-address/${currentItem.idx}/review`, {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -220,7 +220,7 @@
             reason: reason
           }),
         });
-
+        
         const result = await res.json();
 
         if (!res.ok) {

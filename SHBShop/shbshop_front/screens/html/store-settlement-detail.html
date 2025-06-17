@@ -137,7 +137,7 @@
 
     async function fetchSettlementDetail() {
       try {
-        const apiUrl = `http://192.168.0.7:5000/admin/check-payment/st/${idx}`;
+        const apiUrl = `https://www.shbshop.store/admin/check-payment/st/${idx}`;
         console.log(`Fetching settlement detail from: ${apiUrl}`);
 
         const res = await fetch(apiUrl, {
@@ -188,7 +188,7 @@
         if (Array.isArray(transactionList) && transactionList.length > 0) {
           itemList.innerHTML = transactionList.map(item => `
             <div class="item-card">
-              <img src="http://192.168.0.7:5000${item.img}" alt="${item.title ?? '항목 이미지'}" />
+              <img src="https://www.shbshop.store${item.img}" alt="${item.title ?? '항목 이미지'}" />
               <p><strong>${item.title ?? '항목 이름 없음'}</strong></p>
               <p>${item.price ? item.price.toLocaleString() + '원' : '가격 없음'}</p>
             </div>
@@ -222,7 +222,7 @@
       }
 
       try {
-        const reviewApiUrl = `http://192.168.0.7:5000/admin/check-payment/st/${idx}/review`;
+        const reviewApiUrl = `https://www.shbshop.store/admin/check-payment/st/${idx}/review`;
         console.log(`Submitting decision to: ${reviewApiUrl}`);
 
         const res = await fetch(reviewApiUrl, {

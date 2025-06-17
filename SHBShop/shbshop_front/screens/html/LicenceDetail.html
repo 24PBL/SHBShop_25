@@ -91,7 +91,7 @@
       }
 
       try {
-        const response = await fetch(`http://192.168.0.7:5000/admin/check-licence/${licenceId}`, {
+        const response = await fetch(`https://www.shbshop.store/admin/check-licence/${licenceId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -149,13 +149,15 @@
 
         // 사업자 등록증 렌더링
         if (data.licenceInfo.licence) {
-          const pdfUrl = `http://192.168.0.7:5000${data.licenceInfo.licence}`;
+          const pdfUrl = `https://www.shbshop.store${data.licenceInfo.licence}`;
           renderPDF(pdfUrl);
         }
 
+        
+
         // 통장 사본 이미지 렌더링
         if (data.licenceInfo.accountPhoto) {
-          const imageUrl = `http://192.168.0.7:5000${data.licenceInfo.accountPhoto}`;
+          const imageUrl = `https://www.shbshop.store${data.licenceInfo.accountPhoto}`;
           const bankImageContainer = document.getElementById('bankImageContainer');
 
           const title = document.createElement('p');
@@ -225,7 +227,7 @@
       }
 
       try {
-        const response = await fetch(`http://192.168.0.7:5000/admin/check-licence/${licenceId}/review`, {
+        const response = await fetch(`https://www.shbshop.store/admin/check-licence/${licenceId}/review`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,

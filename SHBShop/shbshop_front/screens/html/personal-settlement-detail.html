@@ -120,7 +120,7 @@
 
     async function fetchSettlementDetail() {
       try {
-        const res = await fetch(`http://192.168.0.7:5000/admin/check-payment/pt/${kind}/${idx}`, {
+        const res = await fetch(`https://www.shbshop.store/admin/check-payment/pt/${kind}/${idx}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -153,7 +153,7 @@
 
         document.getElementById('bookList').innerHTML = books.map(book => `
           <div class="book-card">
-            <img src="http://192.168.0.7:5000${book.img}" alt="${book.title}">
+            <img src="https://www.shbshop.store${book.img}" alt="${book.title}">
             <p><strong>${book.title}</strong></p>
             <p>${book.author}</p>
           </div>
@@ -189,7 +189,7 @@
       formData.append('completePhoto', file || null);
 
       try {
-        const res = await fetch(`http://192.168.0.7:5000/admin/check-payment/pt/${kind}/${idx}/review`, {
+        const res = await fetch(`https://www.shbshop.store/admin/check-payment/pt/${kind}/${idx}/review`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`

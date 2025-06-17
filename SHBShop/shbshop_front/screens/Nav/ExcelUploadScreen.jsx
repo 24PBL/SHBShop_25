@@ -48,23 +48,22 @@ const ExcelUploadScreen = ({ navigation, route }) => {
   };
 
   const pickImages = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        allowsMultipleSelection: true,
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 1,
-        base64: false,
-      });
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'image/*',
+      multiple: true,
+      copyToCacheDirectory: true,
+    });
 
-      if (!result.canceled) {
-        const selected = result.assets || [];
-        setImages([...images, ...selected]);
-        console.log("선택된 이미지:", selected);
-      }
-    } catch (err) {
-      console.error(err);
+    if (!result.canceled && result.assets?.length > 0) {
+      setImages(prev => [...prev, ...result.assets]);
+      console.log("선택된 이미지:", result.assets.map(a => a.name));
     }
-  };
+  } catch (err) {
+    console.error("이미지 선택 중 오류:", err);
+    Alert.alert("오류", "이미지 선택 중 문제가 발생했습니다.");
+  }
+};
 
   const upLoaddata = async () => {
     if (!file || images.length === 0) {
@@ -86,17 +85,13 @@ const ExcelUploadScreen = ({ navigation, route }) => {
     });
 
 
-    images.forEach(img => {
-
-  const originalFileName = img.fileName;
-
-
-  const fileType = originalFileName.split('.').pop().toLowerCase();
+images.forEach(img => {
+  const fileName = img.name;
+  const fileType = fileName.split('.').pop().toLowerCase();
 
   formData.append("images", {
     uri: img.uri,
-
-    name: originalFileName,
+    name: fileName, // 엑셀의 img1_path와 매칭
     type: `image/${fileType}`,
   });
 });
