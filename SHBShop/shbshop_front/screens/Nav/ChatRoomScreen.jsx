@@ -84,6 +84,27 @@ const takePhoto = async () => {
   }, []);
 
   useEffect(() => {
+  const joinRoom = async () => {
+    const Token = await AsyncStorage.getItem('jwtToken');
+    if (!Token) return;
+
+    socket.auth = { token: Token };
+
+    if (!socket.connected) {
+      socket.connect();
+      socket.once('connect', () => {
+        socket.emit('join', { token: Token, room_id: roomId });
+      });
+    } else {
+      // 이미 연결되어 있으면 바로 join
+      socket.emit('join', { token: Token, room_id: roomId });
+    }
+  };
+
+  joinRoom();
+}, [roomId]);
+
+  useEffect(() => {
     const fetchMessages = async () => {
       try {
         const Token = await AsyncStorage.getItem('jwtToken');
@@ -135,13 +156,15 @@ const takePhoto = async () => {
     });
   };
 
-  setupSocket();
+  //setupSocket();
 
   socket.on('receive_message', (data) => {
     if (data.room_id === roomId) {
       setMessages((prev) => [...prev, data]);
     }
   });
+
+  setupSocket();
 
   return () => {
     
