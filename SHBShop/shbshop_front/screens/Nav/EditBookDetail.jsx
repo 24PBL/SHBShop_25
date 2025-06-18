@@ -43,7 +43,7 @@ const pickImage = async () => {
   };
 
     const goToHome = () => {
-      navigation.navigate('HomeScreen');
+      navigation.goBack();
     }
   
 
