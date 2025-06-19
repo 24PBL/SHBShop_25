@@ -10,7 +10,7 @@ const API_URL = Constants.expoConfig.extra.API_URL;
 const BookStoreSearch = ({ route, navigation }) => {
   const { storedata } = route.params;
   
-  // 검색 결과가 없는 경우 message에 "검색 결과가 없습니다."가 들어 있음
+  
   const shopList = storedata.data.shopList;
   const message = storedata.data.message;
 
